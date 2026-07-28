@@ -1,90 +1,139 @@
 # SH1ELD
 
-SH1ELD is a Laravel 12 application with Vite-built frontend assets. It includes a public landing page and authenticated role-based areas for super admin, admin/Katuparan, LGU, government agency, MBLRC, 39th IB, and AFP users.
+SH1ELD is a Laravel 12 web application for monitoring reintegration records, RCSP barangays, assistance programs, government interventions, documents, reports, and role-based inter-agency workflows.
+
+The application uses Laravel, Vite, Tailwind, Alpine.js, Chart.js, Leaflet, and a database-backed queue/session setup.
 
 ## Requirements
+
+Install these before running the system:
 
 - PHP 8.2 or newer
 - Composer
 - Node.js and npm
-- SQLite by default, or another Laravel-supported database configured in `.env`
+- Git
+- SQLite, MySQL, or another Laravel-supported database
 
-## Local Setup
+For local development, SQLite is the easiest option because `.env.example` is already configured for it.
 
-1. Clone the repository and enter the project directory.
+## Step-by-Step Local Setup
 
-   ```bash
-   git clone https://github.com/Siom4ii/Sh1eld2.git
-   cd Sh1eld2
-   ```
+### 1. Clone the repository
 
-2. Install PHP dependencies.
+```bash
+git clone https://github.com/Siom4ii/Sh1eld2.git
+cd Sh1eld2
+```
 
-   ```bash
-   composer install
-   ```
+### 2. Install PHP dependencies
 
-3. Install JavaScript dependencies.
+```bash
+composer install
+```
 
-   ```bash
-   npm install
-   ```
+### 3. Install JavaScript dependencies
 
-4. Create the environment file and application key.
+```bash
+npm install
+```
 
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
+### 4. Create the environment file
 
-   On Windows PowerShell, use:
+For macOS/Linux/Git Bash:
 
-   ```powershell
-   Copy-Item .env.example .env
-   php artisan key:generate
-   ```
+```bash
+cp .env.example .env
+```
 
-5. Create the SQLite database file if you are using the default `.env.example` settings.
+For Windows PowerShell:
 
-   ```bash
-   touch database/database.sqlite
-   ```
+```powershell
+Copy-Item .env.example .env
+```
 
-   On Windows PowerShell, use:
+Never commit the generated `.env` file.
 
-   ```powershell
-   New-Item -ItemType File database/database.sqlite -Force
-   ```
+### 5. Generate the application key
 
-6. Run migrations and seed the starter data.
+```bash
+php artisan key:generate
+```
 
-   ```bash
-   php artisan migrate --seed
-   ```
+### 6. Create the local database
 
-7. Start the application.
+The default `.env.example` uses SQLite:
 
-   ```bash
-   composer run dev
-   ```
+```env
+DB_CONNECTION=sqlite
+```
 
-   This starts the Laravel development server, queue listener, and Vite dev server together.
+Create the SQLite database file.
 
-8. Open the local site.
+For macOS/Linux/Git Bash:
 
-   ```text
-   http://127.0.0.1:8000
-   ```
+```bash
+touch database/database.sqlite
+```
 
-## Default Test Account
+For Windows PowerShell:
 
-After running `php artisan migrate --seed`, a test user is created:
+```powershell
+New-Item -ItemType File database/database.sqlite -Force
+```
+
+To use MySQL instead, update the `DB_*` values in `.env`, create the database manually, then continue with the migration step.
+
+### 7. Run migrations and seeders
+
+```bash
+php artisan migrate --seed
+```
+
+This creates the database tables, locations, sessions table, queue table, and starter user data.
+
+### 8. Start the development environment
+
+```bash
+composer run dev
+```
+
+This runs these services together:
+
+- Laravel development server
+- Laravel queue listener
+- Vite development server
+
+### 9. Open the system
+
+Open this URL in your browser:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Seeded Login Account
+
+After `php artisan migrate --seed`, the seeder creates one test user:
 
 ```text
 Email: test@example.com
 Password: password
 Role: lgu
 ```
+
+The login form uses `username`, not email. The seeded username is generated automatically. To view it, run:
+
+```bash
+php artisan tinker
+```
+
+Then run this inside Tinker:
+
+```php
+App\Models\User::where('email', 'test@example.com')->value('username');
+```
+
+Use the returned username with password `password`.
 
 ## Common Commands
 
@@ -94,13 +143,19 @@ Run only the Laravel server:
 php artisan serve
 ```
 
-Run only Vite:
+Run only the Vite dev server:
 
 ```bash
 npm run dev
 ```
 
-Build production frontend assets:
+Run only the queue listener:
+
+```bash
+php artisan queue:listen
+```
+
+Build frontend assets for production:
 
 ```bash
 npm run build
@@ -112,32 +167,22 @@ Run the test suite:
 composer run test
 ```
 
+Or:
+
+```bash
+php artisan test
+```
+
+Format PHP files:
+
+```bash
+vendor/bin/pint
+```
+
 Clear cached Laravel configuration:
 
 ```bash
 php artisan optimize:clear
-```
-
-Tail Laravel logs when your PHP environment supports Laravel Pail:
-
-```bash
-php artisan pail
-```
-
-Laravel Pail requires the `pcntl` extension, which is not available in the standard Windows/XAMPP PHP build.
-
-## Database Configuration
-
-The example environment uses SQLite:
-
-```env
-DB_CONNECTION=sqlite
-```
-
-To use MySQL or another database, update the `DB_*` variables in `.env`, create the database manually, then run:
-
-```bash
-php artisan migrate --seed
 ```
 
 ## Legacy Data Import
@@ -148,26 +193,66 @@ The project includes an Artisan command for importing legacy data:
 php artisan import:legacy
 ```
 
-Use `--fresh` to wipe the destination tables first:
+Use `--fresh` only when you intentionally want to wipe the destination tables before import:
 
 ```bash
 php artisan import:legacy --fresh
 ```
 
-Run this only after configuring the required legacy data source expected by the command.
+Run this command only after configuring the required legacy data source.
 
 ## Troubleshooting
 
-If pages do not load correctly, make sure both the Laravel server and Vite are running with `composer run dev`.
+If the application key is missing:
 
-If the database tables are missing, run:
+```bash
+php artisan key:generate
+```
+
+If database tables are missing:
 
 ```bash
 php artisan migrate --seed
 ```
 
-If assets are stale or missing, rebuild them:
+If pages load but styles or scripts are missing:
 
 ```bash
 npm run build
+```
+
+If cached configuration causes unexpected behavior:
+
+```bash
+php artisan optimize:clear
+```
+
+If `composer run dev` fails on Windows because Laravel Pail or process control extensions are unavailable, run the services separately:
+
+```bash
+php artisan serve
+npm run dev
+php artisan queue:listen
+```
+
+## Production Notes
+
+Before deploying, configure production-safe values in `.env`:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL`
+- Production database credentials
+- Mail settings
+- Queue connection
+- Storage configuration
+
+Then run:
+
+```bash
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
+php artisan migrate --force
+php artisan optimize
 ```
