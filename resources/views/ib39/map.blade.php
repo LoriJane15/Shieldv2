@@ -1,9 +1,10 @@
 @extends('layouts.skydash-v')
-@section('title', 'Map')
+@section('title', 'Operational Map')
 @section('heading', 'Operational Map')
 
 @push('styles')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ asset('assets/css/ib39-operational-map.css') }}">
+    @vite('resources/js/ib39-operational-map.js')
 @endpush
 
 @section('content')
@@ -11,63 +12,67 @@
         <div class="col-12 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                    <div class="map-page-heading">
                         <div>
-                            <h5 class="mb-1">Former Rebel Locations</h5>
-                            <p class="text-muted small mb-0">Davao del Sur area of operations</p>
+                            <h3 class="font-weight-bold mb-1">Former Rebel Locations</h3>
+                            <p class="text-muted mb-0">Authorized operational view for Davao del Sur</p>
                         </div>
-                        <div class="d-flex flex-wrap gap-3 small">
-                            @foreach (['Active' => '#22c55e', 'Reintegrated' => '#2c4199', 'Inactive' => '#94a3b8', 'Under Review' => '#f59e0b'] as $st => $c)
-                                <span class="d-flex align-items-center gap-1">
-                                    <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background: {{ $c }}"></span>{{ $st }}
-                                </span>
-                            @endforeach
+                        <div class="map-count-card" aria-live="polite">
+                            <span class="map-count-value" data-visible-count>0</span>
+                            <span class="map-count-label">visible of <span data-total-count>0</span></span>
                         </div>
                     </div>
-                    <div id="ib39Map" style="height:32rem;width:100%;" data-source="{{ route('ib39.map.data') }}"></div>
+
+                    <div class="map-toolbar" aria-label="Map filters">
+                        <div class="map-search">
+                            <i class="mdi mdi-magnify" aria-hidden="true"></i>
+                            <label class="visually-hidden" for="mapSearch">Search map records</label>
+                            <input id="mapSearch" type="search" class="form-control"
+                                   placeholder="Search name, address, batch, or status"
+                                   data-map-search>
+                        </div>
+
+                        <div>
+                            <label class="visually-hidden" for="mapStatus">Filter by status</label>
+                            <select id="mapStatus" class="form-select" data-map-status>
+                                <option value="">All statuses</option>
+                                @foreach ([
+                                    'Active', 'On hold', 'Reintegrated', 'Inactive', 'Under Review',
+                                    'Disengaged', 'Pending', 'Suspended', 'Completed', 'Deceased', 'Relocated',
+                                ] as $status)
+                                    <option value="{{ $status }}">{{ $status }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <button type="button" class="btn btn-outline-secondary" data-map-reset>
+                            <i class="mdi mdi-filter-remove-outline me-1" aria-hidden="true"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-primary" data-map-fit>
+                            <i class="mdi mdi-crosshairs-gps me-1" aria-hidden="true"></i> Show all
+                        </button>
+                    </div>
+
+                    <div class="map-layout">
+                        <aside class="map-legend" aria-label="Marker legend">
+                            <h6 class="mb-3">Marker status</h6>
+                            <div data-map-legend></div>
+                            <p class="map-privacy-note">
+                                <i class="mdi mdi-shield-lock-outline" aria-hidden="true"></i>
+                                Location information is restricted to authorized users.
+                            </p>
+                        </aside>
+
+                        <div class="map-stage">
+                            <div id="ib39Map" data-source="{{ route('ib39.map.data') }}"></div>
+                            <div class="map-state" data-map-state>
+                                <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
+                                <span data-map-state-text>Loading authorized map data…</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 @endsection
-
-@push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        (function () {
-            var el = document.getElementById('ib39Map');
-            if (!el || typeof L === 'undefined') return;
-
-            var DAVAO_SUR = [6.7497, 125.3572];
-            var STATUS_COLORS = {
-                Active: '#22c55e',
-                Reintegrated: '#2c4199',
-                Inactive: '#94a3b8',
-                'Under Review': '#f59e0b',
-                Completed: '#12b76a',
-            };
-
-            var map = L.map(el).setView(DAVAO_SUR, 10);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap',
-                maxZoom: 19,
-            }).addTo(map);
-
-            fetch(el.dataset.source, { headers: { Accept: 'application/json' } })
-                .then(function (r) { return r.json(); })
-                .then(function (rows) {
-                    var bounds = [];
-                    rows.forEach(function (fr) {
-                        var color = STATUS_COLORS[fr.status] || '#64748b';
-                        L.circleMarker([fr.lat, fr.lng], {
-                            radius: 7, color: color, fillColor: color, fillOpacity: 0.8, weight: 2,
-                        }).bindPopup(
-                            '<strong>' + fr.name + '</strong><br>' + fr.status + ' · ' + (fr.batch ?? '') + '<br>' + (fr.address ?? '')
-                        ).addTo(map);
-                        bounds.push([fr.lat, fr.lng]);
-                    });
-                    if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] });
-                });
-        })();
-    </script>
-@endpush

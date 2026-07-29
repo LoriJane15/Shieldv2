@@ -60,14 +60,22 @@
                                             <a href="{{ route('mblrc.fr.edit', $fr) }}" style="color:#007bff;text-decoration:none;" title="Edit">
                                                 <i class="mdi mdi-pencil" style="font-size:18px;"></i>
                                             </a>
-                                            <form method="POST" action="{{ route('mblrc.fr.destroy', $fr) }}"
-                                                  onsubmit="return confirm('Are you sure you want to delete this Former Rebel? This action cannot be undone.')"
-                                                  style="display:inline;">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" style="background:none;border:none;color:#dc3545;padding:0;cursor:pointer;" title="Delete">
+                                            @if (! $fr->programStatus && $fr->education_works_count === 0 && $fr->location_histories_count === 0 && $fr->skills_count === 0 && $fr->assistances_count === 0)
+                                                <button type="button"
+                                                        data-delete-confirm
+                                                        data-delete-action="{{ route('mblrc.fr.destroy', $fr) }}"
+                                                        data-delete-title="Delete Former Rebel record?"
+                                                        data-delete-name="{{ $fr->classified_id }} — {{ $fr->full_name }}"
+                                                        data-delete-message="Only records without monitoring history can be permanently deleted."
+                                                        style="background:none;border:none;color:#dc3545;padding:0;cursor:pointer;"
+                                                        title="Delete">
                                                     <i class="mdi mdi-delete" style="font-size:18px;"></i>
                                                 </button>
-                                            </form>
+                                            @else
+                                                <span class="text-muted" title="This record has protected monitoring history">
+                                                    <i class="mdi mdi-lock" style="font-size:18px;"></i>
+                                                </span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -83,4 +91,5 @@
         </div>
     </div>
 </div>
+@include('super_admin.partials.delete-confirmation')
 @endsection

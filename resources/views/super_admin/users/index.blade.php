@@ -2,6 +2,10 @@
 @section('title', 'User Management')
 @section('heading', 'User Management')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/user-logo-cropper.css') }}">
+@endpush
+
 @section('content')
     <div class="row mb-3">
         <div class="col-8 col-xl-8 mb-3 mb-xl-0">
@@ -38,6 +42,7 @@
                         <table class="table">
                             <thead>
                                 <tr>
+                                    <th>Logo</th>
                                     <th>Full Name</th>
                                     <th>Username</th>
                                     <th>Role</th>
@@ -49,6 +54,11 @@
                             <tbody>
                                 @forelse ($users as $u)
                                     <tr>
+                                        <td>
+                                            <img src="{{ $u->logo_url }}" alt="{{ $u->name }} logo"
+                                                 class="user-table-logo"
+                                                 onerror="this.onerror=null;this.src='{{ asset('assets/img/kc-logo.svg') }}'">
+                                        </td>
                                         <td class="fw-medium">{{ $u->name }}</td>
                                         <td>{{ '@'.$u->username }}</td>
                                         <td>{{ $roles[$u->role]['label'] ?? $u->role }}</td>
@@ -64,23 +74,33 @@
                                                    data-role="{{ $u->role }}"
                                                    data-municipality="{{ $u->municipality_id }}"
                                                    data-agency="{{ $u->gov_agency_id }}"
+                                                   data-logo="{{ $u->logo_url }}"
+                                                   data-has-logo="{{ $u->logo ? 'true' : 'false' }}"
                                                    data-action="{{ route('super_admin.users.update', $u) }}">
                                                     <i class="icon-pencil edit-icon" style="font-size:18px;"></i>
                                                 </a>
-                                                @if ($u->id !== auth()->id())
-                                                    <form method="POST" action="{{ route('super_admin.users.destroy', $u) }}"
-                                                          onsubmit="return confirm('Delete {{ $u->username }}?')" style="display:inline;">
-                                                        @csrf @method('DELETE')
-                                                        <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
-                                                            <i class="icon-trash delete-icon" style="font-size:18px;"></i>
-                                                        </button>
-                                                    </form>
+                                                @if ($u->id !== auth()->id() && ! $u->rcsp_forms_count && ! $u->implementations_count)
+                                                    <button type="button"
+                                                            class="border-0 bg-transparent p-0"
+                                                            title="Delete user"
+                                                            aria-label="Delete {{ $u->name }}"
+                                                            data-delete-confirm
+                                                            data-delete-action="{{ route('super_admin.users.destroy', $u) }}"
+                                                            data-delete-title="Delete user?"
+                                                            data-delete-name="{{ $u->name }}"
+                                                            data-delete-message="This user account will be permanently removed. This action cannot be undone.">
+                                                        <i class="icon-trash delete-icon" style="font-size:18px;"></i>
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted" title="{{ $u->id === auth()->id() ? 'You cannot delete your own account' : 'User owns workflow records' }}">
+                                                        <i class="icon-lock" style="font-size:18px;"></i>
+                                                    </span>
                                                 @endif
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>
+                                    <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -91,6 +111,8 @@
             </div>
         </div>
     </div>
+
+    @include('super_admin.partials.delete-confirmation')
 
     {{-- Add modal --}}
     <div class="modal fade" id="addUserModal" tabindex="-1">
@@ -205,8 +227,8 @@
                     if (!firstInvalid) {
                         firstInvalid = password;
                     }
-                } else if (password.value.length < 6) {
-                    setFieldError(password, 'Password must be at least 6 characters.');
+                } else if (password.value.length < 8) {
+                    setFieldError(password, 'Password must be at least 8 characters.');
                     if (!firstInvalid) {
                         firstInvalid = password;
                     }
@@ -269,6 +291,11 @@
                 f.querySelector('[name=gov_agency_id]').value = btn.dataset.agency || '';
                 f.querySelector('[name=password]').value = '';
                 f.querySelector('[name=password_confirmation]').value = '';
+                window.UserLogoCropper?.setExistingLogo(
+                    f.querySelector('[data-logo-editor]'),
+                    btn.dataset.logo,
+                    btn.dataset.hasLogo === 'true'
+                );
                 syncRoleFields(f);
                 new bootstrap.Modal(document.getElementById('editUserModal')).show();
             });
@@ -278,4 +305,5 @@
             document.addEventListener('DOMContentLoaded', () => new bootstrap.Modal(document.getElementById('addUserModal')).show());
         @endif
     </script>
+    <script src="{{ asset('assets/js/user-logo-cropper.js') }}"></script>
 @endpush

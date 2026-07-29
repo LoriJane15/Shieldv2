@@ -8,18 +8,26 @@ use App\Http\Requests\SuperAdmin\UpdateUserRequest;
 use App\Models\GovAgency;
 use App\Models\Municipality;
 use App\Models\User;
+use App\Services\UserLogoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly UserLogoService $userLogos) {}
+
     public function index(Request $request): View
     {
         $users = User::query()
             ->with(['municipality', 'govAgency'])
-            ->when($request->search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%")->orWhere('username', 'like', "%{$s}%"))
+            ->withCount(['rcspForms', 'implementations'])
+            ->when($request->search, fn ($q, $s) => $q->where(
+                fn ($search) => $search
+                    ->where('name', 'like', "%{$s}%")
+                    ->orWhere('username', 'like', "%{$s}%")
+            ))
             ->when($request->role, fn ($q, $r) => $q->where('role', $r))
             ->orderBy('role')->orderBy('name')
             ->paginate(15)->withQueryString();
@@ -36,12 +44,20 @@ class UserController extends Controller
     {
         $data = $request->validated();
         $data = $this->scopeRoleFields($data);
+        $storedLogo = null;
 
         if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
+            $storedLogo = $this->userLogos->store($request->file('logo'));
+            $data['logo'] = $storedLogo;
         }
 
-        User::create($data); // password auto-hashed via model cast
+        try {
+            User::create($data); // password auto-hashed via model cast
+        } catch (\Throwable $exception) {
+            $this->userLogos->delete($storedLogo);
+
+            throw $exception;
+        }
 
         return back()->with('success', "User {$data['username']} created.");
     }
@@ -49,21 +65,42 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $data = $request->validated();
+        abort_if(
+            $user->is($request->user()) && $data['role'] !== 'super_admin',
+            422,
+            'You cannot remove your own Super Admin role.'
+        );
         $data = $this->scopeRoleFields($data);
+        $passwordChanged = ! empty($data['password']);
 
-        if (empty($data['password'])) {
+        if (! $passwordChanged) {
             unset($data['password']);   // keep existing
         }
+
+        $oldLogo = $user->logo;
+        $storedLogo = null;
+
         if ($request->hasFile('logo')) {
-            if ($user->logo) {
-                Storage::disk('public')->delete($user->logo);
-            }
-            $data['logo'] = $request->file('logo')->store('logos', 'public');
+            $storedLogo = $this->userLogos->store($request->file('logo'));
+            $data['logo'] = $storedLogo;
         } else {
             unset($data['logo']);
         }
 
-        $user->update($data);
+        try {
+            $user->update($data);
+        } catch (\Throwable $exception) {
+            $this->userLogos->delete($storedLogo);
+
+            throw $exception;
+        }
+
+        if ($storedLogo) {
+            $this->userLogos->delete($oldLogo);
+        }
+        if ($passwordChanged) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
 
         return back()->with('success', 'User updated.');
     }
@@ -71,7 +108,14 @@ class UserController extends Controller
     public function destroy(User $user): RedirectResponse
     {
         abort_if($user->id === auth()->id(), 403, 'You cannot delete your own account.');
+        abort_if(
+            $user->rcspForms()->exists() || $user->implementations()->exists(),
+            422,
+            'This user owns workflow records and cannot be deleted.'
+        );
+        $logo = $user->logo;
         $user->delete();
+        $this->userLogos->delete($logo);
 
         return back()->with('success', 'User deleted.');
     }

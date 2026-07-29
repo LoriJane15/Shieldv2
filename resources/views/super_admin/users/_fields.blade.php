@@ -61,8 +61,64 @@
         @error('gov_agency_id') <p class="mt-1 text-danger small">{{ $message }}</p> @enderror
     </div>
 
-    <div class="col-12">
-        <label class="form-label">Logo (optional)</label>
-        <input name="logo" type="file" accept="image/*" class="form-control form-control-sm">
+    <div class="col-12" data-logo-editor data-is-edit="{{ $isEdit ? 'true' : 'false' }}">
+        <label class="form-label d-block">User logo {{ $isEdit ? '' : '(optional)' }}</label>
+
+        <div class="user-logo-summary">
+            <div class="user-logo-preview">
+                <img data-logo-preview src="{{ asset('assets/img/kc-logo.svg') }}" alt="Logo preview">
+            </div>
+            <div>
+                <p class="mb-1 fw-semibold" data-logo-status>
+                    {{ $isEdit ? 'Current logo' : 'No logo selected' }}
+                </p>
+                <p class="mb-2 text-muted small">JPG, PNG, or WebP. Maximum 5 MB.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <label class="btn btn-sm btn-outline-primary mb-0">
+                        <span data-logo-choose-label>{{ $isEdit ? 'Change logo' : 'Choose logo' }}</span>
+                        <input name="logo" type="file" accept="image/jpeg,image/png,image/webp"
+                               class="visually-hidden" data-logo-input>
+                    </label>
+                    @if ($isEdit)
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                data-logo-recrop>Crop current logo</button>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="logo-crop-workspace mt-3" data-logo-crop-workspace hidden>
+            <div class="logo-crop-heading">
+                <div>
+                    <p class="mb-1 fw-semibold">Align and crop logo</p>
+                    <p class="mb-0 text-muted small">Drag the image to align it inside the square.</p>
+                </div>
+                <span class="badge bg-light text-dark">1:1 square</span>
+            </div>
+
+            <div class="logo-crop-canvas-wrap">
+                <canvas width="512" height="512" data-logo-canvas
+                        aria-label="Logo cropping area"></canvas>
+                <span class="logo-crop-guide" aria-hidden="true"></span>
+            </div>
+
+            <label class="form-label small mt-3" data-logo-zoom-label>
+                Zoom
+                <input type="range" class="form-range" min="1" max="3" value="1" step="0.01"
+                       data-logo-zoom aria-label="Logo zoom">
+            </label>
+
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-logo-crop-cancel>
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-sm btn-primary" data-logo-crop-accept>
+                    Use cropped logo
+                </button>
+            </div>
+        </div>
+
+        <div class="invalid-feedback d-block" data-logo-error hidden></div>
+        @error('logo') <p class="mt-1 text-danger small">{{ $message }}</p> @enderror
     </div>
 </div>

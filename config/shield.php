@@ -8,6 +8,8 @@
 */
 
 return [
+    'development_seed_password' => env('SHIELD_DEV_PASSWORD'),
+
     'roles' => [
         'super_admin' => [
             'label' => 'Super Admin',

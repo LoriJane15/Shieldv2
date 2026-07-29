@@ -4,8 +4,8 @@
 
 @php
     $agencyLogo = $agency?->profile
-        ? asset('assets/logoAgency/'.$agency->profile)
-        : (auth()->user()->logo ? asset('assets/'.auth()->user()->logo) : asset('assets/img/kc-logo.svg'));
+        ? $agency->profile_url
+        : auth()->user()->logo_url;
 @endphp
 
 @push('styles')
@@ -66,7 +66,7 @@
                                         @forelse (($row->agencies ?? []) as $aid)
                                             @php $ag = $agenciesById[$aid] ?? null; @endphp
                                             @if ($ag && $ag->profile)
-                                                <img src="{{ asset('assets/logoAgency/'.$ag->profile) }}"
+                                                <img src="{{ $ag->profile_url }}"
                                                      alt="{{ $ag->acronym }}" title="{{ $ag->acronym }}"
                                                      style="width:40px;height:40px;object-fit:contain;"
                                                      onerror="this.style.display='none'">

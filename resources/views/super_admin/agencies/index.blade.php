@@ -45,8 +45,8 @@
                                         <td>{{ $a->name }}</td>
                                         <td>
                                             @if ($a->profile)
-                                                <img src="{{ asset('assets/logoAgency/'.$a->profile) }}"
-                                                     onerror="this.style.display='none'"
+                                                <img src="{{ $a->profile_url }}"
+                                                     onerror="this.onerror=null;this.src='{{ asset('assets/img/kc-logo.svg') }}'"
                                                      alt="{{ $a->acronym }}" style="width:40px;height:40px;object-fit:contain;">
                                             @else
                                                 <span class="text-muted">—</span>
@@ -58,18 +58,26 @@
                                                 <a href="#" class="text-decoration-none" title="Edit"
                                                    data-edit-agency
                                                    data-name="{{ $a->name }}" data-acronym="{{ $a->acronym }}"
-                                                   data-profile="{{ $a->profile }}"
+                                                   data-profile-url="{{ $a->profile ? $a->profile_url : '' }}"
                                                    data-action="{{ route('super_admin.agencies.update', $a) }}">
                                                     <i class="icon-pencil edit-icon" style="font-size:18px;"></i>
                                                 </a>
-                                                @if (! $a->users_count)
-                                                    <form method="POST" action="{{ route('super_admin.agencies.destroy', $a) }}"
-                                                          onsubmit="return confirm('Delete {{ $a->acronym }}?')" style="display:inline;">
-                                                        @csrf @method('DELETE')
-                                                        <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
-                                                            <i class="icon-trash delete-icon" style="font-size:18px;"></i>
-                                                        </button>
-                                                    </form>
+                                                @if (! $a->users_count && ! $a->responses_count && ! $a->taggings_count)
+                                                    <button type="button"
+                                                            class="border-0 bg-transparent p-0"
+                                                            title="Delete agency"
+                                                            aria-label="Delete {{ $a->name }}"
+                                                            data-delete-confirm
+                                                            data-delete-action="{{ route('super_admin.agencies.destroy', $a) }}"
+                                                            data-delete-title="Delete agency?"
+                                                            data-delete-name="{{ $a->acronym }} — {{ $a->name }}"
+                                                            data-delete-message="This unused agency and its managed logo will be permanently removed. This action cannot be undone.">
+                                                        <i class="icon-trash delete-icon" style="font-size:18px;"></i>
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted" title="Agency has assigned users or workflow history">
+                                                        <i class="icon-lock" style="font-size:18px;"></i>
+                                                    </span>
                                                 @endif
                                             </div>
                                         </td>
@@ -87,6 +95,8 @@
         </div>
     </div>
 
+    @include('super_admin.partials.delete-confirmation')
+
     <div class="modal fade" id="addAgencyModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -95,9 +105,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="{{ route('super_admin.agencies.store') }}">
+                    <form method="POST" action="{{ route('super_admin.agencies.store') }}" enctype="multipart/form-data">
                         @csrf
-                        @include('super_admin.agencies._fields')
+                        @include('super_admin.agencies._fields', ['isEdit' => false])
                         <div class="d-flex justify-content-end gap-2 pt-2">
                             <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
                             <button class="btn btn-success">Add agency</button>
@@ -116,9 +126,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" data-edit-agency-form>
+                    <form method="POST" enctype="multipart/form-data" data-edit-agency-form>
                         @csrf @method('PUT')
-                        @include('super_admin.agencies._fields')
+                        @include('super_admin.agencies._fields', ['isEdit' => true])
                         <div class="d-flex justify-content-end gap-2 pt-2">
                             <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
                             <button class="btn btn-primary">Save changes</button>
@@ -138,7 +148,11 @@
                 f.action = btn.dataset.action;
                 f.querySelector('[name=acronym]').value = btn.dataset.acronym;
                 f.querySelector('[name=name]').value = btn.dataset.name;
-                f.querySelector('[name=profile]').value = btn.dataset.profile || '';
+                f.querySelector('[name=profile]').value = '';
+                const currentLogo = f.querySelector('[data-agency-logo-current]');
+                const logoPreview = f.querySelector('[data-agency-logo-preview]');
+                currentLogo.hidden = !btn.dataset.profileUrl;
+                logoPreview.src = btn.dataset.profileUrl || '{{ asset('assets/img/kc-logo.svg') }}';
                 new bootstrap.Modal(document.getElementById('editAgencyModal')).show();
             });
         });

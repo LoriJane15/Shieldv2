@@ -62,7 +62,7 @@
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">Profile</a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-slate-50">Log out</button>
+                        <button type="button" class="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-slate-50" data-logout-open onclick="return openLogoutModal(event);">Log out</button>
                     </form>
                 </div>
             </div>
@@ -73,6 +73,8 @@
         </main>
     </div>
 </div>
+
+@include('layouts.partials.logout-confirmation')
 
 {{-- Flash toasts --}}
 <div class="pointer-events-none fixed bottom-4 right-4 z-50 space-y-2">

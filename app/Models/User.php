@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -46,14 +48,27 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             'super_admin' => 'super_admin.dashboard',
-            'admin'       => 'admin.dashboard',
-            '39th_ib'     => 'ib39.dashboard',
-            'gov_agency'  => 'gov_agency.dashboard',
-            'lgu'         => 'lgu.dashboard',
-            'mblrc'       => 'mblrc.dashboard',
-            'afp'         => 'afp.dashboard',
-            default       => 'login',
+            'admin' => 'admin.dashboard',
+            '39th_ib' => 'ib39.dashboard',
+            'gov_agency' => 'gov_agency.dashboard',
+            'lgu' => 'lgu.dashboard',
+            'mblrc' => 'mblrc.dashboard',
+            'afp' => 'afp.dashboard',
+            default => 'login',
         };
+    }
+
+    public function getLogoUrlAttribute(): string
+    {
+        if (! $this->logo) {
+            return asset('assets/img/kc-logo.svg');
+        }
+
+        if (Storage::disk('public')->exists($this->logo)) {
+            return Storage::disk('public')->url($this->logo);
+        }
+
+        return asset('assets/'.ltrim($this->logo, '/'));
     }
 
     // Relationships -------------------------------------------------------
@@ -65,5 +80,15 @@ class User extends Authenticatable
     public function govAgency(): BelongsTo
     {
         return $this->belongsTo(GovAgency::class);
+    }
+
+    public function rcspForms(): HasMany
+    {
+        return $this->hasMany(RcspForm::class, 'lgu_user_id');
+    }
+
+    public function implementations(): HasMany
+    {
+        return $this->hasMany(Implementation::class, 'lgu_user_id');
     }
 }

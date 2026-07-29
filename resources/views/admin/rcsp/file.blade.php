@@ -7,7 +7,7 @@
     $ext = strtolower(pathinfo($form->file, PATHINFO_EXTENSION));
     $fileUrl = $form->file ? Storage::url($form->file) : null;
     $fallbackAvatar = asset('assets/img/kc-logo.svg');
-    $avatarFor = fn ($u) => $u && $u->logo ? asset('assets/'.$u->logo) : $fallbackAvatar;
+    $avatarFor = fn ($u) => $u?->logo_url ?? $fallbackAvatar;
     $avatar = $avatarFor($form->lguUser);          // header = uploader
     $myAvatar = $avatarFor(auth()->user());        // current viewer (comment form)
     $statusTone = match ($form->status) {

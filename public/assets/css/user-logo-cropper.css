@@ -1,0 +1,102 @@
+.user-table-logo,
+.user-logo-preview {
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    object-fit: cover;
+}
+
+.user-logo-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.user-logo-preview {
+    flex: 0 0 64px;
+    width: 64px;
+    height: 64px;
+    padding: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.user-logo-preview img,
+img.user-logo-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.logo-crop-workspace {
+    padding: 1rem;
+    border: 1px solid #d8d0ec;
+    border-radius: 12px;
+    background: #fbfaff;
+}
+
+.logo-crop-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.logo-crop-canvas-wrap {
+    position: relative;
+    width: min(100%, 320px);
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 14px;
+    background-color: #e2e8f0;
+    background-image:
+        linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+        linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+        linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    background-size: 20px 20px;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+    touch-action: none;
+}
+
+.logo-crop-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: default;
+}
+
+.logo-crop-canvas-wrap canvas.is-draggable {
+    cursor: grab;
+}
+
+.logo-crop-canvas-wrap canvas.is-draggable:active {
+    cursor: grabbing;
+}
+
+.logo-crop-guide {
+    position: absolute;
+    inset: 8px;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 0 0 999px rgba(15, 23, 42, 0.28);
+}
+
+@media (max-width: 575.98px) {
+    .user-logo-summary {
+        align-items: flex-start;
+    }
+}

@@ -18,10 +18,10 @@
 
     // Sticky Navbar
     $(window).scroll(function () {
-        if ($(this).scrollTop() > 300) {
+        if ($(this).scrollTop() > 0) {
             $('.sticky-top').addClass('shadow-sm').css('top', '0px');
         } else {
-            $('.sticky-top').removeClass('shadow-sm').css('top', '-150px');
+            $('.sticky-top').removeClass('shadow-sm').css('top', '0px');
         }
     });
     
@@ -95,4 +95,3 @@
     });
     
 })(jQuery);
-

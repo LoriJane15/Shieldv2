@@ -215,7 +215,7 @@
                         <a href="/" class="nav-item nav-link active">Home</a>
                         <a href="#about" class="nav-item nav-link">About the Project</a>
                         <a href="#features" class="nav-item nav-link">Features</a>
-                        <a href="/login" class="nav-item nav-link login-btn">
+                        <a href="/login" class="nav-item nav-link login-btn" onclick="document.querySelectorAll('video').forEach(function(video){video.pause();video.removeAttribute('src');video.querySelectorAll('source').forEach(function(source){source.removeAttribute('src');});video.load();}); window.location.href='/login'; return false;">
                             Log in <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -230,7 +230,7 @@
             <div class="">
                 <div class="active" style="height: 100vh; margin: 0; overflow: hidden; position: relative;">
                     <!-- Video background -->
-                    <video class="w-100" autoplay muted loop playsinline style="
+                    <video class="w-100" autoplay muted loop playsinline preload="metadata" style="
                         height: 100vh;
                         object-fit: cover;
                         position: absolute;
@@ -316,7 +316,7 @@
     <!-- Products Start -->
     <div class="container-fluid product py-3 my-3 position-relative">
         <!-- Video background -->
-        <video class="w-100 h-100" autoplay muted loop playsinline style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; object-fit: cover; z-index: 0;">
+        <video class="w-100 h-100" autoplay muted loop playsinline preload="metadata" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; object-fit: cover; z-index: 0;">
             <source src="../assets/video/landingpage2.mp4" type="video/mp4">
             Your browser does not support the video tag.
         </video>
@@ -1188,6 +1188,22 @@
 
     <!-- Add this JavaScript before the closing body tag -->
     <script>
+        document.querySelectorAll('a.login-btn[href="/login"]').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+
+                document.querySelectorAll('video').forEach(function(video) {
+                    video.pause();
+                    video.querySelectorAll('source').forEach(function(source) {
+                        source.removeAttribute('src');
+                    });
+                    video.load();
+                });
+
+                window.location.assign(link.href);
+            });
+        });
+
         // Simplified scroll event listener that only handles color transition
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.container-fluid.bg-white.sticky-top');

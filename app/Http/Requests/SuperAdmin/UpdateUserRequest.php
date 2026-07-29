@@ -4,6 +4,7 @@ namespace App\Http\Requests\SuperAdmin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -19,11 +20,11 @@ class UpdateUserRequest extends FormRequest
         return [
             'username' => ['required', 'string', 'max:50', Rule::unique('users', 'username')->ignore($userId)],
             'name' => ['required', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:6', 'confirmed'],   // blank = keep current
+            'password' => ['nullable', 'string', Password::min(8), 'confirmed'],   // blank = keep current
             'role' => ['required', Rule::in(['super_admin', 'admin', '39th_ib', 'gov_agency', 'lgu', 'mblrc', 'afp'])],
             'municipality_id' => ['nullable', 'required_if:role,lgu', 'exists:municipalities,id'],
             'gov_agency_id' => ['nullable', 'required_if:role,gov_agency', 'exists:gov_agencies,id'],
-            'logo' => ['nullable', 'image', 'max:5120'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'dimensions:ratio=1/1', 'max:5120'],
         ];
     }
 }

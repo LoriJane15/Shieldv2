@@ -4,8 +4,8 @@
 
 @php
     $agencyLogo = $agency?->profile
-        ? asset('assets/logoAgency/'.$agency->profile)
-        : (auth()->user()->logo ? asset('assets/'.auth()->user()->logo) : asset('assets/img/kc-logo.svg'));
+        ? $agency->profile_url
+        : auth()->user()->logo_url;
     $statusBadge = fn ($s) => match ($s) {
         'for verification' => 'badge-info', 'ongoing' => 'badge-primary',
         'not yet started' => 'badge-danger', default => 'badge-secondary',

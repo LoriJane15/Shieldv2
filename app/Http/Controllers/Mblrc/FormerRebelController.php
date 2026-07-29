@@ -20,6 +20,7 @@ class FormerRebelController extends Controller
     {
         $frs = FormerRebel::query()
             ->with(['barangay', 'municipality', 'programStatus'])
+            ->withCount(['educationWorks', 'locationHistories', 'skills', 'assistances'])
             ->when($request->search, function ($q, $search) {
                 $q->where(fn ($w) => $w
                     ->where('firstname', 'like', "%{$search}%")
@@ -52,7 +53,6 @@ class FormerRebelController extends Controller
         $data['province'] ??= 'Davao del Sur';
         $data['status'] ??= 'Active';
         $data['registered_at'] = now();
-        $data['contact_num'] = $this->cleanContact($data['contact_num'] ?? null);
 
         $fr = FormerRebel::create($data);
 
@@ -86,7 +86,6 @@ class FormerRebelController extends Controller
     public function update(UpdateFormerRebelRequest $request, FormerRebel $formerRebel): RedirectResponse
     {
         $data = $request->validated();
-        $data['contact_num'] = $this->cleanContact($data['contact_num'] ?? null);
         $formerRebel->update($data);
 
         return redirect()->route('mblrc.fr.show', $formerRebel)
@@ -95,8 +94,12 @@ class FormerRebelController extends Controller
 
     public function destroy(FormerRebel $formerRebel): RedirectResponse
     {
+        if ($formerRebel->hasRecordedHistory()) {
+            abort(422, 'Former Rebel records with monitoring history cannot be deleted.');
+        }
+
         $id = $formerRebel->classified_id;
-        $formerRebel->delete(); // cascades to program status, skills, etc.
+        $formerRebel->delete();
 
         return redirect()->route('mblrc.fr.index')
             ->with('success', "Former Rebel {$id} deleted.");
@@ -120,7 +123,7 @@ class FormerRebelController extends Controller
                 'url' => route('mblrc.fr.show', $fr->id),
             ]);
 
-        return response()->json($rows);
+        return response()->json($rows)->withHeaders($this->privateResponseHeaders());
     }
 
     /** Cascade: barangays for a municipality. */
@@ -131,12 +134,7 @@ class FormerRebelController extends Controller
         return response()->json(
             Barangay::where('municipality_id', $request->municipality_id)
                 ->orderBy('name')->get(['id', 'name'])
-        );
-    }
-
-    private function cleanContact(?string $v): ?string
-    {
-        return $v ? preg_replace('/[^0-9+]/', '', $v) : null;
+        )->withHeaders($this->privateResponseHeaders());
     }
 
     private function statuses(): array
@@ -144,6 +142,14 @@ class FormerRebelController extends Controller
         return [
             'Active', 'On hold', 'Reintegrated', 'Inactive', 'Under Review',
             'Disengaged', 'Pending', 'Suspended', 'Completed', 'Deceased', 'Relocated',
+        ];
+    }
+
+    private function privateResponseHeaders(): array
+    {
+        return [
+            'Cache-Control' => 'no-store, private',
+            'Pragma' => 'no-cache',
         ];
     }
 }

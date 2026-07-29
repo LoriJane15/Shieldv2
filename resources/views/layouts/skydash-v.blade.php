@@ -19,7 +19,8 @@
 </head>
 <body class="sidebar-fixed">
 @php
-    $role = auth()->user()->role;
+    $user = auth()->user();
+    $role = $user->role;
     $meta = config("shield.roles.$role");
     $nav = collect($meta['nav'] ?? [])->filter(fn ($i) => \Illuminate\Support\Facades\Route::has($i['route']));
 @endphp
@@ -41,19 +42,22 @@
             <span class="ms-3 align-self-center h5 mb-0 text-dark d-none d-md-block">@yield('heading', $meta['label'] ?? '')</span>
             <ul class="navbar-nav navbar-nav-right ms-auto">
                 <li class="nav-item nav-profile dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" id="profileDropdown">
-                        <div class="nav-profile-img">
-                            <img src="{{ auth()->user()->logo ? asset('assets/'.auth()->user()->logo) : asset('assets/img/kc-logo.svg') }}"
+                    <a class="nav-link dropdown-toggle nav-profile-trigger d-flex align-items-center" href="#" data-bs-toggle="dropdown" id="profileDropdown">
+                        <div class="nav-profile-avatar">
+                            <img src="{{ $user->logo_url }}"
                                  onerror="this.onerror=null;this.src='{{ asset('assets/img/kc-logo.svg') }}'"
-                                 alt="profile" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+                                 alt="{{ $user->name }} logo" />
                         </div>
+                        <span class="nav-profile-name text-truncate" title="{{ $user->name }}">
+                            {{ $user->name }}
+                        </span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
                         <h6 class="dropdown-header mb-0 text-truncate">{{ auth()->user()->name }}</h6>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="ti-settings text-primary"></i> Settings</a>
                         <form method="POST" action="{{ route('logout') }}">@csrf
-                            <button class="dropdown-item" type="submit"><i class="ti-power-off text-primary"></i> Logout</button>
+                            <button class="dropdown-item" type="button" data-logout-open onclick="return openLogoutModal(event);"><i class="ti-power-off text-primary"></i> Logout</button>
                         </form>
                     </div>
                 </li>
@@ -103,11 +107,13 @@
 </div>
 
 <script src="{{ asset('assets/vendors/js/vendor.bundle.base.js') }}"></script>
+<script src="{{ asset('assets/js/jquery.cookie.js') }}"></script>
 <script src="{{ asset('assets/js/off-canvas.js') }}"></script>
 <script src="{{ asset('assets/js/hoverable-collapse.js') }}"></script>
 <script src="{{ asset('assets/js/template.js') }}"></script>
 <script src="{{ asset('assets/js/settings.js') }}"></script>
 <script src="{{ asset('assets/vendors/chart.js/Chart.min.js') }}"></script>
+@include('layouts.partials.logout-confirmation')
 @stack('scripts')
 </body>
 </html>

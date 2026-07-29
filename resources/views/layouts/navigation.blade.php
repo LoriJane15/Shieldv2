@@ -43,8 +43,7 @@
                             @csrf
 
                             <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
+                                    onclick="return openLogoutModal(event);" data-logout-open>
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -89,8 +88,7 @@
                     @csrf
 
                     <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
+                            onclick="return openLogoutModal(event);" data-logout-open>
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
@@ -98,3 +96,5 @@
         </div>
     </div>
 </nav>
+
+@include('layouts.partials.logout-confirmation')

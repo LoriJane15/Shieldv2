@@ -83,7 +83,7 @@
   
   /*** Navbar ***/
   .sticky-top {
-    top: -150px;
+    top: 0;
     transition: 0.5s;
   }
   

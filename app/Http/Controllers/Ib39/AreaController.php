@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Ib39;
 
 use App\Http\Controllers\Controller;
+use App\Models\FormerRebel;
 use App\Models\MapBarangay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AreaController extends Controller
@@ -58,12 +60,26 @@ class AreaController extends Controller
         return view('ib39.map');
     }
 
-    /** Former-rebel points for the Leaflet operational map. */
-    public function mapData(): JsonResponse
+    /** Authorized former-rebel points for the Leaflet operational map. */
+    public function mapData(Request $request): JsonResponse
     {
-        $rows = \App\Models\FormerRebel::whereNotNull('latitude')->whereNotNull('longitude')
+        $data = $request->validate([
+            'status' => ['nullable', Rule::in([
+                'Active', 'On hold', 'Reintegrated', 'Inactive', 'Under Review',
+                'Disengaged', 'Pending', 'Suspended', 'Completed', 'Deceased', 'Relocated',
+            ])],
+        ]);
+
+        $markers = FormerRebel::query()
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->whereBetween('latitude', [-90, 90])
+            ->whereBetween('longitude', [-180, 180])
+            ->when($data['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->orderBy('classified_id')
             ->get(['id', 'firstname', 'lastname', 'placement_address', 'latitude', 'longitude', 'status', 'batch_year'])
             ->map(fn ($fr) => [
+                'id' => $fr->id,
                 'name' => trim("{$fr->firstname} {$fr->lastname}"),
                 'address' => $fr->placement_address,
                 'lat' => (float) $fr->latitude,
@@ -72,6 +88,12 @@ class AreaController extends Controller
                 'batch' => $fr->batch_year,
             ]);
 
-        return response()->json($rows);
+        return response()->json([
+            'markers' => $markers,
+            'meta' => [
+                'count' => $markers->count(),
+                'generated_at' => now()->toIso8601String(),
+            ],
+        ])->header('Cache-Control', 'private, no-store, max-age=0');
     }
 }

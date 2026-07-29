@@ -24,9 +24,13 @@ class StoreFormerRebelRequest extends FormRequest
             'age' => ['nullable', 'integer', 'min:0', 'max:120'],
             'civil_status' => ['nullable', Rule::in(['Single', 'Married', 'Widowed', 'Separated'])],
             'birthdate' => ['nullable', 'date'],
-            'contact_num' => ['nullable', 'string', 'max:15'],
+            'contact_num' => ['nullable', 'string', 'max:15', 'regex:/^\+?[0-9]+$/'],
             'municipality_id' => ['required', 'exists:municipalities,id'],
-            'barangay_id' => ['required', 'exists:barangays,id'],
+            'barangay_id' => [
+                'required',
+                Rule::exists('barangays', 'id')
+                    ->where('municipality_id', $this->input('municipality_id')),
+            ],
             'province' => ['nullable', 'string', 'max:50'],
             'zipcode' => ['nullable', 'string', 'max:10'],
             'residential_address' => ['nullable', 'string', 'max:255'],
@@ -39,5 +43,29 @@ class StoreFormerRebelRequest extends FormRequest
                 'Disengaged', 'Pending', 'Suspended', 'Completed', 'Deceased', 'Relocated',
             ])],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $contact = $this->input('contact_num');
+
+        $this->merge([
+            'firstname' => $this->trimmed('firstname'),
+            'middlename' => $this->trimmed('middlename'),
+            'lastname' => $this->trimmed('lastname'),
+            'nickname' => $this->trimmed('nickname'),
+            'residential_address' => $this->trimmed('residential_address'),
+            'surrender_reason' => $this->trimmed('surrender_reason'),
+            'contact_num' => filled($contact)
+                ? preg_replace('/[^0-9+]/', '', (string) $contact)
+                : null,
+        ]);
+    }
+
+    private function trimmed(string $field): ?string
+    {
+        $value = trim((string) $this->input($field, ''));
+
+        return $value === '' ? null : $value;
     }
 }

@@ -755,6 +755,64 @@
   transition: all 0.3s ease;
 }
 
+/* Keep the signed-in user's identity visible beside the top-bar profile image. */
+.navbar .nav-profile .nav-profile-trigger {
+  gap: 0.65rem;
+  min-height: 48px;
+  padding: 0.35rem 0.85rem 0.35rem 0.4rem !important;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.navbar .nav-profile .nav-profile-trigger:hover,
+.navbar .nav-profile .nav-profile-trigger:focus {
+  border-color: rgba(53, 18, 125, 0.35);
+  box-shadow: 0 4px 14px rgba(53, 18, 125, 0.12);
+  transform: translateY(-1px);
+}
+
+.navbar .nav-profile .nav-profile-avatar {
+  display: block;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: #f8fafc;
+}
+
+.navbar .nav-profile .nav-profile-avatar img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.navbar .nav-profile .nav-profile-name {
+  display: inline-block;
+  max-width: 180px;
+  margin-left: 0 !important;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+  .navbar .nav-profile .nav-profile-trigger {
+    min-height: 42px;
+    padding: 0.2rem 0.55rem 0.2rem 0.2rem !important;
+  }
+
+  .navbar .nav-profile .nav-profile-name {
+    display: none;
+  }
+}
+
 .agenda-file-item:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

@@ -40,17 +40,32 @@
                     @method('PUT')
                     <div class="mb-3">
                         <label class="form-label">Current password</label>
-                        <input type="password" name="current_password" class="form-control" autocomplete="current-password">
+                        <div class="input-group">
+                            <input type="password" name="current_password" class="form-control" autocomplete="current-password">
+                            <button type="button" class="btn btn-outline-secondary password-toggle-btn" data-password-toggle title="Show password" aria-label="Show password">
+                                <i class="ti-eye password-toggle-icon"></i>
+                            </button>
+                        </div>
                         @error('current_password', 'updatePassword') <p class="mt-1 text-danger small">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label">New password</label>
-                        <input type="password" name="password" class="form-control" autocomplete="new-password">
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control" autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary password-toggle-btn" data-password-toggle title="Show password" aria-label="Show password">
+                                <i class="ti-eye password-toggle-icon"></i>
+                            </button>
+                        </div>
                         @error('password', 'updatePassword') <p class="mt-1 text-danger small">{{ $message }}</p> @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Confirm new password</label>
-                        <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password">
+                        <div class="input-group">
+                            <input type="password" name="password_confirmation" class="form-control" autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary password-toggle-btn" data-password-toggle title="Show password" aria-label="Show password">
+                                <i class="ti-eye password-toggle-icon"></i>
+                            </button>
+                        </div>
                     </div>
                     <button class="btn btn-primary">Update password</button>
                 </form>
@@ -59,3 +74,45 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .password-toggle-btn {
+        min-width: 44px;
+    }
+
+    .password-toggle-icon {
+        position: relative;
+        display: inline-block;
+    }
+
+    .password-toggle-icon.is-hidden::after {
+        content: "";
+        position: absolute;
+        left: -3px;
+        top: 50%;
+        width: 22px;
+        height: 2px;
+        background: currentColor;
+        transform: rotate(-35deg);
+        transform-origin: center;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+    document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const input = button.closest('.input-group').querySelector('input');
+            const icon = button.querySelector('i');
+            const shouldShow = input.type === 'password';
+
+            input.type = shouldShow ? 'text' : 'password';
+            button.title = shouldShow ? 'Hide password' : 'Show password';
+            button.setAttribute('aria-label', button.title);
+            icon.classList.toggle('is-hidden', shouldShow);
+        });
+    });
+</script>
+@endpush

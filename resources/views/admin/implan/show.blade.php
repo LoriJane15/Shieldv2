@@ -79,7 +79,7 @@
                             @php $tag = $tagByAgency[$agency->id] ?? null; @endphp
                             <div class="d-inline-flex flex-column align-items-center me-3 mb-2 text-center">
                                 @if ($agency->profile)
-                                    <img src="{{ asset('assets/logoAgency/'.$agency->profile) }}" alt="{{ $agency->acronym }}"
+                                    <img src="{{ $agency->profile_url }}" alt="{{ $agency->acronym }}"
                                          style="width: 50px; height: 50px; border-radius: 50%; object-fit: contain; background:#f4f5f7;">
                                 @else
                                     <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light" style="width:50px;height:50px;">

@@ -21,14 +21,26 @@ class PasswordConfirmationTest extends TestCase
 
     public function test_password_can_be_confirmed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->role('39th_ib')->create();
 
         $response = $this->actingAs($user)->post('/confirm-password', [
             'password' => 'password',
         ]);
 
-        $response->assertRedirect();
+        $response->assertRedirect(route('ib39.dashboard'));
         $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('auth.password_confirmed_at');
+    }
+
+    public function test_password_confirmation_honors_the_intended_url(): void
+    {
+        $user = User::factory()->role('admin')->create();
+
+        $response = $this->actingAs($user)
+            ->withSession(['url.intended' => route('profile.edit')])
+            ->post('/confirm-password', ['password' => 'password']);
+
+        $response->assertRedirect(route('profile.edit'));
     }
 
     public function test_password_is_not_confirmed_with_invalid_password(): void

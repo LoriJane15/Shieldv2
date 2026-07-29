@@ -323,9 +323,13 @@
                                             </div>
                                             <div class="d-flex align-items-center gap-2">
                                                 @if ($a->certificate_file)
-                                                    <a href="{{ Storage::url($a->certificate_file) }}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-file-document me-1"></i> Certificate</a>
+                                                    <a href="{{ route('mblrc.fr.assistance.certificate', $a) }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-file-document me-1"></i> Certificate</a>
                                                 @endif
-                                                <button type="button" data-assistance-delete="{{ route('mblrc.fr.assistance.destroy', $a) }}" class="btn btn-outline-danger btn-sm"><i class="mdi mdi-delete"></i></button>
+                                                @if ($a->status !== 'Completed' && ! $a->date_received && ! $a->certificate_file)
+                                                    <button type="button" data-assistance-delete="{{ route('mblrc.fr.assistance.destroy', $a) }}" class="btn btn-outline-danger btn-sm" aria-label="Delete pending assistance"><i class="mdi mdi-delete"></i></button>
+                                                @else
+                                                    <span class="text-muted" title="Recorded assistance history is protected"><i class="mdi mdi-lock"></i></span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -410,7 +414,14 @@
             },
             body: isForm ? body : JSON.stringify(body),
         });
-        return res.json().catch(() => ({}));
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            const validationMessage = Object.values(data.errors || {}).flat()[0];
+            alert(validationMessage || data.message || 'The request could not be completed.');
+        }
+
+        return data;
     }
 
     // Program status

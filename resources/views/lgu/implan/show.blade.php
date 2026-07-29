@@ -148,7 +148,7 @@
                             @forelse (($implan->agencies ?? []) as $aid)
                                 @php $ag = $agenciesById[$aid] ?? null; @endphp
                                 @if ($ag && $ag->profile)
-                                    <img src="{{ asset('assets/logoAgency/'.$ag->profile) }}" alt="{{ $ag->acronym }}" title="{{ $ag->acronym }}"
+                                    <img src="{{ $ag->profile_url }}" alt="{{ $ag->acronym }}" title="{{ $ag->acronym }}"
                                          style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none'">
                                 @elseif ($ag)
                                     <span class="badge badge-secondary">{{ $ag->acronym }}</span>

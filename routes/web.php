@@ -11,7 +11,11 @@ use App\Http\Controllers\SuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 // Public landing page — original static site copied to public/landing/.
-Route::get('/', fn () => response()->file(public_path('landing/index.html')))->name('landing');
+Route::get('/', fn () => response()->file(public_path('landing/index.html'), [
+    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+    'Pragma' => 'no-cache',
+    'Expires' => '0',
+]))->name('landing');
 
 // Shared authenticated routes.
 Route::middleware('auth')->group(function () {
@@ -126,6 +130,7 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
     Route::post('/former-rebels/{formerRebel}/skills', [Mblrc\ProfileActionController::class, 'storeSkill'])->name('fr.skills.store');
     Route::delete('/skills/{skill}', [Mblrc\ProfileActionController::class, 'destroySkill'])->name('fr.skills.destroy');
     Route::post('/former-rebels/{formerRebel}/assistance', [Mblrc\ProfileActionController::class, 'storeAssistance'])->name('fr.assistance.store');
+    Route::get('/assistance/{assistance}/certificate', [Mblrc\ProfileActionController::class, 'downloadAssistanceCertificate'])->name('fr.assistance.certificate');
     Route::delete('/assistance/{assistance}', [Mblrc\ProfileActionController::class, 'destroyAssistance'])->name('fr.assistance.destroy');
     Route::post('/former-rebels/{formerRebel}/education-work', [Mblrc\ProfileActionController::class, 'updateEducationWork'])->name('fr.education.update');
 });
