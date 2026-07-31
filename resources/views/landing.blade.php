@@ -85,7 +85,7 @@
     </section>
 
     <footer class="bg-shield-950 py-8 text-center text-sm text-shield-300">
-        &copy; {{ date('Y') }} SHIELD Program · Katuparan Center. All rights reserved.
+        &copy; {{ now(config('app.display_timezone'))->year }} SHIELD Program · Katuparan Center. All rights reserved.
     </footer>
 </body>
 </html>

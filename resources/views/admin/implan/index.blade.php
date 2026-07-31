@@ -128,7 +128,7 @@
                                                 <td>{{ $tag?->govAgency?->name ?? 'No Agency Found' }}</td>
                                                 <td>{{ $tag?->reason ?? 'No Reason' }}</td>
                                                 <td><span class="badge badge-danger">{{ $tag?->status ?? 'No Status' }}</span></td>
-                                                <td>{{ $tag?->created_at?->format('Y-m-d H:i') ?? 'No Date' }}</td>
+                                                <td>{{ $tag?->created_at?->timezone(config('app.display_timezone'))->format('Y-m-d H:i') ?? 'No Date' }}</td>
                                                 <td>
                                                     <button type="button" class="btn btn-danger btn-sm"
                                                             data-bs-toggle="modal" data-bs-target="#reassign_{{ $im->id }}">

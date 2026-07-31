@@ -18,7 +18,7 @@
                 <p class="text-muted mb-0">Strengthening Institutions and Empowering Localities Against Discrimination Programs for Former Rebels</p>
             </div>
             <button class="btn btn-sm btn-light bg-white">
-                <i class="mdi mdi-calendar"></i> Today is <span class="text-primary">{{ now()->format('d F Y') }}</span>
+                <i class="mdi mdi-calendar"></i> Today is <span class="text-primary">{{ now(config('app.display_timezone'))->format('d F Y') }}</span>
             </button>
         </div>
     </div>
@@ -33,7 +33,7 @@
                         <h2 class="text-primary mb-0">{{ $rcsp['total'] }}</h2>
                         <p class="text-muted mb-0 ms-2">RCSP Barangay of <span class="text-primary">{{ $municipalName }}</span></p>
                     </div>
-                    <p class="small text-muted mb-0 mt-2">As of {{ now()->format('d F Y') }}</p>
+                    <p class="small text-muted mb-0 mt-2">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
                 </div>
                 <i class="mdi mdi-home-map-marker icon-top-right text-primary"></i>
             </div>
@@ -46,7 +46,7 @@
                             <h5 class="card-title fs-6">Total Not Yet RCSP Barangay</h5>
                             <h2 class="text-danger mb-1">{{ $rcsp['not_started'] }}</h2>
                             <p class="text-muted mb-0"><i class="mdi mdi-alert-circle-outline"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now()->format('d F Y') }}</p>
+                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
                         </div>
                         <i class="mdi mdi-cancel icon-top-right text-danger"></i>
                     </div>
@@ -57,7 +57,7 @@
                             <h5 class="card-title fs-6">Total On-Going RCSP Barangay</h5>
                             <h2 class="text-warning mb-1">{{ $rcsp['ongoing'] }}</h2>
                             <p class="text-muted mb-0"><i class="mdi mdi-progress-clock"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now()->format('d F Y') }}</p>
+                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
                         </div>
                         <i class="mdi mdi-progress-clock icon-top-right text-warning"></i>
                     </div>
@@ -68,7 +68,7 @@
                             <h5 class="card-title fs-6">Total Completed RCSP Barangay</h5>
                             <h2 class="text-success mb-1">{{ $rcsp['completed'] }}</h2>
                             <p class="text-muted mb-0"><i class="mdi mdi-check-circle-outline"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now()->format('d F Y') }}</p>
+                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
                         </div>
                         <i class="mdi mdi-check icon-top-right text-success"></i>
                     </div>
@@ -141,7 +141,7 @@
                                     <tr>
                                         <td>{{ $doc->phase?->name ?? 'Phase' }} submission</td>
                                         <td>{{ $doc->rcspBarangay?->barangay?->name ?? '—' }}</td>
-                                        <td>{{ $doc->created_at?->format('d F Y, g:i A') }}</td>
+                                        <td>{{ $doc->created_at?->timezone(config('app.display_timezone'))->format('d F Y, g:i A') }}</td>
                                         <td><span class="{{ $badge }}">{{ ucfirst($doc->status) }}</span></td>
                                     </tr>
                                 @empty

@@ -11,6 +11,121 @@
     $tagByAgency = $implan->taggings->keyBy('gov_agency_id');
 @endphp
 
+@push('styles')
+    <style>
+        .verify-implan-scroll-lock,
+        .verify-implan-scroll-lock body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .verify-implan-scroll-lock .container-scroller,
+        .verify-implan-scroll-lock .page-body-wrapper {
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        #verifyImplanModal {
+            overflow: hidden;
+        }
+
+        #verifyImplanModal .modal-dialog {
+            display: flex;
+            min-height: calc(100dvh - 3.5rem);
+            max-width: 430px;
+            align-items: center;
+            margin: 1.75rem auto;
+            pointer-events: none;
+        }
+
+        #verifyImplanModal .modal-content {
+            pointer-events: auto;
+        }
+
+        #verifyImplanModal.fade .modal-dialog {
+            transform: translateY(18px) scale(0.92);
+            transition: transform 0.22s cubic-bezier(0.2, 1.12, 0.42, 1), opacity 0.18s ease-out;
+        }
+
+        #verifyImplanModal.show .modal-dialog {
+            transform: translateY(0) scale(1);
+        }
+
+        .verify-implan-content {
+            overflow: hidden;
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, 0.26);
+        }
+
+        .verify-implan-body {
+            padding: 1.75rem 1.75rem 1rem;
+            text-align: center;
+        }
+
+        .verify-implan-icon {
+            display: grid;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            place-items: center;
+            border-radius: 50%;
+            background: #e8f7ee;
+            color: #1f9d55;
+            font-size: 1.85rem;
+        }
+
+        .verify-implan-title {
+            margin-bottom: 0.4rem;
+            color: #172033;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .verify-implan-text {
+            max-width: 320px;
+            margin: 0 auto 1rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .verify-implan-record {
+            padding: 0.85rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            text-align: left;
+        }
+
+        .verify-implan-record-title {
+            overflow-wrap: anywhere;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .verify-implan-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            padding: 1rem 1.75rem 1.75rem;
+            border-top: 0;
+        }
+
+        .verify-implan-actions .btn {
+            min-height: 42px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 575.98px) {
+            #verifyImplanModal .modal-dialog {
+                min-height: calc(100dvh - 1rem);
+                margin: 0.5rem;
+            }
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="row mb-4">
         <div class="col-8 col-xl-8 mb-3 mb-xl-0">
@@ -23,11 +138,9 @@
             <div class="justify-content-end d-flex align-items-center gap-2">
                 <span class="{{ $statusBadge }}">{{ $implan->status }}</span>
                 @if ($implan->status === 'for verification')
-                    <form method="POST" action="{{ route('admin.implan.verify', $implan) }}"
-                          onsubmit="return confirm('Mark this plan as verified?')">
-                        @csrf
-                        <button class="btn btn-sm btn-success"><i class="mdi mdi-check-decagram"></i> Verify</button>
-                    </form>
+                    <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#verifyImplanModal">
+                        <i class="mdi mdi-check-decagram"></i> Verify
+                    </button>
                 @endif
                 @if ($hasRejected)
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#reassignModal">
@@ -212,6 +325,36 @@
         </div>
     </div>
 
+    @if ($implan->status === 'for verification')
+        <div class="modal fade" id="verifyImplanModal" tabindex="-1" aria-labelledby="verifyImplanModalTitle" aria-describedby="verifyImplanModalText">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content verify-implan-content">
+                    <form method="POST" action="{{ route('admin.implan.verify', $implan) }}">
+                        @csrf
+                        <div class="verify-implan-body">
+                            <div class="verify-implan-icon" aria-hidden="true">
+                                <i class="mdi mdi-check-decagram"></i>
+                            </div>
+                            <h5 class="verify-implan-title" id="verifyImplanModalTitle">Confirm verification</h5>
+                            <p id="verifyImplanModalText" class="verify-implan-text">
+                                Mark this implementation plan as verified?
+                            </p>
+                            <div class="verify-implan-record">
+                                <p class="text-muted mb-1" style="font-size: 0.85rem;">IMPLAN #{{ $implan->id }}</p>
+                                <p class="mb-0 verify-implan-record-title">{{ $implan->program ?: $implan->issues ?: 'Implementation plan' }}</p>
+                            </div>
+                        </div>
+                        <div class="verify-implan-actions">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="mdi mdi-check-decagram"></i> Verify
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
     @if ($hasRejected)
         <div class="modal fade" id="reassignModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
@@ -242,4 +385,29 @@
             </div>
         </div>
     @endif
+
+    @push('scripts')
+        <script>
+            (() => {
+                const modal = document.getElementById('verifyImplanModal');
+
+                if (!modal) {
+                    return;
+                }
+
+                const lockPageScroll = () => {
+                    document.documentElement.classList.add('verify-implan-scroll-lock');
+                    document.body.classList.add('verify-implan-scroll-lock');
+                };
+
+                const unlockPageScroll = () => {
+                    document.documentElement.classList.remove('verify-implan-scroll-lock');
+                    document.body.classList.remove('verify-implan-scroll-lock');
+                };
+
+                modal.addEventListener('show.bs.modal', lockPageScroll);
+                modal.addEventListener('hidden.bs.modal', unlockPageScroll);
+            })();
+        </script>
+    @endpush
 @endsection

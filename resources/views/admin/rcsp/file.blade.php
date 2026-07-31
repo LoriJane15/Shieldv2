@@ -34,7 +34,7 @@
                         </div>
                         <div class="file-info ms-3">
                             <h5 class="mb-1">File ID: {{ $form->id }}</h5>
-                            <div class="text-muted">Uploaded on: {{ $form->created_at?->format('F j, Y g:i A') }}</div>
+                            <div class="text-muted">Uploaded on: {{ $form->created_at?->timezone(config('app.display_timezone'))->format('F j, Y g:i A') }}</div>
                         </div>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                 </div>
                 <div class="status-card" style="background-color: #ebf0ff;">
                     <div class="label">Date/Time</div>
-                    <div class="value">{{ $form->created_at?->format('F j, Y g:i A') }}</div>
+                    <div class="value">{{ $form->created_at?->timezone(config('app.display_timezone'))->format('F j, Y g:i A') }}</div>
                 </div>
             </div>
         </div>
@@ -107,43 +107,29 @@
 
         <!-- Comments -->
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
+            <div class="card comment-thread-card">
+                <div class="card-body comment-thread-body">
                     <h4 class="card-title">Comments</h4>
 
-                    <form id="commentForm" class="mb-4"
-                          data-post="{{ route('admin.rcsp.comment', $form->id) }}">
-                        <div class="d-flex gap-2 mb-3">
-                            <div class="user-avatar">
-                                <img src="{{ $myAvatar }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" alt="Admin Profile" width="40" height="40" style="object-fit:cover;">
-                            </div>
-                            <div class="flex-grow-1">
-                                <textarea class="form-control" name="comment_text" rows="2" placeholder="Add admin comment..."></textarea>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary">Post Comment</button>
-                        </div>
-                    </form>
 
-                    <div id="commentsList">
-                        @forelse ($form->fileComments->sortByDesc('id') as $c)
-                            @php $isAdmin = ($c->user?->role === 'admin' || $c->user?->role === 'super_admin'); @endphp
+                    <div id="commentsList" class="comment-thread-list">
+                        @forelse ($form->fileComments as $c)
+                            @php $isMine = $c->user_id === auth()->id(); @endphp
                             <div class="comment-card mb-3">
-                                <div class="d-flex gap-2 {{ $isAdmin ? '' : 'justify-content-end' }}">
-                                    @if ($isAdmin)
-                                        <div class="user-avatar"><img src="{{ $avatarFor($c->user) }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
-                                    @endif
-                                    <div class="flex-grow-0">
-                                        <div class="comment-content p-3 {{ $isAdmin ? 'bg-light' : 'bg-primary text-white' }} rounded" style="max-width: 80%;">
+                                <div class="d-flex align-items-start gap-2 {{ $isMine ? 'justify-content-end' : '' }}">
+                                    @unless ($isMine)
+                                        <div class="user-avatar flex-shrink-0"><img src="{{ $avatarFor($c->user) }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
+                                    @endunless
+                                    <div class="comment-message">
+                                        <div class="comment-content p-3 {{ $isMine ? 'bg-primary text-white' : 'bg-light' }} rounded">
                                             <p class="mb-1">{{ $c->text }}</p>
-                                            <small class="{{ $isAdmin ? 'text-muted' : 'text-white-50' }}">
-                                                {{ $c->user?->name ?? 'User' }} · {{ $c->created_at?->format('F j, Y g:i A') }}
+                                            <small class="{{ $isMine ? 'text-white-50' : 'text-muted' }}">
+                                                {{ $c->user?->name ?? 'User' }} - {{ $c->created_at?->timezone(config('app.display_timezone'))->format('F j, Y g:i A') }}
                                             </small>
                                         </div>
                                     </div>
-                                    @if (! $isAdmin)
-                                        <div class="user-avatar"><img src="{{ $avatarFor($c->user) }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
+                                    @if ($isMine)
+                                        <div class="user-avatar flex-shrink-0"><img src="{{ $avatarFor($c->user) }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
                                     @endif
                                 </div>
                             </div>
@@ -151,6 +137,17 @@
                             <p class="text-muted small" data-empty>No comments yet.</p>
                         @endforelse
                     </div>
+                    <form id="commentForm" class="comment-composer mt-3" data-post="{{ route('admin.rcsp.comment', $form->id) }}">
+                        <div class="d-flex align-items-start gap-2">
+                            <div class="user-avatar flex-shrink-0">
+                                <img src="{{ $myAvatar }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" alt="Admin Profile" width="40" height="40" style="object-fit:cover;">
+                            </div>
+                            <div class="flex-grow-1">
+                                <textarea class="form-control" name="comment_text" rows="2" placeholder="Add admin comment..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary flex-shrink-0">Post Comment</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -171,12 +168,31 @@
     .status-pending { color: #f0ad4e; }
     .status-approved { color: #28a745; }
     .status-disapproved { color: #dc3545; }
+    .comment-thread-card { height: 800px; }
+    .comment-thread-body { display: flex; min-height: 0; flex-direction: column; }
+    .comment-thread-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: .25rem; }
+    .comment-message { max-width: calc(100% - 48px); }
     .comment-content { word-break: break-word; }
+    .comment-composer { flex-shrink: 0; padding-top: .75rem; border-top: 1px solid #edf2f7; }
+    .comment-composer textarea { min-height: 42px; max-height: 120px; resize: vertical; }
+    .comment-composer .btn { min-height: 42px; white-space: nowrap; }
+    @media (max-width: 767.98px) {
+        .comment-thread-card { height: auto; }
+        .comment-thread-list { max-height: 24rem; }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+    }[char]));
+
     document.getElementById('commentForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         const ta = this.querySelector('textarea[name="comment_text"]');
@@ -190,20 +206,23 @@
             body: JSON.stringify({ text: ta.value }),
         }).then((r) => r.json());
         if (res.success) {
+            const commentText = escapeHtml(res.comment.text);
+            const commentUser = escapeHtml(res.comment.user);
+            const commentAt = escapeHtml(res.comment.at);
             document.querySelector('#commentsList [data-empty]')?.remove();
             const card = document.createElement('div');
             card.className = 'comment-card mb-3';
             card.innerHTML = `
-                <div class="d-flex gap-2">
-                    <div class="user-avatar"><img src="{{ $myAvatar }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
-                    <div class="flex-grow-0">
-                        <div class="comment-content p-3 bg-light rounded" style="max-width: 80%;">
-                            <p class="mb-1">${res.comment.text}</p>
-                            <small class="text-muted">${res.comment.user ?? ''} · ${res.comment.at}</small>
+                <div class="d-flex align-items-start gap-2 justify-content-end">
+                    <div class="comment-message">
+                        <div class="comment-content p-3 bg-primary text-white rounded">
+                            <p class="mb-1">${commentText}</p>
+                            <small class="text-white-50">${commentUser} - ${commentAt}</small>
                         </div>
                     </div>
+                    <div class="user-avatar flex-shrink-0"><img src="{{ $myAvatar }}" onerror="this.onerror=null;this.src='{{ $fallbackAvatar }}'" class="rounded-circle" width="40" height="40" alt="" style="object-fit:cover;"></div>
                 </div>`;
-            document.getElementById('commentsList').prepend(card);
+            document.getElementById('commentsList').append(card);
             ta.value = '';
         } else {
             alert('Error posting comment');

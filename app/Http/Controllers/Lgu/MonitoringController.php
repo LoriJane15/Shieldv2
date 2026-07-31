@@ -166,7 +166,7 @@ class MonitoringController extends Controller
                 'text' => $comment->text,
                 'user' => $request->user()->name,
                 'role' => $request->user()->role,
-                'at' => $comment->created_at->diffForHumans(),
+                'at' => $comment->created_at->timezone(config('app.display_timezone'))->format('M j, Y g:i A'),
             ],
         ]);
     }

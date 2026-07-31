@@ -63,7 +63,7 @@
                                         <td>{{ '@'.$u->username }}</td>
                                         <td>{{ $roles[$u->role]['label'] ?? $u->role }}</td>
                                         <td>{{ $u->municipality?->name ?? $u->govAgency?->acronym ?? '—' }}</td>
-                                        <td>{{ $u->created_at?->format('M d, Y') ?? '—' }}</td>
+                                        <td>{{ $u->created_at?->timezone(config('app.display_timezone'))->format('M d, Y') ?? '—' }}</td>
                                         <td>
                                             <div class="d-flex align-items-center justify-content-end" style="gap:15px;">
                                                 <a href="#" class="text-decoration-none" title="Edit"

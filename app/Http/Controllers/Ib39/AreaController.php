@@ -92,7 +92,7 @@ class AreaController extends Controller
             'markers' => $markers,
             'meta' => [
                 'count' => $markers->count(),
-                'generated_at' => now()->toIso8601String(),
+                'generated_at' => now(config('app.display_timezone'))->toIso8601String(),
             ],
         ])->header('Cache-Control', 'private, no-store, max-age=0');
     }

@@ -12,7 +12,8 @@ class DashboardController extends Controller
 {
     /** Municipality name => LGU seal image in public/assets/LGUS. */
     private array $seals = [
-        'Bansalan' => 'bansalan.png', 'Digos' => 'digos.png', 'Hagonoy' => 'hagonoy.png',
+        'Bansalan' => 'bansalan.png', 'Digos' => 'digos.png', 'Digos City' => 'digos.png',
+        'Hagonoy' => 'hagonoy.png',
         'Kiblawan' => 'kiblawan.png', 'Magsaysay' => 'magsaysay.png', 'Malalag' => 'malalag.png',
         'Matanao' => 'matanao.png', 'Padada' => 'padada.jpg', 'Santa Cruz' => 'sta cruz.png',
         'Sulop' => 'sulop.png',

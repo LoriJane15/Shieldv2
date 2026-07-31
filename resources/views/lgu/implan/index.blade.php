@@ -33,7 +33,7 @@
         <div class="col-4 col-xl-4">
             <div class="justify-content-end d-flex">
                 <button class="btn btn-sm btn-light bg-white">
-                    <i class="mdi mdi-calendar"></i> Today is <span class="text-primary">{{ now()->format('d F Y') }}</span>
+                    <i class="mdi mdi-calendar"></i> Today is <span class="text-primary">{{ now(config('app.display_timezone'))->format('d F Y') }}</span>
                 </button>
             </div>
         </div>

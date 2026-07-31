@@ -74,7 +74,7 @@
                                                 onclick="window.location='{{ route('admin.rcsp.show', $b) }}'">
                                                 <td>
                                                     Form<br>
-                                                    <small class="text-muted">Generated on: {{ $b->updated_at?->format('M d, Y g:i A') }}</small>
+                                                    <small class="text-muted">Generated on: {{ $b->updated_at?->timezone(config('app.display_timezone'))->format('M d, Y g:i A') }}</small>
                                                 </td>
                                                 <td>{{ $b->barangay?->name ?? 'Barangay #'.$b->barangay_id }}</td>
                                                 <td>{{ $b->municipality?->name ?? 'No Municipality' }}</td>

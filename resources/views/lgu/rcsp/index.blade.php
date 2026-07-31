@@ -66,7 +66,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $rb->created_at?->format('M d, Y') ?? '—' }}</td>
+                                        <td>{{ $rb->created_at?->timezone(config('app.display_timezone'))->format('M d, Y') ?? '—' }}</td>
                                         <td>
                                             <form method="POST" action="{{ route('lgu.rcsp.destroy', $rb) }}"
                                                   onsubmit="return confirm('Delete this RCSP barangay?')" style="display:inline;">

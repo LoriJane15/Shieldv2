@@ -66,7 +66,7 @@
                                         <span class="text-muted small text-nowrap">Phase {{ $b->current_phase }}/5</span>
                                     </div>
                                 </td>
-                                <td>{{ $b->created_at?->format('Y/m/d') ?? '—' }}</td>
+                                <td>{{ $b->created_at?->timezone(config('app.display_timezone'))->format('Y/m/d') ?? '—' }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="text-center text-muted py-5">No RCSP barangays.</td></tr>

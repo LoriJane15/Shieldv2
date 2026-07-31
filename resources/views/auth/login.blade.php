@@ -136,7 +136,7 @@
                     </div>
                     <div class="col-lg-6 login-half-bg d-flex flex-row">
                         <p class="text-white font-weight-medium text-center flex-grow align-self-end">
-                            Copyright &copy; {{ date('Y') }} All rights reserved.
+                            Copyright &copy; {{ now(config('app.display_timezone'))->year }} All rights reserved.
                         </p>
                     </div>
                 </div>

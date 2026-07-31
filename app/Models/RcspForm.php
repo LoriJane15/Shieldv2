@@ -35,6 +35,8 @@ class RcspForm extends Model
 
     public function fileComments(): HasMany
     {
-        return $this->hasMany(RcspFileComment::class);
+        return $this->hasMany(RcspFileComment::class)
+            ->orderBy('created_at')
+            ->orderBy('id');
     }
 }
