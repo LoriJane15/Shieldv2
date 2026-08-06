@@ -4,6 +4,7 @@ namespace App\Http\Controllers\GovAgency;
 
 use App\Http\Controllers\Controller;
 use App\Models\AgencyImplanResponse;
+use App\Models\GovAgency;
 use App\Models\Implementation;
 use Illuminate\View\View;
 
@@ -34,7 +35,7 @@ class DashboardController extends Controller
             'stats' => $stats,
             'accepted' => $accepted,
             'agency' => auth()->user()->govAgency,
-            'agenciesById' => \App\Models\GovAgency::all()->keyBy('id'),
+            'agenciesById' => GovAgency::all()->keyBy('id'),
         ]);
     }
 }

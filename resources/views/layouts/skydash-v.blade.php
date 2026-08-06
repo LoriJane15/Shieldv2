@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendors/mdi/css/materialdesignicons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/vertical-layout-light/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/dropdown-indicators.css') }}">
     <link rel="shortcut icon" href="{{ asset('assets/img/SHEILD.png') }}">
     @stack('styles')
 </head>
@@ -41,6 +42,15 @@
             </button>
             <span class="ms-3 align-self-center h5 mb-0 text-dark d-none d-md-block">@yield('heading', $meta['label'] ?? '')</span>
             <ul class="navbar-nav navbar-nav-right ms-auto">
+                <li class="nav-item d-flex align-items-center mr-2">
+                    @php
+                        $unreadNotificationCount = $user->unreadNotifications()->count();
+                    @endphp
+                    <a class="nav-link position-relative" href="{{ route('notifications.index') }}" aria-label="Notifications" data-notification-link data-notification-status-url="{{ route('notifications.status') }}">
+                        <i class="ti-bell"></i>
+                        <span class="badge badge-danger {{ $unreadNotificationCount ? '' : 'd-none' }}" data-notification-badge>{{ min($unreadNotificationCount, 99) }}</span>
+                    </a>
+                </li>
                 <li class="nav-item nav-profile dropdown">
                     <a class="nav-link dropdown-toggle nav-profile-trigger d-flex align-items-center" href="#" data-bs-toggle="dropdown" id="profileDropdown">
                         <div class="nav-profile-avatar">
@@ -114,6 +124,7 @@
 <script src="{{ asset('assets/js/settings.js') }}"></script>
 <script src="{{ asset('assets/vendors/chart.js/Chart.min.js') }}"></script>
 @include('layouts.partials.logout-confirmation')
+@include('layouts.partials.notification-realtime')
 @stack('scripts')
 </body>
 </html>

@@ -27,7 +27,7 @@ class MapBarangay extends Model
             $frs >= 20 => ['status' => 'Konsolidado', 'color' => 'rgba(255,0,0,0.5)'],
             $frs >= 15 => ['status' => 'Rekonsilida', 'color' => 'rgba(255,165,0,0.5)'],
             $frs >= 10 => ['status' => 'Expansion',   'color' => 'rgba(255,255,0,0.5)'],
-            default    => ['status' => 'Recovery',    'color' => 'rgba(0,255,0,0.5)'],
+            default => ['status' => 'Recovery',    'color' => 'rgba(0,255,0,0.5)'],
         };
     }
 }

@@ -13,4 +13,9 @@ class Municipality extends Model
     {
         return $this->hasMany(Barangay::class);
     }
+
+    public function eclipCases(): HasMany
+    {
+        return $this->hasMany(EclipCase::class);
+    }
 }

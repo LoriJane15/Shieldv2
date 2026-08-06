@@ -37,8 +37,8 @@
         </select>
     </div>
 
-    {{-- LGU only --}}
-    <div data-role-field="lgu" class="col-sm-6 d-none">
+    {{-- Municipality-scoped roles --}}
+    <div data-role-field="lgu,lswdo,dilg_provincial_focal,local_eclip_committee" class="col-sm-6 d-none">
         <label class="form-label">Municipality</label>
         <select name="municipality_id" class="form-select">
             <option value="">Select municipality</option>

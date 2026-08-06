@@ -4,13 +4,14 @@ namespace App\Http\Controllers\GovAgency;
 
 use App\Http\Controllers\Controller;
 use App\Models\AgencyImplanResponse;
+use App\Models\GovAgency;
 use App\Models\Implementation;
 use App\Models\RcspBarangay;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /**
  * Government-agency side of the IMPLAN workflow: view assigned plans,
@@ -54,7 +55,7 @@ class ImplanController extends Controller
             'response' => $response,
             'areaNames' => RcspBarangay::with('barangay')->whereIn('id', $implan->target_areas ?? [])
                 ->get()->map(fn ($r) => $r->barangay?->name ?? "Barangay #{$r->barangay_id}"),
-            'agenciesById' => \App\Models\GovAgency::all()->keyBy('id'),
+            'agenciesById' => GovAgency::all()->keyBy('id'),
         ]);
     }
 

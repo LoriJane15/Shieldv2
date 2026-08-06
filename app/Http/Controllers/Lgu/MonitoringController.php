@@ -129,12 +129,13 @@ class MonitoringController extends Controller
 
         if ($phase >= 5) {
             $rcspBarangay->update(['status' => 'Completed']);
+
             return back()->with('success', 'RCSP monitoring completed for this barangay.');
         }
 
         $rcspBarangay->update(['current_phase' => $phase + 1]);
 
-        return back()->with('success', "Advanced to phase ".($phase + 1).".");
+        return back()->with('success', 'Advanced to phase '.($phase + 1).'.');
     }
 
     /** Full-page file viewer with side-by-side comment thread. */

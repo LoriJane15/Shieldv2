@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Schema;
 class ImportLegacyData extends Command
 {
     protected $signature = 'import:legacy {--fresh : Wipe destination tables first}';
+
     protected $description = 'Import and transform legacy kp_datacenter data into shield_db';
 
     private $legacy;
@@ -29,6 +30,7 @@ class ImportLegacyData extends Command
             $this->legacy->getPdo();
         } catch (\Throwable $e) {
             $this->error('Cannot reach legacy DB: '.$e->getMessage());
+
             return self::FAILURE;
         }
 
@@ -56,6 +58,7 @@ class ImportLegacyData extends Command
 
         $this->newLine();
         $this->info('Legacy import complete.');
+
         return self::SUCCESS;
     }
 
@@ -82,6 +85,7 @@ class ImportLegacyData extends Command
         if (is_string($v) && str_starts_with($v, '0000-00-00')) {
             return null;
         }
+
         return $v;
     }
 
@@ -92,11 +96,11 @@ class ImportLegacyData extends Command
         $names = [];
         foreach ([
             'super_admin' => ['kp_super_admin', 'kp_super_admin_fullname'],
-            'admin'       => ['kp_admin', 'kp_admin_fullname'],
-            '39th_ib'     => ['kp_camp', 'kp_camp_fullname'],
-            'gov_agency'  => ['kp_gov_agency', 'kp_gov_agency_fullname'],
-            'mblrc'       => ['kp_mblrc', 'kp_mblrc_fullname'],
-            'afp'         => ['kp_afp', 'kp_afp_fullname'],
+            'admin' => ['kp_admin', 'kp_admin_fullname'],
+            '39th_ib' => ['kp_camp', 'kp_camp_fullname'],
+            'gov_agency' => ['kp_gov_agency', 'kp_gov_agency_fullname'],
+            'mblrc' => ['kp_mblrc', 'kp_mblrc_fullname'],
+            'afp' => ['kp_afp', 'kp_afp_fullname'],
         ] as [$tbl, $col]) {
             foreach ($this->legacy->table($tbl)->get() as $r) {
                 $names[$r->kp_user_id] = $r->$col;
@@ -322,6 +326,7 @@ class ImportLegacyData extends Command
                 if (! $ok) {
                     $skippedForms++;
                 }
+
                 return $ok;
             })
             ->map(fn ($r) => [
@@ -373,6 +378,7 @@ class ImportLegacyData extends Command
     private function csvToJson(?string $v): string
     {
         $ids = array_values(array_filter(array_map('trim', explode(',', (string) $v)), fn ($x) => $x !== ''));
+
         return json_encode(array_map('intval', $ids));
     }
 
@@ -386,6 +392,7 @@ class ImportLegacyData extends Command
                 if (! isset($userIds[$uid])) {
                     $uid = DB::table('users')->where('role', 'lgu')->value('id'); // fallback
                 }
+
                 return [
                     'id' => $r->fr_rcsp_imp_id,
                     'lgu_user_id' => $uid,
@@ -438,8 +445,10 @@ class ImportLegacyData extends Command
                 $aid = $kpAgencyToAgency[$r->agency_id] ?? null;
                 if (! isset($implIds[$r->implan_id]) || ! isset($agencyIds[$aid])) {
                     $respSkip++;
+
                     return null;
                 }
+
                 return [
                     'gov_agency_id' => $aid,
                     'implementation_id' => $r->implan_id,
@@ -474,6 +483,7 @@ class ImportLegacyData extends Command
     {
         if (! $rows) {
             $this->line("  {$table}: 0");
+
             return;
         }
         foreach (array_chunk($rows, 200) as $chunk) {

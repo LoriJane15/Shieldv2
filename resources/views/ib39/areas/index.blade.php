@@ -1,99 +1,40 @@
 @extends('layouts.skydash-v')
-@section('title', 'Add Area')
-@section('heading', 'RCSP Areas')
-
-@php
-    $statusClass = fn ($s) => 'status-'.strtolower($s ?: 'unclassified');
-@endphp
+@section('title', 'RCSP Areas')
+@section('heading', '39th IB RCSP Areas')
 
 @push('styles')
 <style>
-    .status-badge {
-        padding: .4rem .9rem; border-radius: 9999px; font-size: .72rem; font-weight: 600;
-        text-transform: uppercase; letter-spacing: .05em; display: inline-flex; align-items: center; gap: .375rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,.05);
-    }
-    .status-konsolidado { background: linear-gradient(135deg,#fecaca,#fee2e2); color: #dc2626; border: 1px solid #fecaca; }
-    .status-rekonsilida { background: linear-gradient(135deg,#fed7aa,#ffedd5); color: #ea580c; border: 1px solid #fed7aa; }
-    .status-expansion   { background: linear-gradient(135deg,#fef08a,#fef9c3); color: #ca8a04; border: 1px solid #fef08a; }
-    .status-recovery    { background: linear-gradient(135deg,#86efac,#dcfce7); color: #16a34a; border: 1px solid #86efac; }
-    .status-unclassified { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+    .areas-page{--navy:#172b4d;--border:#e7ecf3}.areas-hero{background:linear-gradient(125deg,#173b74,#2f6fed);border-radius:16px;box-shadow:0 10px 28px rgba(47,111,237,.16);color:#fff;overflow:hidden;padding:1.5rem;position:relative}.areas-hero::after{background:rgba(255,255,255,.08);border-radius:50%;content:'';height:180px;position:absolute;right:-45px;top:-90px;width:180px}.areas-hero h2{color:#fff;font-size:1.55rem;font-weight:700}.areas-hero p{font-size:.82rem;opacity:.85}.map-link{align-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:9px;color:#fff;display:inline-flex;font-size:.72rem;font-weight:600;gap:.4rem;padding:.55rem .75rem;position:relative;z-index:1}.map-link:hover{background:#fff;color:#245cc4;text-decoration:none}.threshold-card,.areas-card{border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 16px rgba(23,43,77,.045)}.threshold-card .card-body{padding:1rem}.thresholds{display:grid;gap:.55rem;grid-template-columns:repeat(4,minmax(0,1fr))}.threshold{align-items:center;background:#f8fafc;border-radius:9px;display:flex;gap:.55rem;padding:.65rem}.threshold-dot{background:var(--tone);border-radius:50%;flex:0 0 9px;height:9px;width:9px}.threshold strong{color:#42526b;display:block;font-size:.7rem}.threshold small{color:#8492a6;display:block;font-size:.65rem}.areas-card{overflow:hidden}.filter-bar{align-items:end;background:#fff;border-bottom:1px solid #edf1f6;display:flex;flex-wrap:wrap;gap:.7rem;padding:1rem 1.2rem}.filter-field label{color:#718096;display:block;font-size:.66rem;font-weight:700;margin-bottom:.25rem;text-transform:uppercase}.filter-search{min-width:230px}.filter-select{min-width:170px}.form-control{border-color:#dfe5ee;border-radius:8px}.form-control:focus{border-color:#80a6ee;box-shadow:0 0 0 3px rgba(47,111,237,.1)}.area-table{margin:0}.area-table thead th{background:#f7f9fc;border:0;color:#718096;font-size:.69rem;font-weight:700;letter-spacing:.04em;padding:.85rem 1rem;text-transform:uppercase;white-space:nowrap}.area-table tbody td{border-color:#edf1f6;color:#52616f;font-size:.8rem;padding:.8rem 1rem;vertical-align:middle}.barangay{color:#263a59;font-weight:700}.status-badge{border:1px solid var(--badge-border);background:var(--badge-bg);border-radius:14px;color:var(--badge-color);display:inline-flex;font-size:.63rem;font-weight:700;padding:.3rem .6rem;text-transform:uppercase}.status-konsolidado{--badge-bg:#ffebed;--badge-border:#facdd1;--badge-color:#bd3e49}.status-rekonsilida{--badge-bg:#fff0e2;--badge-border:#f5d4b6;--badge-color:#b75f13}.status-expansion{--badge-bg:#fff7d8;--badge-border:#efe0a4;--badge-color:#94700d}.status-recovery{--badge-bg:#e8f8f1;--badge-border:#bfe8d6;--badge-color:#16845e}.status-unclassified{--badge-bg:#f1f4f8;--badge-border:#dfe5ee;--badge-color:#64748b}.count-value{color:#173b74;font-weight:700}.count-form{align-items:center;display:flex;gap:.45rem}.count-form input{max-width:80px}.set-button{border-radius:7px;font-weight:600}.areas-pagination{border-top:1px solid #edf1f6;padding:1rem 1.2rem}.empty-state{color:#8492a6;padding:3rem 1rem;text-align:center}.empty-state i{color:#bcc7d6;display:block;font-size:2.2rem;margin-bottom:.5rem}
+    @media(max-width:767px){.areas-hero{padding:1.2rem}.areas-hero h2{font-size:1.3rem}.map-link{margin-top:1rem}.thresholds{grid-template-columns:1fr 1fr}.filter-field,.filter-search,.filter-select{width:100%;min-width:0}.filter-bar .btn{flex:1}.area-table thead{display:none}.area-table,.area-table tbody,.area-table tr,.area-table td{display:block;width:100%}.area-table tr{border-bottom:1px solid #e7ecf3;padding:.65rem 0}.area-table tbody td{border:0;padding:.3rem 1rem}.count-form input{max-width:110px}}
 </style>
 @endpush
 
 @section('content')
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                <div>
-                    <h3 class="font-weight-bold mb-0">RCSP Barangays</h3>
-                    <p class="text-muted mb-0">Set former-rebel counts to classify each barangay.</p>
-                </div>
-                <p class="text-muted small mb-0">
-                    Thresholds: ≥20 Konsolidado · ≥15 Rekonsilida · ≥10 Expansion · &lt;10 Recovery
-                </p>
-            </div>
+@php
+    $statusClass = fn ($status) => 'status-'.strtolower($status ?: 'unclassified');
+@endphp
+<div class="areas-page">
+    <section class="areas-hero mb-4"><div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between position-relative" style="z-index:1"><div><h2 class="mb-1">RCSP Barangay Classification</h2><p class="mb-0">Update recorded former-rebel counts and monitor the resulting area classification.</p></div><a href="{{ route('ib39.map') }}" class="map-link"><i class="fa fa-map"></i>Open Operational Map</a></div></section>
 
-            {{-- Filters --}}
-            <form method="GET" class="d-flex flex-wrap align-items-center gap-2 mb-4">
-                <div class="input-group" style="width:16rem;">
-                    <span class="input-group-text bg-white"><i class="mdi mdi-magnify"></i></span>
-                    <input name="search" value="{{ request('search') }}" placeholder="Search barangays, municipalities…" class="form-control">
-                </div>
-                <select name="municipality" class="form-select" style="width:12rem;" onchange="this.form.submit()">
-                    <option value="">All Municipalities</option>
-                    @foreach ($municipalities as $m)
-                        <option value="{{ $m }}" @selected(request('municipality') === $m)>{{ $m }}</option>
-                    @endforeach
-                </select>
-                <select name="status" class="form-select" style="width:11rem;" onchange="this.form.submit()">
-                    <option value="">All Status</option>
-                    @foreach (['Konsolidado', 'Rekonsilida', 'Expansion', 'Recovery'] as $s)
-                        <option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>
-                    @endforeach
-                </select>
-                <button class="btn btn-outline-secondary"><i class="mdi mdi-filter-variant"></i> Filter</button>
-                @if (request()->hasAny(['search', 'municipality', 'status']))
-                    <a href="{{ route('ib39.areas.index') }}" class="btn btn-light"><i class="mdi mdi-close"></i> Clear</a>
-                @endif
-            </form>
+    <section class="card threshold-card mb-4" aria-label="Classification thresholds"><div class="card-body"><div class="thresholds"><div class="threshold"><span class="threshold-dot" style="--tone:#dc4c58"></span><div><strong>Konsolidado</strong><small>20 or more FRs</small></div></div><div class="threshold"><span class="threshold-dot" style="--tone:#e78328"></span><div><strong>Rekonsilida</strong><small>15–19 FRs</small></div></div><div class="threshold"><span class="threshold-dot" style="--tone:#d4aa26"></span><div><strong>Expansion</strong><small>10–14 FRs</small></div></div><div class="threshold"><span class="threshold-dot" style="--tone:#20a779"></span><div><strong>Recovery</strong><small>Fewer than 10 FRs</small></div></div></div></div></section>
 
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Province</th>
-                            <th>Municipality/City</th>
-                            <th>Barangay</th>
-                            <th>Status</th>
-                            <th>FR's</th>
-                            <th style="width:14rem">Set FR count</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($areas as $area)
-                            <tr>
-                                <td>Davao del Sur</td>
-                                <td>{{ $area->municipality }}</td>
-                                <td class="font-weight-medium">{{ $area->barangay }}</td>
-                                <td><span class="status-badge {{ $statusClass($area->status) }}">{{ $area->status ?: 'Unclassified' }}</span></td>
-                                <td>{{ $area->frs }}</td>
-                                <td>
-                                    <form method="POST" action="{{ route('ib39.areas.update', $area) }}" class="d-flex align-items-center gap-2">
-                                        @csrf @method('PUT')
-                                        <input name="frs" type="number" min="0" value="{{ $area->frs }}" class="form-control" style="width:6rem;">
-                                        <button class="btn btn-outline-secondary">Set</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="text-center text-muted py-5">No RCSP Barangays found</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3">{{ $areas->links() }}</div>
-        </div>
-    </div>
+    <section class="card areas-card" aria-label="RCSP barangays">
+        <form method="GET" class="filter-bar">
+            <div class="filter-field filter-search"><label for="area-search">Search Barangay</label><input id="area-search" name="search" value="{{ request('search') }}" placeholder="Enter barangay name" class="form-control"></div>
+            <div class="filter-field filter-select"><label for="municipality">Municipality or City</label><select id="municipality" name="municipality" class="form-control"><option value="">All municipalities</option>@foreach($municipalities as $municipality)<option value="{{ $municipality }}" @selected(request('municipality')===$municipality)>{{ $municipality }}</option>@endforeach</select></div>
+            <div class="filter-field filter-select"><label for="area-status">Classification</label><select id="area-status" name="status" class="form-control"><option value="">All classifications</option>@foreach(['Konsolidado','Rekonsilida','Expansion','Recovery'] as $status)<option value="{{ $status }}" @selected(request('status')===$status)>{{ $status }}</option>@endforeach</select></div>
+            <button class="btn btn-primary"><i class="fa fa-filter mr-1"></i>Apply Filters</button>@if(request()->hasAny(['search','municipality','status']))<a href="{{ route('ib39.areas.index') }}" class="btn btn-light"><i class="fa fa-times mr-1"></i>Clear</a>@endif
+        </form>
+        <div class="table-responsive"><table class="table area-table"><thead><tr><th>Province</th><th>Municipality/City</th><th>Barangay</th><th>Classification</th><th>Recorded FRs</th><th>Update Count</th></tr></thead><tbody>
+            @forelse($areas as $area)
+                <tr><td>Davao del Sur</td><td>{{ $area->municipality }}</td><td><span class="barangay">{{ $area->barangay }}</span></td><td><span class="status-badge {{ $statusClass($area->status) }}">{{ $area->status ?: 'Unclassified' }}</span></td><td><span class="count-value">{{ number_format($area->frs) }}</span></td><td><form method="POST" action="{{ route('ib39.areas.update',$area) }}" class="count-form" data-count-form>@csrf @method('PUT')<label class="sr-only" for="frs-{{ $area->id }}">FR count for {{ $area->barangay }}</label><input id="frs-{{ $area->id }}" name="frs" type="number" min="0" value="{{ $area->frs }}" class="form-control" required><button class="btn btn-sm btn-outline-primary set-button" data-submit-button>Save</button></form></td></tr>
+            @empty<tr><td colspan="6"><div class="empty-state"><i class="fa fa-map-marker"></i><strong class="d-block text-dark mb-1">No barangays found</strong><span>Adjust the filters to view other RCSP areas.</span></div></td></tr>@endforelse
+        </tbody></table></div>
+        @if($areas->hasPages())<div class="areas-pagination">{{ $areas->links() }}</div>@endif
+    </section>
+</div>
 @endsection
+
+@push('scripts')
+<script>document.querySelectorAll('[data-count-form]').forEach(function(form){form.addEventListener('submit',function(){var button=form.querySelector('[data-submit-button]');button.disabled=true;button.innerHTML='<i class="fa fa-spinner fa-spin mr-1"></i>Saving';});});</script>
+@endpush

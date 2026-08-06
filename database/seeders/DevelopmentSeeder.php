@@ -2,8 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Enums\EclipCaseStatus;
 use App\Models\AgencyImplanResponse;
 use App\Models\Barangay;
+use App\Models\EclipAssistanceCategory;
+use App\Models\EclipAssistanceRequest;
+use App\Models\EclipCase;
 use App\Models\FormerRebel;
 use App\Models\GovAgency;
 use App\Models\Implementation;
@@ -45,6 +49,7 @@ class DevelopmentSeeder extends Seeder
 
             $this->seedImplementationWorkflow($users['lgu'], $agencies, $rcspBarangays);
             $this->seedFormerRebelSamples();
+            $this->seedEclipSamples($users);
             $this->seedMapSamples();
         });
     }
@@ -94,6 +99,26 @@ class DevelopmentSeeder extends Seeder
                 'gov_agency_id' => $agencies['alpha']->id,
             ],
             'mblrc' => ['name' => 'Test MBLRC User', 'role' => 'mblrc'],
+            'lswdo' => [
+                'name' => 'Test Digos LSWDO User',
+                'role' => 'lswdo',
+                'municipality_id' => $municipality->id,
+            ],
+            'japic' => ['name' => 'Test JAPIC User', 'role' => 'japic'],
+            'dilg_provincial_focal' => [
+                'name' => 'Test Digos DILG Provincial Focal Person',
+                'role' => 'dilg_provincial_focal',
+                'municipality_id' => $municipality->id,
+            ],
+            'dilg_regional' => ['name' => 'Test DILG Regional Office User', 'role' => 'dilg_regional'],
+            'nboo_eclip_pmo' => ['name' => 'Test NBOO ECLIP-PMO User', 'role' => 'nboo_eclip_pmo'],
+            'dilg_fms' => ['name' => 'Test DILG FMS User', 'role' => 'dilg_fms'],
+            'local_eclip_committee' => [
+                'name' => 'Test Digos Local E-CLIP Committee',
+                'role' => 'local_eclip_committee',
+                'municipality_id' => $municipality->id,
+            ],
+            'pnp' => ['name' => 'Test PNP User', 'role' => 'pnp'],
             'afp' => ['name' => 'Test AFP User', 'role' => 'afp'],
         ];
 
@@ -325,6 +350,197 @@ class DevelopmentSeeder extends Seeder
                 ]
             );
         }
+    }
+
+    /**
+     * Create synthetic E-CLIP records across the real workflow queues.
+     *
+     * @param  array<string, User>  $users
+     */
+    private function seedEclipSamples(array $users): void
+    {
+        $municipality = Municipality::query()->where('name', 'Digos City')->firstOrFail();
+        $barangays = $municipality->barangays()->orderBy('id')->limit(3)->get();
+
+        if ($barangays->isEmpty()) {
+            throw new RuntimeException('E-CLIP development seeding requires at least one Digos City barangay.');
+        }
+
+        $category = EclipAssistanceCategory::query()->updateOrCreate(
+            ['code' => 'DEMO-LIVELIHOOD'],
+            [
+                'name' => 'Synthetic Livelihood Assistance',
+                'description' => 'Development-only assistance category; not an official program record.',
+                'is_active' => true,
+                'sort_order' => 900,
+            ]
+        );
+
+        $samples = [
+            EclipCaseStatus::SubmittedForEligibility,
+            EclipCaseStatus::SubmittedForEligibility,
+            EclipCaseStatus::Eligible,
+            EclipCaseStatus::DocumentsCertified,
+            EclipCaseStatus::AssistanceAssessment,
+            EclipCaseStatus::SubmittedForDilgReview,
+            EclipCaseStatus::ProvincialEndorsed,
+            EclipCaseStatus::RegionalEndorsed,
+            EclipCaseStatus::Approved,
+            EclipCaseStatus::FundsTransferred,
+        ];
+
+        foreach ($samples as $index => $status) {
+            $number = $index + 1;
+            $barangay = $barangays[$index % $barangays->count()];
+            $formerRebel = FormerRebel::query()->updateOrCreate(
+                ['classified_id' => 'FR-#D'.str_pad((string) $number, 3, '0', STR_PAD_LEFT)],
+                [
+                    'firstname' => 'Demo',
+                    'middlename' => 'Synthetic',
+                    'lastname' => 'Beneficiary '.$number,
+                    'gender' => $index % 2 === 0 ? 'Male' : 'Female',
+                    'age' => 25 + $index,
+                    'civil_status' => 'Single',
+                    'residential_address' => 'Synthetic development address',
+                    'placement_address' => $barangay->name.', Digos City',
+                    'batch_year' => 'DEMO-2026',
+                    'batch_section' => '1',
+                    'barangay_id' => $barangay->id,
+                    'municipality_id' => $municipality->id,
+                    'province' => 'Davao del Sur',
+                    'registered_at' => now()->subDays(20 - $index)->toDateString(),
+                    'status' => 'Active',
+                    'latitude' => 6.7200 + ($index * 0.0060),
+                    'longitude' => 125.3300 + ($index * 0.0070),
+                    'occupation' => 'Synthetic occupation',
+                    'work_status' => 'Development-only record',
+                ]
+            );
+
+            $case = EclipCase::query()->updateOrCreate(
+                ['case_number' => 'ECLIP-DEMO-'.str_pad((string) $number, 3, '0', STR_PAD_LEFT)],
+                [
+                    'former_rebel_id' => $formerRebel->id,
+                    'municipality_id' => $municipality->id,
+                    'created_by' => $users['mblrc']->id,
+                    'assigned_to' => $users['lswdo']->id,
+                    'status' => $status,
+                    'submitted_at' => now()->subDays(15 - $index),
+                    'eligibility_decided_at' => $index >= 2 ? now()->subDays(13 - min($index, 9)) : null,
+                ]
+            );
+
+            $case->statusHistories()->updateOrCreate(
+                ['to_status' => $status->value],
+                [
+                    'user_id' => $this->actorForStatus($status, $users)->id,
+                    'from_status' => $status === EclipCaseStatus::SubmittedForEligibility ? EclipCaseStatus::Draft->value : null,
+                    'remarks' => 'Synthetic workflow state created by DevelopmentSeeder.',
+                    'ip_address' => '127.0.0.1',
+                ]
+            );
+
+            if ($index >= 2) {
+                $case->eligibilityReviews()->updateOrCreate(
+                    ['reviewed_by' => $users['lswdo']->id, 'decision' => 'eligible'],
+                    ['remarks' => 'Synthetic eligibility review.', 'reviewed_at' => now()->subDays(12)]
+                );
+            }
+
+            if ($index < 4) {
+                continue;
+            }
+
+            $requestStatus = match ($status) {
+                EclipCaseStatus::AssistanceAssessment => 'draft',
+                EclipCaseStatus::Approved, EclipCaseStatus::FundsTransferred => 'approved',
+                default => 'submitted',
+            };
+            $assistanceRequest = EclipAssistanceRequest::query()->updateOrCreate(
+                ['eclip_case_id' => $case->id],
+                [
+                    'created_by' => $users['lswdo']->id,
+                    'status' => $requestStatus,
+                    'submitted_at' => $requestStatus === 'draft' ? null : now()->subDays(8),
+                ]
+            );
+            $amount = 25000 + ($index * 5000);
+            $revision = $assistanceRequest->revisions()->updateOrCreate(
+                ['revision_number' => 1],
+                [
+                    'category_id' => $category->id,
+                    'requested_amount' => $amount,
+                    'assessed_amount' => $amount - 2500,
+                    'justification' => 'Synthetic development justification for UI and workflow testing.',
+                    'assessment_remarks' => 'Development-only assessment; not an official determination.',
+                    'created_by' => $users['lswdo']->id,
+                ]
+            );
+
+            if ($index >= 6) {
+                $this->seedDilgReview($case, $assistanceRequest, $revision->id, $users['dilg_provincial_focal'], 'provincial', 'endorsed');
+            }
+            if ($index >= 7) {
+                $this->seedDilgReview($case, $assistanceRequest, $revision->id, $users['dilg_regional'], 'regional', 'endorsed');
+            }
+            if ($index >= 8) {
+                $this->seedDilgReview($case, $assistanceRequest, $revision->id, $users['nboo_eclip_pmo'], 'national', 'approved');
+            }
+            if ($status === EclipCaseStatus::FundsTransferred) {
+                foreach (['allocation', 'transfer'] as $type) {
+                    $case->fundTransactions()->updateOrCreate(
+                        ['type' => $type, 'reference_number' => 'DEMO-'.strtoupper($type).'-'.$number],
+                        [
+                            'assistance_request_id' => $assistanceRequest->id,
+                            'assistance_revision_id' => $revision->id,
+                            'amount' => $amount - 2500,
+                            'transaction_date' => now()->subDays($type === 'allocation' ? 3 : 2)->toDateString(),
+                            'remarks' => 'Synthetic development funding transaction.',
+                            'created_by' => $users['dilg_fms']->id,
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
+    /** @param array<string, User> $users */
+    private function actorForStatus(EclipCaseStatus $status, array $users): User
+    {
+        return match ($status) {
+            EclipCaseStatus::SubmittedForEligibility => $users['mblrc'],
+            EclipCaseStatus::Eligible, EclipCaseStatus::DocumentsCertified,
+            EclipCaseStatus::AssistanceAssessment, EclipCaseStatus::SubmittedForDilgReview => $users['lswdo'],
+            EclipCaseStatus::ProvincialEndorsed => $users['dilg_provincial_focal'],
+            EclipCaseStatus::RegionalEndorsed => $users['dilg_regional'],
+            EclipCaseStatus::Approved => $users['nboo_eclip_pmo'],
+            EclipCaseStatus::FundsTransferred => $users['dilg_fms'],
+            default => $users['mblrc'],
+        };
+    }
+
+    private function seedDilgReview(
+        EclipCase $case,
+        EclipAssistanceRequest $request,
+        int $revisionId,
+        User $reviewer,
+        string $level,
+        string $decision,
+    ): void {
+        $case->dilgReviews()->updateOrCreate(
+            ['review_level' => $level, 'assistance_revision_id' => $revisionId],
+            [
+                'assistance_request_id' => $request->id,
+                'reviewed_by' => $reviewer->id,
+                'decision' => $decision,
+                'feedback' => 'Synthetic development review feedback.',
+                'reviewed_at' => now()->subDays(match ($level) {
+                    'provincial' => 7,
+                    'regional' => 6,
+                    default => 5,
+                }),
+            ]
+        );
     }
 
     private function seedMapSamples(): void

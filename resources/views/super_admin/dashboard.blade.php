@@ -1,177 +1,33 @@
 @extends('layouts.skydash-v')
-@section('title', 'Dashboard')
+@section('title', 'Super Admin Dashboard')
 @section('heading', 'Super Admin')
 
 @push('styles')
 <style>
-    .icon-top-right { position: absolute; top: 1.25rem; right: 1.5rem; font-size: 2rem; opacity: .15; }
+    .admin-dashboard{--primary:#2f6fed;--navy:#172b4d;--border:#e7ecf3}.admin-hero{background:linear-gradient(125deg,#173b74,#2f6fed);border-radius:18px;box-shadow:0 12px 30px rgba(47,111,237,.18);color:#fff;overflow:hidden;padding:1.7rem;position:relative}.admin-hero::before,.admin-hero::after{background:rgba(255,255,255,.07);border-radius:50%;content:'';position:absolute}.admin-hero::before{height:220px;right:-60px;top:-110px;width:220px}.admin-hero::after{bottom:-100px;height:160px;right:120px;width:160px}.admin-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.11em;opacity:.76;text-transform:uppercase}.admin-hero h2{color:#fff;font-size:1.65rem;font-weight:700}.admin-hero p{font-size:.8rem;line-height:1.5;max-width:720px;opacity:.86}.hero-date{align-items:center;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:10px;display:inline-flex;font-size:.72rem;font-weight:600;gap:.5rem;padding:.6rem .8rem;position:relative;z-index:1}
+    .quick-actions{display:grid;gap:.65rem;grid-template-columns:repeat(3,minmax(0,1fr))}.quick-action{align-items:center;background:#fff;border:1px solid var(--border);border-radius:11px;color:#42526b;display:flex;gap:.65rem;padding:.8rem;transition:.15s}.quick-action:hover{background:#f5f8ff;border-color:#b9cdf5;color:#245cc4;text-decoration:none;transform:translateY(-1px)}.quick-action i{align-items:center;background:#eaf1ff;border-radius:8px;color:#2f6fed;display:flex;flex:0 0 34px;height:34px;justify-content:center}.quick-action strong{display:block;font-size:.74rem}.quick-action small{color:#8492a6;display:block;font-size:.64rem;margin-top:.1rem}
+    .metric-card,.dashboard-card{border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 16px rgba(23,43,77,.045)}.metric-card{overflow:hidden;position:relative}.metric-card::before{background:var(--metric-color);content:'';height:4px;left:0;position:absolute;right:0;top:0}.metric-card .card-body{align-items:center;display:flex;gap:.85rem;padding:1.15rem}.metric-icon{align-items:center;background:var(--metric-bg);border-radius:10px;color:var(--metric-color);display:flex;flex:0 0 42px;font-size:1.15rem;height:42px;justify-content:center}.metric-card strong{color:var(--navy);display:block;font-size:1.4rem;line-height:1.1}.metric-card span{color:#718096;font-size:.68rem;font-weight:700;text-transform:uppercase}.metric-blue{--metric-bg:#eaf1ff;--metric-color:#2f6fed}.metric-gray{--metric-bg:#f1f4f8;--metric-color:#64748b}.metric-amber{--metric-bg:#fff5dc;--metric-color:#d89400}.metric-green{--metric-bg:#e8f8f1;--metric-color:#20a779}
+    .dashboard-card .card-body{padding:1.35rem}.section-title{color:var(--navy);font-size:1rem;font-weight:700;margin:0 0 .2rem}.section-subtitle{color:#8492a6;font-size:.75rem;margin:0}.chart-box{height:310px;position:relative}.activity-list{list-style:none;margin:0;padding:0}.activity-item{align-items:flex-start;border-bottom:1px solid #edf1f6;display:flex;gap:.7rem;padding:.8rem 0}.activity-item:first-child{padding-top:0}.activity-item:last-child{border-bottom:0;padding-bottom:0}.activity-icon{align-items:center;background:#eaf1ff;border-radius:9px;color:#2f6fed;display:flex;flex:0 0 36px;height:36px;justify-content:center}.activity-copy{min-width:0;flex:1}.activity-copy strong{color:#334155;display:block;font-size:.76rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.activity-copy span{color:#64748b;display:block;font-size:.69rem;margin-top:.1rem}.activity-copy time{color:#94a3b8;display:block;font-size:.64rem;margin-top:.15rem}.status-badge{border-radius:12px;display:inline-flex;font-size:.62rem;font-weight:700;padding:.25rem .5rem}.status-approved{background:#e8f8f1;color:#16845e}.status-disapproved{background:#ffebed;color:#bd3e49}.status-submitted,.status-updated{background:#fff5dc;color:#9a6800}.status-default{background:#f1f4f8;color:#64748b}.document-table{margin:0}.document-table thead th{background:#f7f9fc;border:0;color:#718096;font-size:.69rem;font-weight:700;letter-spacing:.04em;padding:.8rem 1rem;text-transform:uppercase;white-space:nowrap}.document-table tbody td{border-color:#edf1f6;color:#52616f;font-size:.78rem;padding:.8rem 1rem;vertical-align:middle}.document-name{color:#263a59;font-weight:700}.dashboard-card.flush .card-body{padding:0}.table-header{padding:1.2rem 1.35rem;border-bottom:1px solid #edf1f6}.empty-state{color:#8492a6;padding:2.5rem 1rem;text-align:center}.empty-state i{color:#bdc8d7;display:block;font-size:2rem;margin-bottom:.4rem}
+    @media(max-width:991px){.quick-actions{margin-top:1rem}}@media(max-width:767px){.admin-hero{padding:1.2rem}.admin-hero h2{font-size:1.35rem}.hero-date{margin-top:1rem}.quick-actions{grid-template-columns:1fr}.document-table thead{display:none}.document-table,.document-table tbody,.document-table tr,.document-table td{display:block;width:100%}.document-table tr{border-bottom:1px solid #e7ecf3;padding:.65rem 0}.document-table tbody td{border:0;padding:.3rem 1rem}}
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    {{-- Greeting --}}
-    <div class="row">
-        <div class="col-12 d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-            <div>
-                <h1 class="card-title fs-3 mb-1">Good Day! {{ $userFullname }}</h1>
-                <p class="text-muted mb-0">Strengthening Institutions and Empowering Localities Against Discrimination Programs for Former Rebels</p>
-            </div>
-            <button class="btn btn-sm btn-light bg-white">
-                <i class="mdi mdi-calendar"></i> Today is <span class="text-primary">{{ now(config('app.display_timezone'))->format('d F Y') }}</span>
-            </button>
-        </div>
-    </div>
+<div class="admin-dashboard">
+    <section class="admin-hero mb-4"><div class="row align-items-center position-relative" style="z-index:1"><div class="col-lg-8"><div class="admin-eyebrow mb-1">System administration overview</div><h2 class="mb-2">Good day, {{ $userFullname }}</h2><p class="mb-0">Strengthening Institutions and Empowering Localities Against Discrimination Programs for Former Rebels</p></div><div class="col-lg-4 text-lg-right"><div class="hero-date"><i class="fa fa-calendar"></i>{{ now(config('app.display_timezone'))->format('d F Y') }}</div></div></div></section>
 
-    <div class="row mb-1">
-        <div class="col-md-8">
-            {{-- Total RCSP Barangay --}}
-            <div class="card position-relative">
-                <div class="card-body">
-                    <h5 class="card-title">Total RCSP Barangay</h5>
-                    <div class="d-flex align-items-center">
-                        <h2 class="text-primary mb-0">{{ $rcsp['total'] }}</h2>
-                        <p class="text-muted mb-0 ms-2">Identified RCSP Barangays</p>
-                    </div>
-                    <p class="small text-muted mb-0 mt-2">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
-                </div>
-                <i class="mdi mdi-home-map-marker icon-top-right text-primary"></i>
-            </div>
+    <div class="row mb-2"><div class="col-lg-8 mb-4 mb-lg-0"><div class="quick-actions"><a class="quick-action" href="{{ route('super_admin.users.index') }}"><i class="fa fa-users"></i><span><strong>User Management</strong><small>Manage system accounts</small></span></a><a class="quick-action" href="{{ route('super_admin.agencies.index') }}"><i class="fa fa-building"></i><span><strong>Government Agencies</strong><small>Manage agency records</small></span></a><a class="quick-action" href="{{ route('eclip.analytics.index') }}"><i class="fa fa-bar-chart"></i><span><strong>E-CLIP Analytics</strong><small>View program aggregates</small></span></a></div></div></div>
 
-            <div class="mb-4"></div>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card position-relative h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fs-6">Total Not Yet RCSP Barangay</h5>
-                            <h2 class="text-danger mb-1">{{ $rcsp['not_started'] }}</h2>
-                            <p class="text-muted mb-0"><i class="mdi mdi-alert-circle-outline"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
-                        </div>
-                        <i class="mdi mdi-cancel icon-top-right text-danger"></i>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card position-relative h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fs-6">Total On-Going RCSP Barangay</h5>
-                            <h2 class="text-warning mb-1">{{ $rcsp['ongoing'] }}</h2>
-                            <p class="text-muted mb-0"><i class="mdi mdi-progress-clock"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
-                        </div>
-                        <i class="mdi mdi-progress-clock icon-top-right text-warning"></i>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card position-relative h-100">
-                        <div class="card-body">
-                            <h5 class="card-title fs-6">Total Completed RCSP Barangay</h5>
-                            <h2 class="text-success mb-1">{{ $rcsp['completed'] }}</h2>
-                            <p class="text-muted mb-0"><i class="mdi mdi-check-circle-outline"></i></p>
-                            <p class="small text-muted mb-0">As of {{ now(config('app.display_timezone'))->format('d F Y') }}</p>
-                        </div>
-                        <i class="mdi mdi-check icon-top-right text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="row"><div class="col-6 col-xl-3 mb-4"><div class="card metric-card metric-blue h-100"><div class="card-body"><div class="metric-icon"><i class="fa fa-map-o"></i></div><div><strong>{{ number_format($rcsp['total']) }}</strong><span>Total RCSP barangays</span></div></div></div></div><div class="col-6 col-xl-3 mb-4"><div class="card metric-card metric-gray h-100"><div class="card-body"><div class="metric-icon"><i class="fa fa-circle-o"></i></div><div><strong>{{ number_format($rcsp['not_started']) }}</strong><span>Not started</span></div></div></div></div><div class="col-6 col-xl-3 mb-4"><div class="card metric-card metric-amber h-100"><div class="card-body"><div class="metric-icon"><i class="fa fa-clock-o"></i></div><div><strong>{{ number_format($rcsp['ongoing']) }}</strong><span>Ongoing</span></div></div></div></div><div class="col-6 col-xl-3 mb-4"><div class="card metric-card metric-green h-100"><div class="card-body"><div class="metric-icon"><i class="fa fa-check-circle"></i></div><div><strong>{{ number_format($rcsp['completed']) }}</strong><span>Completed</span></div></div></div></div></div>
 
-        {{-- Notifications --}}
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Notifications</h5>
-                    @php
-                        $notes = $recentDocuments->take(3);
-                    @endphp
-                    @forelse ($notes as $doc)
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white me-3" style="width:40px;height:40px;">
-                                <i class="mdi mdi-file-document-outline"></i>
-                            </span>
-                            <div>
-                                <strong>{{ $doc->rcspBarangay?->barangay?->name ?? 'RCSP Barangay' }}</strong>
-                                <p class="mb-0 small">{{ $doc->phase?->name ?? 'Phase' }} · {{ ucfirst($doc->status) }}</p>
-                                <small class="text-muted">{{ $doc->created_at?->diffForHumans() }}</small>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-muted mb-0">No recent activity.</p>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="row"><div class="col-xl-8 mb-4"><section class="card dashboard-card h-100" aria-labelledby="rcsp-chart-title"><div class="card-body"><div class="mb-3"><h3 id="rcsp-chart-title" class="section-title">RCSP Barangays by Municipality</h3><p class="section-subtitle">Distribution of identified RCSP barangays across municipalities.</p></div><div class="chart-box"><canvas id="rcspBarChart" aria-hidden="true"></canvas></div></div></section></div><div class="col-xl-4 mb-4"><section class="card dashboard-card h-100" aria-labelledby="activity-title"><div class="card-body"><div class="mb-4"><h3 id="activity-title" class="section-title">Recent Document Activity</h3><p class="section-subtitle">Latest RCSP form submissions and updates.</p></div><ul class="activity-list">@forelse($recentDocuments->take(4) as $document)<li class="activity-item"><span class="activity-icon"><i class="fa fa-file-text"></i></span><span class="activity-copy"><strong>{{ $document->rcspBarangay?->barangay?->name ?? 'RCSP Barangay' }}</strong><span>{{ $document->phase?->name ?? 'Phase' }} · {{ ucfirst($document->status) }}</span><time datetime="{{ $document->created_at?->toIso8601String() }}">{{ $document->created_at?->diffForHumans() }}</time></span><span class="status-badge status-{{ in_array($document->status,['approved','disapproved','submitted','updated'],true)?$document->status:'default' }}">{{ ucfirst($document->status) }}</span></li>@empty<li class="empty-state"><i class="fa fa-file-o"></i>No recent document activity.</li>@endforelse</ul></div></section></div></div>
 
-    {{-- RCSP Analytics --}}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">RCSP Analytics</h5>
-                    <p class="text-muted">RCSP barangays identified per municipality.</p>
-                    <div style="height:300px;"><canvas id="rcspBarChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Document Overview --}}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Document Overview</h5>
-                    <p class="text-muted">Track and manage document submission, revisions, and verification.</p>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Document</th>
-                                    <th>RCSP Barangay</th>
-                                    <th>Date &amp; Time</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($recentDocuments as $doc)
-                                    @php
-                                        $badge = match ($doc->status) {
-                                            'approved' => 'badge badge-success', 'disapproved' => 'badge badge-danger',
-                                            'submitted', 'updated' => 'badge badge-warning', default => 'badge badge-secondary',
-                                        };
-                                    @endphp
-                                    <tr>
-                                        <td>{{ $doc->phase?->name ?? 'Phase' }} submission</td>
-                                        <td>{{ $doc->rcspBarangay?->barangay?->name ?? '—' }}</td>
-                                        <td>{{ $doc->created_at?->timezone(config('app.display_timezone'))->format('d F Y, g:i A') }}</td>
-                                        <td><span class="{{ $badge }}">{{ ucfirst($doc->status) }}</span></td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="4" class="text-center text-muted py-3">No documents yet.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <section class="card dashboard-card flush mb-4" aria-labelledby="documents-title"><div class="table-header"><h3 id="documents-title" class="section-title">Document Overview</h3><p class="section-subtitle">Recent RCSP submissions, revisions, and verification status.</p></div><div class="card-body"><div class="table-responsive"><table class="table document-table"><thead><tr><th>Document</th><th>RCSP Barangay</th><th>Date and Time</th><th>Status</th></tr></thead><tbody>@forelse($recentDocuments as $document)<tr><td><span class="document-name">{{ $document->phase?->name ?? 'Phase' }} submission</span></td><td>{{ $document->rcspBarangay?->barangay?->name ?? 'Not assigned' }}</td><td><i class="fa fa-calendar-o text-muted mr-1"></i>{{ $document->created_at?->timezone(config('app.display_timezone'))->format('d M Y, g:i A') }}</td><td><span class="status-badge status-{{ in_array($document->status,['approved','disapproved','submitted','updated'],true)?$document->status:'default' }}">{{ ucfirst($document->status) }}</span></td></tr>@empty<tr><td colspan="4"><div class="empty-state"><i class="fa fa-folder-open-o"></i>No RCSP documents have been recorded.</div></td></tr>@endforelse</tbody></table></div></div></section>
 </div>
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-(function () {
-    const labels = @json($rcspByMunicipality->keys());
-    const values = @json($rcspByMunicipality->values());
-    new Chart(document.getElementById('rcspBarChart'), {
-        type: 'bar',
-        data: { labels, datasets: [{ label: 'RCSP Barangays', data: values, backgroundColor: '#6a5acd', borderRadius: 6, maxBarThickness: 80, categoryPercentage: 0.6, barPercentage: 0.7 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                   scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-    });
-})();
+(function(){var canvas=document.getElementById('rcspBarChart');if(!canvas||typeof Chart==='undefined')return;new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:@json($rcspByMunicipality->keys()->values()),datasets:[{label:'RCSP Barangays',data:@json($rcspByMunicipality->values()),backgroundColor:'#2f6fed',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,legend:{display:false},scales:{yAxes:[{ticks:{beginAtZero:true,precision:0},gridLines:{color:'#edf1f7',drawBorder:false}}],xAxes:[{gridLines:{display:false}}]}}});})();
 </script>
 @endpush

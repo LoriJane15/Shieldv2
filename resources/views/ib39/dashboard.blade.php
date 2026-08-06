@@ -1,116 +1,40 @@
 @extends('layouts.skydash-v')
-@section('title', 'Dashboard')
+@section('title', '39th IB Dashboard')
 @section('heading', '39th Infantry Battalion')
-
-@php
-    $cards = [
-        ['Konsolidado', $statusCounts['Konsolidado'] ?? 0, 'konsolidado', 'mdi-flag', 'Organized NPA Influenced Areas'],
-        ['Rekonsilida', $statusCounts['Rekonsilida'] ?? 0, 'rekonsilida', 'mdi-alert', 'Less Influenced Areas'],
-        ['Expansion', $statusCounts['Expansion'] ?? 0, 'expansion', 'mdi-square', 'Potential Threat Areas'],
-        ['Recovery', $statusCounts['Recovery'] ?? 0, 'recovery', 'mdi-plus-circle', 'Cleared Areas'],
-        ["Total FR's", $stats['total_frs'], 'total-frs', 'mdi-account-group', 'Overall Former Rebels'],
-    ];
-@endphp
 
 @push('styles')
 <style>
-    .analytics-section { padding: 1.5rem; }
-    .stat-card { border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,.05); transition: all .3s ease; }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 4px 6px rgba(0,0,0,.1); }
-    .stat-card .card-body { padding: 1.5rem; position: relative; }
-    .stat-icon { position: absolute; top: 1rem; right: 1rem; font-size: 1.5rem; opacity: .25; }
-    .stat-card h5 { font-size: .875rem; font-weight: 600; margin-bottom: .75rem; color: #64748b; }
-    .stat-card h2 { font-size: 2rem; font-weight: 700; margin-bottom: .5rem; color: #0f172a; }
-    .stat-card .description { font-size: .75rem; color: #64748b; margin: 0; }
-    .konsolidado { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); color: #dc2626; }
-    .rekonsilida { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); color: #ea580c; }
-    .expansion   { background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); color: #ca8a04; }
-    .recovery    { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); color: #16a34a; }
-    .total-frs   { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); color: #0284c7; }
-    .chart-container { margin-top: 1rem; padding: 1.5rem; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.1); position: relative; height: 460px; }
-    .chart-controls { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10; }
-    .chart-select { padding: .5rem 1rem; border: 1px solid #e2e8f0; border-radius: 6px; background: #fff; color: #0f172a; font-size: .875rem; cursor: pointer; }
-    .chart-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+    .ib-page{--navy:#172b4d;--border:#e7ecf3}.ib-hero{background:linear-gradient(125deg,#173b74,#2f6fed);border-radius:18px;box-shadow:0 12px 30px rgba(47,111,237,.18);color:#fff;overflow:hidden;padding:1.7rem;position:relative}.ib-hero::after{background:rgba(255,255,255,.08);border-radius:50%;content:'';height:210px;position:absolute;right:-55px;top:-105px;width:210px}.ib-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.11em;opacity:.76;text-transform:uppercase}.ib-hero h2{color:#fff;font-size:1.65rem;font-weight:700}.ib-hero p{font-size:.82rem;opacity:.86}.hero-actions{display:flex;flex-wrap:wrap;gap:.55rem;justify-content:flex-end;position:relative;z-index:1}.hero-action{align-items:center;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:9px;color:#fff;display:inline-flex;font-size:.72rem;font-weight:600;gap:.4rem;padding:.55rem .75rem}.hero-action:hover{background:#fff;color:#245cc4;text-decoration:none}
+    .summary-card,.classification-card,.chart-card{border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 16px rgba(23,43,77,.045)}.summary-card .card-body{align-items:center;display:flex;gap:.85rem;padding:1.05rem}.summary-icon{align-items:center;background:var(--summary-bg);border-radius:10px;color:var(--summary-color);display:flex;flex:0 0 42px;font-size:1.15rem;height:42px;justify-content:center}.summary-card strong{color:var(--navy);display:block;font-size:1.35rem;line-height:1.1}.summary-card span{color:#718096;font-size:.68rem;font-weight:700;text-transform:uppercase}.summary-blue{--summary-bg:#eaf1ff;--summary-color:#2f6fed}.summary-green{--summary-bg:#e8f8f1;--summary-color:#20a779}.summary-purple{--summary-bg:#f2ebff;--summary-color:#805ad5}
+    .section-title{color:var(--navy);font-size:1rem;font-weight:700;margin:0 0 .2rem}.section-subtitle{color:#8492a6;font-size:.75rem;margin:0}.classification-card{overflow:hidden;position:relative}.classification-card::before{background:var(--tone);content:'';height:4px;left:0;position:absolute;right:0;top:0}.classification-card .card-body{padding:1.15rem}.classification-head{align-items:center;display:flex;justify-content:space-between}.classification-icon{align-items:center;background:var(--tone-bg);border-radius:9px;color:var(--tone);display:flex;height:36px;justify-content:center;width:36px}.classification-card h3{color:var(--navy);font-size:1.45rem;font-weight:700;margin:.8rem 0 .15rem}.classification-card h4{color:#42526b;font-size:.78rem;font-weight:700;margin:0}.classification-card p{color:#8492a6;font-size:.68rem;margin:.2rem 0 0}.tone-red{--tone:#dc4c58;--tone-bg:#ffebed}.tone-orange{--tone:#e78328;--tone-bg:#fff0e2}.tone-yellow{--tone:#c79512;--tone-bg:#fff7d8}.tone-green{--tone:#20a779;--tone-bg:#e8f8f1}.chart-card .card-body{padding:1.35rem}.chart-box{height:340px;position:relative}.chart-select{border:1px solid #dfe5ee;border-radius:8px;color:#52616f;font-size:.75rem;padding:.45rem .7rem}.legend-note{align-items:flex-start;background:#f8fafc;border-radius:9px;color:#718096;display:flex;font-size:.7rem;gap:.5rem;padding:.7rem .8rem}
+    @media(max-width:767px){.ib-hero{padding:1.2rem}.ib-hero h2{font-size:1.35rem}.hero-actions{justify-content:flex-start;margin-top:1rem}.chart-box{height:290px}}
 </style>
 @endpush
 
 @section('content')
-<div class="card">
-    <div class="card-body">
-        <div class="analytics-section">
-            <div class="row mb-4">
-                @foreach ($cards as [$title, $count, $cls, $icon, $desc])
-                    <div class="col-md col-6 mb-3">
-                        <div class="card stat-card {{ $cls }}">
-                            <div class="card-body">
-                                <div class="stat-icon"><i class="mdi {{ $icon }}"></i></div>
-                                <h5>{{ $title }}</h5>
-                                <h2>{{ $count }}</h2>
-                                <p class="description">{{ $desc }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+@php
+    $classifications = [
+        ['Konsolidado', $statusCounts['Konsolidado'] ?? 0, 'tone-red', 'fa-flag', 'Organized NPA Influenced Areas'],
+        ['Rekonsilida', $statusCounts['Rekonsilida'] ?? 0, 'tone-orange', 'fa-exclamation-triangle', 'Less Influenced Areas'],
+        ['Expansion', $statusCounts['Expansion'] ?? 0, 'tone-yellow', 'fa-expand', 'Potential Threat Areas'],
+        ['Recovery', $statusCounts['Recovery'] ?? 0, 'tone-green', 'fa-check-circle', 'Cleared Areas'],
+    ];
+@endphp
+<div class="ib-page">
+    <section class="ib-hero mb-4"><div class="row align-items-center position-relative" style="z-index:1"><div class="col-lg-8"><div class="ib-eyebrow mb-1">Operational overview</div><h2 class="mb-2">39th Infantry Battalion Dashboard</h2><p class="mb-0">Authorized RCSP area classification and former-rebel monitoring overview.</p></div><div class="col-lg-4"><div class="hero-actions"><a href="{{ route('ib39.areas.index') }}" class="hero-action"><i class="fa fa-map-marker"></i>Manage Areas</a><a href="{{ route('ib39.map') }}" class="hero-action"><i class="fa fa-map"></i>Operational Map</a></div></div></div></section>
 
-            <div class="chart-container">
-                <div class="chart-controls">
-                    <select id="chartType" class="chart-select">
-                        <option value="status">Status Distribution</option>
-                        <option value="municipality">Municipality Distribution</option>
-                    </select>
-                </div>
-                <canvas id="barangayChart"></canvas>
-            </div>
-        </div>
-    </div>
+    <div class="row"><div class="col-md-4 mb-4"><div class="card summary-card summary-blue h-100"><div class="card-body"><div class="summary-icon"><i class="fa fa-map-o"></i></div><div><strong>{{ number_format($stats['mapped']) }}</strong><span>Mapped barangays</span></div></div></div></div><div class="col-md-4 mb-4"><div class="card summary-card summary-green h-100"><div class="card-body"><div class="summary-icon"><i class="fa fa-crosshairs"></i></div><div><strong>{{ number_format($stats['active_areas']) }}</strong><span>Areas with FR records</span></div></div></div></div><div class="col-md-4 mb-4"><div class="card summary-card summary-purple h-100"><div class="card-body"><div class="summary-icon"><i class="fa fa-users"></i></div><div><strong>{{ number_format($stats['total_frs']) }}</strong><span>Total former rebels</span></div></div></div></div></div>
+
+    <div class="d-flex align-items-end justify-content-between mb-3"><div><h3 class="section-title">Area Classification</h3><p class="section-subtitle">Current barangay distribution based on recorded FR counts.</p></div></div>
+    <div class="row mb-2">@foreach($classifications as [$title,$count,$tone,$icon,$description])<div class="col-sm-6 col-xl-3 mb-4"><div class="card classification-card {{ $tone }} h-100"><div class="card-body"><div class="classification-head"><h4>{{ $title }}</h4><div class="classification-icon"><i class="fa {{ $icon }}"></i></div></div><h3>{{ number_format($count) }}</h3><p>{{ $description }}</p></div></div></div>@endforeach</div>
+
+    <section class="card chart-card mb-4" aria-labelledby="distribution-title"><div class="card-body"><div class="d-flex flex-wrap align-items-start justify-content-between mb-3"><div><h3 id="distribution-title" class="section-title">Operational Distribution</h3><p class="section-subtitle">Compare area classifications or recorded FR totals by municipality.</p></div><label class="sr-only" for="chartType">Chart data</label><select id="chartType" class="chart-select mt-2 mt-sm-0"><option value="status">Classification distribution</option><option value="municipality">FRs by municipality</option></select></div><div class="chart-box"><canvas id="barangayChart" aria-hidden="true"></canvas></div><div class="legend-note mt-3"><i class="fa fa-info-circle"></i><span>Figures are aggregate monitoring totals. Access to record-level location information remains restricted to the authorized operational map.</span></div></div></section>
 </div>
-
-<div id="ib39Data"
-     data-status='@json($statusCounts)'
-     data-muni-labels='@json($perMunicipality->pluck('municipality'))'
-     data-muni-values='@json($perMunicipality->pluck('frs'))'
-     hidden></div>
+<div id="ib39Data" data-status='@json($statusCounts)' data-muni-labels='@json($perMunicipality->pluck('municipality'))' data-muni-values='@json($perMunicipality->pluck('frs'))' hidden></div>
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-(function () {
-    const el = document.getElementById('ib39Data');
-    const status = JSON.parse(el.dataset.status || '{}');
-    const muniLabels = JSON.parse(el.dataset.muniLabels || '[]');
-    const muniValues = JSON.parse(el.dataset.muniValues || '[]');
-    const statusLabels = ['Konsolidado', 'Rekonsilida', 'Expansion', 'Recovery'];
-    const statusColors = ['#ef4444', '#fb923c', '#facc15', '#22c55e'];
-
-    const ctx = document.getElementById('barangayChart').getContext('2d');
-    let chart;
-
-    function render(type) {
-        if (chart) chart.destroy();
-        const isStatus = type === 'status';
-        chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: isStatus ? statusLabels : muniLabels,
-                datasets: [{
-                    label: isStatus ? 'Barangay Status Distribution' : 'Former Rebels per Municipality',
-                    data: isStatus ? statusLabels.map(l => status[l] || 0) : muniValues,
-                    backgroundColor: isStatus ? statusColors : '#4527A0',
-                    borderRadius: 6,
-                }],
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            },
-        });
-    }
-
-    render('status');
-    document.getElementById('chartType').addEventListener('change', (e) => render(e.target.value));
-})();
+(function(){var el=document.getElementById('ib39Data');var status=JSON.parse(el.dataset.status||'{}');var municipalityLabels=JSON.parse(el.dataset.muniLabels||'[]');var municipalityValues=JSON.parse(el.dataset.muniValues||'[]');var labels=['Konsolidado','Rekonsilida','Expansion','Recovery'];var colors=['#dc4c58','#e78328','#d4aa26','#20a779'];var chart;function render(type){if(chart)chart.destroy();var byStatus=type==='status';chart=new Chart(document.getElementById('barangayChart').getContext('2d'),{type:'bar',data:{labels:byStatus?labels:municipalityLabels,datasets:[{label:byStatus?'Barangays':'Former rebels',data:byStatus?labels.map(function(label){return status[label]||0;}):municipalityValues,backgroundColor:byStatus?colors:'#2f6fed',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,legend:{display:false},scales:{yAxes:[{ticks:{beginAtZero:true,precision:0},gridLines:{color:'#edf1f7',drawBorder:false}}],xAxes:[{gridLines:{display:false}}]}}});}render('status');document.getElementById('chartType').addEventListener('change',function(event){render(event.target.value);});})();
 </script>
 @endpush

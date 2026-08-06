@@ -26,11 +26,19 @@ class DevelopmentSeederTest extends TestCase
         $this->seed(DevelopmentSeeder::class);
 
         $this->assertSame(
-            ['39th_ib', 'admin', 'afp', 'gov_agency', 'lgu', 'mblrc', 'super_admin'],
+            [
+                '39th_ib', 'admin', 'afp', 'dilg_fms', 'dilg_provincial_focal',
+                'dilg_regional', 'gov_agency', 'japic', 'lgu', 'local_eclip_committee',
+                'lswdo', 'mblrc', 'nboo_eclip_pmo', 'pnp', 'super_admin',
+            ],
             User::query()->orderBy('role')->pluck('role')->all()
         );
         $this->assertNotNull(User::query()->where('role', 'lgu')->firstOrFail()->municipality_id);
         $this->assertNotNull(User::query()->where('role', 'gov_agency')->firstOrFail()->gov_agency_id);
+        foreach (['lswdo', 'dilg_provincial_focal', 'local_eclip_committee'] as $role) {
+            $this->assertNotNull(User::query()->where('role', $role)->firstOrFail()->municipality_id);
+        }
+        $this->assertNull(User::query()->where('role', 'japic')->firstOrFail()->municipality_id);
 
         $this->assertSame(6, RcspPhase::query()->count());
         $this->assertSame(3, RcspBarangay::query()->count());
@@ -53,7 +61,7 @@ class DevelopmentSeederTest extends TestCase
         $this->seed(DevelopmentSeeder::class);
         $this->seed(DevelopmentSeeder::class);
 
-        $this->assertSame(7, User::query()->count());
+        $this->assertSame(15, User::query()->count());
         $this->assertSame(6, RcspPhase::query()->count());
         $this->assertSame(3, RcspBarangay::query()->count());
         $this->assertSame(4, Implementation::query()->count());

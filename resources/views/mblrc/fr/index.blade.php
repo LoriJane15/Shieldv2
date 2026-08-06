@@ -3,93 +3,31 @@
 @section('heading', 'Former Rebels Monitoring')
 
 @php
-    $badge = fn ($s) => match ($s) {
-        'Active' => 'badge badge-success',
-        'Inactive' => 'badge badge-danger',
-        'On hold' => 'badge badge-warning',
-        'Reintegrated' => 'badge badge-primary',
-        default => 'badge badge-secondary',
+    $statusClass = fn ($status) => match ($status) {
+        'Active', 'Reintegrated', 'Completed' => 'status-positive',
+        'On hold', 'Under Review', 'Pending', 'Suspended' => 'status-warning',
+        'Inactive', 'Disengaged', 'Deceased' => 'status-negative',
+        default => 'status-neutral',
     };
 @endphp
 
+@push('styles')
+<style>
+    .fr-index{--navy:#172b4d;--primary:#2f6fed;--border:#e7ecf3}.fr-hero{align-items:center;background:linear-gradient(125deg,#173b74,#2f6fed);border-radius:16px;box-shadow:0 10px 28px rgba(47,111,237,.16);color:#fff;display:flex;justify-content:space-between;overflow:hidden;padding:1.5rem;position:relative}.fr-hero::after{background:rgba(255,255,255,.08);border-radius:50%;content:'';height:190px;position:absolute;right:-45px;top:-95px;width:190px}.hero-content{position:relative;z-index:1}.hero-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.1em;opacity:.75;text-transform:uppercase}.fr-hero h2{color:#fff;font-size:1.55rem;font-weight:700}.fr-hero p{font-size:.8rem;opacity:.86}.register-button{align-items:center;background:#fff;border:1px solid rgba(255,255,255,.8);border-radius:12px;box-shadow:0 8px 20px rgba(12,42,91,.24);color:#204f9e;display:inline-flex;font-size:.76rem;font-weight:700;padding:.55rem .9rem .55rem .55rem;position:relative;text-decoration:none!important;z-index:1}.register-button i{align-items:center;background:#e8f0ff;border-radius:9px;color:#2f6fed;display:flex;font-size:1.05rem;height:34px;justify-content:center;margin-right:.65rem;width:34px}.register-button:hover{background:#f8fbff;color:#173f85;transform:translateY(-1px)}.register-button:hover i{background:#2f6fed;color:#fff}.records-card{border:1px solid var(--border);border-radius:14px;box-shadow:0 4px 16px rgba(23,43,77,.045);overflow:hidden}.records-card .card-body{padding:0}.records-table{margin:0}.records-table thead th{background:#f7f9fc;border:0;color:#718096;font-size:.66rem;font-weight:700;letter-spacing:.05em;padding:.9rem 1rem;text-transform:uppercase;white-space:nowrap}.records-table tbody td{border-color:#edf1f6;color:#52616f;font-size:.78rem;padding:.9rem 1rem;vertical-align:middle}.profile-id{color:#244a83;font-weight:700}.avatar{border:2px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(23,43,77,.15);height:40px;object-fit:cover;width:40px}.record-name{color:#334155;font-weight:700}.record-detail{align-items:flex-start;display:flex;line-height:1.45}.record-detail i{color:#8a9bb2;flex:0 0 auto;margin-right:.4rem;margin-top:.12rem}.status-pill{border-radius:13px;display:inline-flex;font-size:.62rem;font-weight:700;padding:.28rem .55rem}.status-positive{background:#e8f8f1;color:#16845e}.status-warning{background:#fff5df;color:#9a6700}.status-negative{background:#fff1f2;color:#c2414f}.status-neutral{background:#eaf1ff;color:#2f6fed}.profile-button{align-items:center;border-radius:8px;display:inline-flex;font-weight:600}.profile-button i{margin-left:.3rem}.manage-actions{align-items:center;display:flex;gap:.45rem}.icon-action{align-items:center;background:#f7f9fc;border:1px solid #e5eaf1;border-radius:8px;color:#64748b;display:flex;height:32px;justify-content:center;padding:0;text-decoration:none!important;width:32px}.icon-action.edit:hover{background:#eaf1ff;border-color:#c9dafb;color:#2f6fed}.icon-action.delete{color:#c2414f}.icon-action.delete:hover{background:#fff1f2;border-color:#f2cbd0}.icon-action.locked{color:#94a3b8;cursor:not-allowed}.records-pagination{border-top:1px solid #edf1f6;padding:1rem 1.25rem}.empty-records{color:#8492a6;padding:3.5rem 1rem;text-align:center}.empty-records i{color:#b7c4d5;display:block;font-size:2.5rem;margin-bottom:.55rem}.empty-records strong{color:#334155;display:block;margin-bottom:.25rem}
+    @media(max-width:767px){.fr-hero{align-items:stretch;flex-direction:column;padding:1.2rem}.fr-hero h2{font-size:1.3rem}.register-button{justify-content:center;margin-top:1rem;width:100%}.records-table thead{display:none}.records-table,.records-table tbody,.records-table tr,.records-table td{display:block;width:100%}.records-table tr{border-bottom:1px solid var(--border);padding:.7rem 0}.records-table tbody td{border:0;padding:.3rem 1rem}.records-table td:last-child{padding-top:.7rem}.manage-actions{justify-content:flex-start}.profile-button{justify-content:center;width:100%}}
+</style>
+@endpush
+
 @section('content')
-<div class="row">
-    <div class="col-md-12 grid-margin">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="font-weight-bold">Former Rebels Monitoring</h3>
-                <p class="text-muted mb-0">Add and manage Former Rebels</p>
-            </div>
-            <a href="{{ route('mblrc.fr.create') }}" class="btn btn-primary">+ Register Former Rebel</a>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr class="bg-primary text-white">
-                                <th>Profile ID</th>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Batch</th>
-                                <th>Status</th>
-                                <th>Profile</th>
-                                <th>Manage</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($frs as $fr)
-                                <tr>
-                                    <td>{{ $fr->classified_id }}</td>
-                                    <td>
-                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width:40px;height:40px;overflow:hidden;">
-                                            <img src="{{ asset('assets/img/fr-profile.jpg') }}" alt="FR Profile" style="width:100%;height:100%;object-fit:cover;">
-                                        </div>
-                                    </td>
-                                    <td>{{ trim($fr->lastname.' '.$fr->firstname.' '.$fr->middlename.' '.$fr->suffix) }}</td>
-                                    <td>{{ $fr->barangay?->name }}{{ $fr->municipality ? ', '.$fr->municipality->name : '' }}</td>
-                                    <td>Batch {{ $fr->batch_section ?: '—' }} - {{ $fr->batch_year ?: '—' }}</td>
-                                    <td><span class="{{ $badge($fr->status) }}">{{ $fr->status }}</span></td>
-                                    <td>
-                                        <a href="{{ route('mblrc.fr.show', $fr) }}" class="btn btn-outline-primary btn-sm">Profile</a>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center" style="gap:15px;">
-                                            <a href="{{ route('mblrc.fr.edit', $fr) }}" style="color:#007bff;text-decoration:none;" title="Edit">
-                                                <i class="mdi mdi-pencil" style="font-size:18px;"></i>
-                                            </a>
-                                            @if (! $fr->programStatus && $fr->education_works_count === 0 && $fr->location_histories_count === 0 && $fr->skills_count === 0 && $fr->assistances_count === 0)
-                                                <button type="button"
-                                                        data-delete-confirm
-                                                        data-delete-action="{{ route('mblrc.fr.destroy', $fr) }}"
-                                                        data-delete-title="Delete Former Rebel record?"
-                                                        data-delete-name="{{ $fr->classified_id }} — {{ $fr->full_name }}"
-                                                        data-delete-message="Only records without monitoring history can be permanently deleted."
-                                                        style="background:none;border:none;color:#dc3545;padding:0;cursor:pointer;"
-                                                        title="Delete">
-                                                    <i class="mdi mdi-delete" style="font-size:18px;"></i>
-                                                </button>
-                                            @else
-                                                <span class="text-muted" title="This record has protected monitoring history">
-                                                    <i class="mdi mdi-lock" style="font-size:18px;"></i>
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="8" class="text-center">No records found.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="mt-4">{{ $frs->links() }}</div>
-            </div>
-        </div>
-    </div>
+<div class="fr-index">
+    <section class="fr-hero mb-4" aria-labelledby="fr-records-title"><div class="hero-content"><div class="hero-eyebrow mb-1">MBLRC records workspace</div><h2 id="fr-records-title" class="mb-1">Former Rebels Monitoring</h2><p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Manage authorized profiles and monitor reintegration records.</p></div><a href="{{ route('mblrc.fr.create') }}" class="register-button"><i class="mdi mdi-account-plus"></i>Register Former Rebel</a></section>
+    <section class="card records-card" aria-label="Former rebel records"><div class="card-body"><div class="table-responsive"><table class="table records-table"><thead><tr><th>Profile ID</th><th>Photo</th><th>Name</th><th>Address</th><th>Batch</th><th>Status</th><th>Profile</th><th>Manage</th></tr></thead><tbody>
+        @forelse($frs as $fr)
+            <tr><td><span class="profile-id">{{ $fr->classified_id }}</span></td><td><img class="avatar" src="{{ asset('assets/img/fr-profile.jpg') }}" alt="Profile placeholder"></td><td><span class="record-name">{{ trim($fr->lastname.' '.$fr->firstname.' '.$fr->middlename.' '.$fr->suffix) }}</span></td><td><span class="record-detail"><i class="mdi mdi-map-marker-outline"></i><span>{{ $fr->barangay?->name ?: 'Barangay not assigned' }}{{ $fr->municipality ? ', '.$fr->municipality->name : '' }}</span></span></td><td><span class="record-detail"><i class="mdi mdi-account-group"></i><span>Batch {{ $fr->batch_section ?: '—' }} · {{ $fr->batch_year ?: '—' }}</span></span></td><td><span class="status-pill {{ $statusClass($fr->status) }}">{{ $fr->status }}</span></td><td><a href="{{ route('mblrc.fr.show', $fr) }}" class="btn btn-sm btn-outline-primary profile-button">View Profile <i class="mdi mdi-arrow-right"></i></a></td><td><div class="manage-actions"><a href="{{ route('mblrc.fr.edit', $fr) }}" class="icon-action edit" title="Edit {{ $fr->classified_id }}" aria-label="Edit {{ $fr->classified_id }}"><i class="mdi mdi-pencil"></i></a>@if(! $fr->programStatus && $fr->education_works_count === 0 && $fr->location_histories_count === 0 && $fr->skills_count === 0 && $fr->assistances_count === 0)<button type="button" class="icon-action delete" data-delete-confirm data-delete-action="{{ route('mblrc.fr.destroy', $fr) }}" data-delete-title="Delete Former Rebel record?" data-delete-name="{{ $fr->classified_id }} — {{ $fr->full_name }}" data-delete-message="Only records without monitoring history can be permanently deleted." title="Delete {{ $fr->classified_id }}" aria-label="Delete {{ $fr->classified_id }}"><i class="mdi mdi-delete"></i></button>@else<span class="icon-action locked" title="This record has protected monitoring history" aria-label="Protected monitoring history"><i class="mdi mdi-lock"></i></span>@endif</div></td></tr>
+        @empty
+            <tr><td colspan="8"><div class="empty-records"><i class="mdi mdi-account-search"></i><strong>No records found</strong><span>Register a former rebel profile to begin authorized monitoring.</span></div></td></tr>
+        @endforelse
+    </tbody></table></div></div>@if($frs->hasPages())<div class="records-pagination">{{ $frs->links() }}</div>@endif</section>
 </div>
 @include('super_admin.partials.delete-confirmation')
 @endsection

@@ -165,7 +165,7 @@
         function syncRoleFields(form) {
             const role = form.querySelector('[name=role]').value;
             form.querySelectorAll('[data-role-field]').forEach((el) => {
-                el.classList.toggle('d-none', el.dataset.roleField !== role);
+                el.classList.toggle('d-none', !el.dataset.roleField.split(',').includes(role));
             });
         }
 
@@ -208,8 +208,8 @@
             requireField('role', 'Role is required.');
 
             const role = form.querySelector('[name=role]').value;
-            if (role === 'lgu') {
-                requireField('municipality_id', 'Municipality is required for LGU users.');
+            if (['lgu', 'lswdo', 'dilg_provincial_focal', 'local_eclip_committee'].includes(role)) {
+                requireField('municipality_id', 'Municipality is required for municipality-scoped users.');
             }
             if (role === 'gov_agency') {
                 requireField('gov_agency_id', 'Government agency is required for agency users.');

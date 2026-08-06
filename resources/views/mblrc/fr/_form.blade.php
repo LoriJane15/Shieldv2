@@ -4,11 +4,20 @@
     $selBarangays = $barangays ?? collect();
 @endphp
 
-<div class="card">
+@once
+@push('styles')
+<style>
+    .fr-form-card{border:1px solid #e7ecf3;border-radius:14px;box-shadow:0 4px 16px rgba(23,43,77,.045)}.fr-form-card .card-body{padding:1.5rem}.form-section{border-bottom:1px solid #edf1f6;margin-bottom:1.4rem;padding-bottom:1.4rem}.form-section:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}.form-section-title{align-items:center;color:#172b4d!important;display:flex;font-size:.9rem!important;font-weight:700!important;letter-spacing:.03em;margin-bottom:1.2rem!important;text-transform:uppercase}.form-section-title i{align-items:center;background:#eaf1ff;border-radius:9px;color:#2f6fed;display:flex;font-size:1rem;height:34px;justify-content:center;margin-right:.7rem;width:34px}.fr-form-card small.text-muted{color:#64748b!important;font-size:.68rem;font-weight:700;letter-spacing:.03em}.fr-form-card .form-control,.fr-form-card .form-select{border:1px solid #dfe5ee;border-radius:8px;min-height:42px}.fr-form-card .form-control:focus,.fr-form-card .form-select:focus{border-color:#80a6ee;box-shadow:0 0 0 3px rgba(47,111,237,.1)}.fr-form-card textarea.form-control{min-height:92px}.fr-form-card .text-danger.small{font-size:.67rem}
+    @media(max-width:767px){.fr-form-card .card-body{padding:1.1rem}.form-section{margin-bottom:1.15rem;padding-bottom:1.15rem}}
+</style>
+@endpush
+@endonce
+
+<div class="card fr-form-card">
     <div class="card-body">
         {{-- PROFILE INFORMATION --}}
-        <div class="mb-4">
-            <h4 class="mb-4" style="color:#63479B;font-weight:bold;">PROFILE INFORMATION</h4>
+        <div class="form-section">
+            <h4 class="form-section-title"><i class="mdi mdi-account-outline"></i>Profile Information</h4>
             <div class="row g-3">
                 <div class="col-md-4">
                     <small class="text-muted d-block mb-2">FIRST NAME <span class="text-danger">*</span></small>
@@ -71,8 +80,8 @@
         </div>
 
         {{-- ADDRESS INFORMATION --}}
-        <div class="mb-4">
-            <h4 class="mb-4" style="color:#63479B;font-weight:bold;">ADDRESS INFORMATION</h4>
+        <div class="form-section">
+            <h4 class="form-section-title"><i class="mdi mdi-map-marker-outline"></i>Address Information</h4>
             <div class="row g-3">
                 <div class="col-md-4">
                     <small class="text-muted d-block mb-2">PROVINCE</small>
@@ -116,8 +125,8 @@
         </div>
 
         {{-- BACKGROUND INFORMATION --}}
-        <div class="mb-2">
-            <h4 class="mb-4" style="color:#63479B;font-weight:bold;">BACKGROUND INFORMATION</h4>
+        <div class="form-section">
+            <h4 class="form-section-title"><i class="mdi mdi-clipboard-text-outline"></i>Background Information</h4>
             <div class="row g-3">
                 <div class="col-md-4">
                     <small class="text-muted d-block mb-2">DATE OF SURRENDER</small>

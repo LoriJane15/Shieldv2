@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GovAgency;
+use App\Models\FormerRebel;
 use App\Models\Implementation;
 use App\Models\Municipality;
 use App\Models\RcspBarangay;
@@ -40,7 +40,7 @@ class OverviewController extends Controller
             'barangays' => RcspBarangay::with('barangay')->where('municipality_id', $m->id)->get(),
         ])->filter(fn ($r) => $r['barangays']->isNotEmpty());
 
-        $frPoints = \App\Models\FormerRebel::whereNotNull('latitude')->whereNotNull('longitude')
+        $frPoints = FormerRebel::whereNotNull('latitude')->whereNotNull('longitude')
             ->get(['firstname', 'lastname', 'placement_address', 'latitude', 'longitude', 'status'])
             ->map(fn ($fr) => [
                 'name' => trim("{$fr->firstname} {$fr->lastname}"),

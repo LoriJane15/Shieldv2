@@ -2,30 +2,21 @@
 @section('title', 'Register FR')
 @section('heading', 'Register Former Rebel')
 
+@push('styles')
+<style>
+    .fr-editor{--primary:#2f6fed;--navy:#172b4d}.editor-back{align-items:center;color:#64748b;display:inline-flex;font-size:.8rem;font-weight:600;margin-bottom:1.1rem;text-decoration:none!important}.editor-back i{margin-right:.4rem}.editor-header{align-items:center;background:linear-gradient(125deg,#173b74,#2f6fed);border-radius:15px;color:#fff;display:flex;justify-content:space-between;margin-bottom:1.2rem;overflow:hidden;padding:1.3rem 1.4rem;position:relative}.editor-header::after{background:rgba(255,255,255,.08);border-radius:50%;content:'';height:160px;position:absolute;right:-35px;top:-85px;width:160px}.editor-heading{align-items:center;display:flex;position:relative;z-index:1}.editor-icon{align-items:center;background:rgba(255,255,255,.17);border-radius:10px;display:flex;flex:0 0 42px;font-size:1.2rem;height:42px;justify-content:center;margin-right:.9rem;width:42px}.editor-header h2{color:#fff;font-size:1.15rem;font-weight:700;margin:0 0 .15rem}.editor-header p{font-size:.7rem;margin:0;opacity:.82}.save-button{border-radius:9px;font-size:.74rem;font-weight:600;position:relative;z-index:1}.save-button i{margin-right:.35rem}.bottom-actions{display:flex;justify-content:flex-end;margin-top:1rem}.bottom-actions .save-button{padding:.65rem 1rem}@media(max-width:767px){.editor-header{align-items:stretch;flex-direction:column}.editor-header>.save-button{margin-top:1rem;width:100%}.bottom-actions .save-button{width:100%}}
+</style>
+@endpush
+
 @section('content')
-<form method="POST" action="{{ route('mblrc.fr.store') }}">
+<div class="fr-editor"><a href="{{ route('mblrc.fr.index') }}" class="editor-back"><i class="mdi mdi-arrow-left"></i>Back to former rebel records</a><form method="POST" action="{{ route('mblrc.fr.store') }}" data-fr-form>
     @csrf
-    <div class="row">
-        <div class="col-12 grid-margin">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <a href="{{ route('mblrc.fr.index') }}" class="btn btn-outline-secondary">
-                    <i class="mdi mdi-arrow-left"></i> Back
-                </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="mdi mdi-check"></i> Register
-                </button>
-            </div>
-        </div>
-    </div>
+    <header class="editor-header"><div class="editor-heading"><div class="editor-icon"><i class="mdi mdi-account-plus"></i></div><div><h2>Register Former Rebel</h2><p>Create an authorized profile for reintegration monitoring.</p></div></div><button type="submit" class="btn btn-light save-button" data-submit-button><i class="mdi mdi-content-save"></i>Register Profile</button></header>
 
     @include('mblrc.fr._form')
 
-    <div class="row">
-        <div class="col-12 d-flex justify-content-end">
-            <button type="submit" class="btn btn-success">Register Former Rebel</button>
-        </div>
-    </div>
-</form>
+    <div class="bottom-actions"><button type="submit" class="btn btn-primary save-button"><i class="mdi mdi-content-save"></i>Register Former Rebel</button></div>
+</form></div>
 @endsection
 
 @push('scripts')
@@ -47,5 +38,6 @@
             + rows.map((b) => `<option value="${b.id}">${b.name}</option>`).join('');
     });
 })();
+const frForm=document.querySelector('[data-fr-form]');if(frForm){frForm.addEventListener('submit',function(){const button=frForm.querySelector('[data-submit-button]');button.disabled=true;button.innerHTML='<i class="mdi mdi-loading mdi-spin mr-1"></i>Registering...';});}
 </script>
 @endpush

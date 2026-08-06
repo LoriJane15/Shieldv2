@@ -19,10 +19,15 @@ class RcspLifecycleTest extends TestCase
     use RefreshDatabase;
 
     private Municipality $muni;
+
     private Barangay $barangay;
+
     private User $lgu;
+
     private User $admin;
+
     private RcspBarangay $rb;
+
     /** @var array<int,RcspPhase> */
     private array $phases = [];
 

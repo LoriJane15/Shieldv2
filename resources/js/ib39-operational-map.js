@@ -17,6 +17,8 @@ import 'leaflet/dist/leaflet.css';
     const legend = document.querySelector('[data-map-legend]');
     const fitButton = document.querySelector('[data-map-fit]');
     const resetButton = document.querySelector('[data-map-reset]');
+    const generatedAt = document.querySelector('[data-generated-at]');
+    const dataStatus = document.querySelector('[data-data-status]');
 
     const colors = {
         Active: '#16a34a',
@@ -183,6 +185,16 @@ import 'leaflet/dist/leaflet.css';
             }
 
             const payload = await response.json();
+            if (dataStatus) {
+                dataStatus.textContent = 'Authorized data loaded securely';
+            }
+            if (generatedAt && payload.meta?.generated_at) {
+                const generatedDate = new Date(payload.meta.generated_at);
+                generatedAt.dateTime = payload.meta.generated_at;
+                generatedAt.textContent = Number.isNaN(generatedDate.getTime())
+                    ? 'recently'
+                    : generatedDate.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+            }
             records = (payload.markers || []).filter((record) => (
                 Number.isFinite(Number(record.lat))
                 && Number.isFinite(Number(record.lng))
@@ -199,6 +211,9 @@ import 'leaflet/dist/leaflet.css';
             totalCount.textContent = String(records.length);
             renderMarkers(true);
         } catch (error) {
+            if (dataStatus) {
+                dataStatus.textContent = 'Authorized data unavailable';
+            }
             setState('Authorized map data could not be loaded. Please reload or contact an administrator.', 'error');
         }
     };

@@ -139,7 +139,7 @@ The command writes a unique `APP_KEY` into the local `.env` file.
 php artisan migrate --seed
 ```
 
-This creates the tables, location reference data, seven synthetic role accounts,
+This creates the tables, location reference data, thirteen synthetic role accounts,
 and sample records for the RCSP, IMPLAN, former-rebel monitoring, and map workflows.
 The development seeder runs only when `APP_ENV=local`.
 
@@ -171,6 +171,14 @@ example configuration above, the password is `Shield-Local-2026-Test!`.
 | `lgu` | DILG — LGU (scoped to Digos City) |
 | `gov_agency` | Government Agency (scoped to a synthetic agency) |
 | `mblrc` | MBLRC |
+| `lswdo` | LSWDO (scoped to Digos City) |
+| `japic` | JAPIC |
+| `dilg_provincial_focal` | DILG Provincial/HUC/ICC E-CLIP Focal Person (scoped to Digos City) |
+| `dilg_regional` | DILG Regional Office |
+| `nboo_eclip_pmo` | NBOO / ECLIP-PMO |
+| `dilg_fms` | DILG Financial Management Service |
+| `pnp` | Philippine National Police |
+| `local_eclip_committee` | Local E-CLIP Committee (scoped to Digos City) |
 | `afp` | AFP |
 
 These credentials are development-only and must never be used in production.

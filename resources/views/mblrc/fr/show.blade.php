@@ -14,8 +14,8 @@
     $batch = 'Batch '.($fr->batch_section ? $fr->batch_section.' - ' : '').($fr->batch_year ?: '—');
     // [label, mdi icon, value, col class]
     $profileFields = [
-        ['NAME', 'mdi-card-account-details', $fullName, 'col-md-8'],
-        ['ALIAS', 'mdi-tag-text', $fr->nickname ?: '—', 'col-md-4'],
+        ['NAME', 'mdi-account-card-details', $fullName, 'col-md-8'],
+        ['ALIAS', 'mdi-tag', $fr->nickname ?: '—', 'col-md-4'],
         ['GENDER', 'mdi-gender-male-female', $fr->gender ?: '—', 'col-md-4'],
         ['CIVIL STATUS', 'mdi-heart', $fr->civil_status ?: '—', 'col-md-4'],
         ['BIRTHDAY', 'mdi-calendar', $fr->birthdate?->format('F d, Y') ?: '—', 'col-md-4'],
@@ -55,6 +55,16 @@
     .nav-tabs-line .nav-link.active { color: #007bff; border-bottom-color: #007bff; background: transparent; }
     .section-head h3 { font-size: 1.25rem; }
     #frLocationMap { height: 400px; width: 100%; border-radius: 6px; }
+    #frProfile .me-1 { margin-right: .25rem !important; }
+    #frProfile .me-2 { margin-right: .5rem !important; }
+    #frProfile .me-3 { margin-right: 1rem !important; }
+    #frProfile .gap-2 { gap: .5rem; }
+    #frProfile .g-2 { margin-left: -.25rem; margin-right: -.25rem; row-gap: .5rem; }
+    #frProfile .g-2 > [class*="col-"] { padding-left: .25rem; padding-right: .25rem; }
+    #frProfile .g-3 { margin-left: -.5rem; margin-right: -.5rem; row-gap: 1rem; }
+    #frProfile .g-3 > [class*="col-"] { padding-left: .5rem; padding-right: .5rem; }
+    #frProfile .section-head > .d-flex > i,
+    #frProfile .section-head > i { flex: 0 0 auto; margin-right: .65rem !important; }
 </style>
 @endpush
 
@@ -165,7 +175,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-4 section-head">
                         <div class="d-flex align-items-center">
-                            <i class="mdi mdi-clipboard-list me-2" style="font-size:1.8rem;color:#3D0075;"></i>
+                            <i class="mdi mdi-clipboard-text-outline me-2" style="font-size:1.8rem;color:#3D0075;"></i>
                             <h3 class="font-weight-bold mb-0" style="color:#3D0075;">3-MONTHS PROGRAM STATUS</h3>
                         </div>
                         <button type="button" class="btn" style="background-color:#3D0075;color:#fff;" data-bs-toggle="collapse" data-bs-target="#editStatusForm">Edit Status</button>
@@ -268,7 +278,7 @@
                         <ul data-skills-list class="list-unstyled mb-0">
                             @foreach ($fr->skills as $skill)
                                 <li class="d-flex align-items-center info-item mb-3 p-2 border-bottom" data-skill-id="{{ $skill->id }}">
-                                    <div class="icon-container me-3"><i class="mdi mdi-tools text-primary"></i></div>
+                                    <div class="icon-container me-3"><i class="mdi mdi-wrench text-primary"></i></div>
                                     <div class="info-content flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
@@ -314,7 +324,7 @@
                         <ul data-assistance-list class="list-unstyled mb-0">
                             @foreach ($fr->assistances as $a)
                                 <li class="d-flex align-items-center info-item mb-3 p-2 border-bottom">
-                                    <div class="icon-container me-3"><i class="mdi mdi-hand-heart text-primary"></i></div>
+                                    <div class="icon-container me-3"><i class="mdi mdi-heart text-primary"></i></div>
                                     <div class="info-content flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>

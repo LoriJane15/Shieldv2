@@ -109,11 +109,26 @@ class UserController extends Controller
     {
         abort_if($user->id === auth()->id(), 403, 'You cannot delete your own account.');
         abort_if(
-            $user->rcspForms()->exists() || $user->implementations()->exists(),
+            $user->rcspForms()->exists()
+                || $user->implementations()->exists()
+                || $user->createdEclipCases()->exists()
+                || $user->eclipEligibilityReviews()->exists()
+                || $user->eclipStatusHistories()->exists()
+                || $user->eclipDocumentVersions()->exists()
+                || $user->eclipDocumentReviews()->exists()
+                || $user->eclipDocumentRequirementHistories()->exists()
+                || $user->eclipAssistanceRequests()->exists()
+                || $user->eclipAssistanceRevisions()->exists()
+                || $user->eclipAssistanceCategoryHistories()->exists()
+                || $user->eclipDilgReviews()->exists()
+                || $user->eclipFundTransactions()->exists()
+                || $user->eclipAssistanceReleases()->exists()
+                || $user->eclipReportExports()->exists(),
             422,
             'This user owns workflow records and cannot be deleted.'
         );
         $logo = $user->logo;
+        $user->notifications()->delete();
         $user->delete();
         $this->userLogos->delete($logo);
 
@@ -123,7 +138,7 @@ class UserController extends Controller
     /** Null out role-scoped FKs that don't apply to the chosen role. */
     private function scopeRoleFields(array $data): array
     {
-        if (($data['role'] ?? null) !== 'lgu') {
+        if (! in_array(($data['role'] ?? null), ['lgu', 'lswdo', 'dilg_provincial_focal', 'local_eclip_committee'], true)) {
             $data['municipality_id'] = null;
         }
         if (($data['role'] ?? null) !== 'gov_agency') {
