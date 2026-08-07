@@ -12,12 +12,13 @@
     .services-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .1em; opacity: .75; text-transform: uppercase; }
     .services-hero h2 { color: #fff; font-size: 1.55rem; font-weight: 700; }
     .case-meta { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
-    .case-meta span { align-items: center; display: inline-flex; font-size: .82rem; gap: .4rem; opacity: .92; }
+    .case-meta span { align-items: center; display: inline-flex; font-size: .82rem; gap: .5rem; opacity: .92; }
+    .case-meta span > i { align-items: center; background: rgba(255, 255, 255, .1); border-radius: 7px; display: inline-flex; flex: 0 0 28px; height: 28px; justify-content: center; width: 28px; }
     .scope-notice { align-items: flex-start; background: #eef5ff; border: 1px solid #ccddfb; border-radius: 11px; color: #36537c; display: flex; font-size: .78rem; gap: .65rem; padding: .8rem 1rem; }
-    .scope-notice i { color: #2f6fed; font-size: 1.05rem; }
+    .scope-notice i { align-items: center; color: #2f6fed; display: inline-flex; flex: 0 0 24px; font-size: 1.05rem; height: 24px; justify-content: center; width: 24px; }
     .summary-card, .service-card, .add-service-card { border: 1px solid var(--service-border); border-radius: 14px; box-shadow: 0 4px 16px rgba(23, 43, 77, .045); }
     .summary-card .card-body { align-items: center; display: flex; gap: .85rem; padding: 1rem; }
-    .summary-icon { align-items: center; background: var(--summary-bg); border-radius: 10px; color: var(--summary-color); display: flex; flex: 0 0 40px; font-size: 1.15rem; height: 40px; justify-content: center; }
+    .summary-icon { align-items: center; background: var(--summary-bg); border-radius: 10px; color: var(--summary-color); display: flex; flex: 0 0 40px; font-size: 1.15rem; height: 40px; justify-content: center; width: 40px; }
     .summary-card strong { color: var(--service-navy); display: block; font-size: 1.35rem; line-height: 1.15; }
     .summary-card span { color: #718096; font-size: .72rem; font-weight: 600; text-transform: uppercase; }
     .summary-total { --summary-bg: #eaf1ff; --summary-color: #2f6fed; }
@@ -36,7 +37,7 @@
     .service-card { overflow: hidden; }
     .service-card-header { align-items: center; background: #f8fafc; border-bottom: 1px solid #edf1f6; display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; padding: 1rem 1.25rem; }
     .service-title-wrap { align-items: center; display: flex; gap: .75rem; }
-    .service-type-icon { align-items: center; background: #eaf1ff; border-radius: 10px; color: #2f6fed; display: flex; flex: 0 0 40px; font-size: 1.1rem; height: 40px; justify-content: center; }
+    .service-type-icon { align-items: center; background: #eaf1ff; border-radius: 10px; color: #2f6fed; display: flex; flex: 0 0 40px; font-size: 1.1rem; height: 40px; justify-content: center; width: 40px; }
     .service-title { color: #263a59; font-size: .95rem; font-weight: 700; margin: 0; }
     .service-agency { color: #8492a6; font-size: .72rem; margin-top: .12rem; }
     .status-badge { border-radius: 14px; display: inline-flex; font-size: .7rem; font-weight: 700; padding: .35rem .7rem; }
@@ -67,7 +68,8 @@
     .latest-badge { background: #e6f7ef; border-radius: 10px; color: #16845e; font-size: .58rem; margin-left: .25rem; padding: .16rem .38rem; }
     .empty-services { background: #fff; border: 1px dashed #cbd5e1; border-radius: 14px; color: #8492a6; padding: 2.5rem 1rem; text-align: center; }
     .empty-services i { color: #b7c2d1; display: block; font-size: 2.25rem; margin-bottom: .5rem; }
-    @media (max-width: 767px) { .services-hero { padding: 1.2rem; } .services-hero h2 { font-size: 1.3rem; } .evidence-document-list { grid-template-columns: 1fr; } .service-evidence-upload .btn { margin-top: .75rem; width: 100%; } }
+    .services-page .btn { align-items: center; display: inline-flex; gap: .3rem; justify-content: center; }
+    @media (max-width: 767px) { .services-hero { padding: 1.2rem; } .services-hero h2 { font-size: 1.3rem; } .case-meta { align-items: flex-start; flex-direction: column; gap: .5rem; } .evidence-document-list { grid-template-columns: 1fr; } .service-evidence-upload .btn { margin-top: .75rem; width: 100%; } .service-card-header { align-items: flex-start; } }
 </style>
 @endpush
 

@@ -4,10 +4,11 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Afp;
 use App\Http\Controllers\DilgReviewer\EclipReviewController;
 use App\Http\Controllers\EclipAnalyticsController;
-use App\Http\Controllers\EclipBasicServiceDocumentController;
 use App\Http\Controllers\EclipAssessor;
+use App\Http\Controllers\EclipBasicServiceDocumentController;
 use App\Http\Controllers\EclipDocumentDownloadController;
 use App\Http\Controllers\EclipFunding\FundingController;
+use App\Http\Controllers\EclipWorkflowActivityController;
 use App\Http\Controllers\GovAgency;
 use App\Http\Controllers\Ib39;
 use App\Http\Controllers\Japic;
@@ -16,8 +17,8 @@ use App\Http\Controllers\LocalEclip\ReleaseController;
 use App\Http\Controllers\Lswdo;
 use App\Http\Controllers\Mblrc;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Pnp;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::get('/eclip-analytics', [EclipAnalyticsController::class, 'index'])->name('eclip.analytics.index');
     Route::get('/eclip-analytics/export', [EclipAnalyticsController::class, 'export'])->name('eclip.analytics.export');
+    Route::patch('/eclip-workflow-activities/{activity}', [EclipWorkflowActivityController::class, 'update'])->name('eclip.workflow-activities.update');
 });
 
 /*

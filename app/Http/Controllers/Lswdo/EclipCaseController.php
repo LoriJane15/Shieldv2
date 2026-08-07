@@ -40,6 +40,7 @@ class EclipCaseController extends Controller
         $eclipCase->load([
             'formerRebel.municipality', 'eligibilityReviews.reviewer', 'statusHistories.user',
             'documents.requirement', 'documents.versions.uploader', 'documents.latestVersion', 'documents.reviews.reviewer',
+            'workflowActivities.histories.user',
         ]);
 
         return view('lswdo.eclip.show', [

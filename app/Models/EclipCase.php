@@ -83,4 +83,9 @@ class EclipCase extends Model
     {
         return $this->hasMany(EclipBasicService::class);
     }
+
+    public function workflowActivities(): HasMany
+    {
+        return $this->hasMany(EclipWorkflowActivity::class)->orderBy('id');
+    }
 }

@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class EclipCaseWorkflowService
 {
+    public function __construct(private readonly EclipOfficialWorkflowService $officialWorkflow) {}
+
     public function beginAssistanceRelease(EclipCase $case, User $actor, ?string $ipAddress): EclipCase
     {
         if ($case->status === EclipCaseStatus::ReleasePending) {
@@ -68,13 +70,13 @@ class EclipCaseWorkflowService
                 'returned' => EclipCaseStatus::ReturnedForAssessmentRevision,
                 'rejected' => EclipCaseStatus::Rejected,
             }
-            : match ([$level, $decision]) {
-                ['provincial', 'endorsed'] => EclipCaseStatus::ProvincialEndorsed,
-                ['regional', 'endorsed'] => EclipCaseStatus::RegionalEndorsed,
-                ['national', 'approved'] => EclipCaseStatus::Approved,
-                ['legacy', 'approved'] => EclipCaseStatus::Approved,
-                default => throw ValidationException::withMessages(['decision' => 'The DILG review decision is invalid.']),
-            };
+        : match ([$level, $decision]) {
+            ['provincial', 'endorsed'] => EclipCaseStatus::ProvincialEndorsed,
+            ['regional', 'endorsed'] => EclipCaseStatus::RegionalEndorsed,
+            ['national', 'approved'] => EclipCaseStatus::Approved,
+            ['legacy', 'approved'] => EclipCaseStatus::Approved,
+            default => throw ValidationException::withMessages(['decision' => 'The DILG review decision is invalid.']),
+        };
 
         $from = match ($level) {
             'provincial' => EclipCaseStatus::SubmittedForDilgReview,
@@ -138,7 +140,7 @@ class EclipCaseWorkflowService
 
     public function submitForEligibility(EclipCase $case, User $actor, ?string $ipAddress): EclipCase
     {
-        return $this->transition(
+        $submitted = $this->transition(
             $case,
             $actor,
             [EclipCaseStatus::Draft, EclipCaseStatus::ReturnedForCorrection],
@@ -147,6 +149,10 @@ class EclipCaseWorkflowService
             $ipAddress,
             ['submitted_at' => now(), 'assigned_to' => null, 'eligibility_decided_at' => null],
         );
+
+        $this->officialWorkflow->initialize($submitted, $actor, $ipAddress);
+
+        return $submitted;
     }
 
     public function decideEligibility(
@@ -184,10 +190,16 @@ class EclipCaseWorkflowService
                 'reviewed_at' => now(),
             ]);
 
-            return $this->transitionLocked($lockedCase, $actor, $target, $remarks, $ipAddress, [
+            $result = $this->transitionLocked($lockedCase, $actor, $target, $remarks, $ipAddress, [
                 'assigned_to' => $actor->id,
                 'eligibility_decided_at' => now(),
             ]);
+
+            if (in_array($decision, ['eligible', 'ineligible'], true)) {
+                $this->officialWorkflow->recordEligibility($result, $actor, $decision, $remarks, $ipAddress);
+            }
+
+            return $result;
         });
     }
 
