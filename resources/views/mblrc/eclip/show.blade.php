@@ -29,9 +29,7 @@
             <section class="card overview-card mb-4" aria-labelledby="overview-title"><div class="card-body">
                 <div class="section-heading"><div class="section-icon"><i class="mdi mdi-clipboard-text-outline"></i></div><div><h3 id="overview-title" class="section-title">Case Overview</h3><p class="section-subtitle">Current ownership and processing information.</p></div></div>
                 <div class="overview-grid"><div class="overview-item"><small>Beneficiary ID</small><strong>{{ $case->formerRebel->classified_id }}</strong></div><div class="overview-item"><small>Municipality</small><strong>{{ $case->formerRebel->municipality?->name ?? 'Not assigned' }}</strong></div><div class="overview-item"><small>Current Status</small><strong>{{ $case->status->label() }}</strong></div></div>
-                @can('submit', $case)
-                    <form method="POST" action="{{ route('mblrc.eclip.submit', $case) }}" class="submit-panel" data-submit-form>@csrf<div class="submit-copy"><i class="mdi mdi-information-outline"></i><div><strong>Ready for eligibility review?</strong><span>Confirm the case information before forwarding it to LSWDO. Submission will be recorded in the case history.</span></div></div><button class="btn btn-primary submit-button" data-submit-button><i class="mdi mdi-send"></i>Submit for Eligibility Review</button></form>
-                @endcan
+                <div class="submit-panel"><div class="submit-copy"><i class="mdi mdi-information-outline"></i><div><strong>LSWDO processing</strong><span>This case was created through an accepted referral. MBLRC access is monitoring-only after handoff.</span></div></div></div>
             </div></section>
 
             @can('uploadDocument', $case)

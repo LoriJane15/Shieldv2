@@ -11,6 +11,7 @@ use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -79,6 +80,43 @@ class EclipBasicServiceTest extends TestCase
         $outside = User::factory()->role('lswdo')->create(['municipality_id' => $otherMunicipality->id]);
 
         $this->actingAs($outside)->get(route('lswdo.eclip.basic-services.index', $case))->assertForbidden();
+    }
+
+    public function test_lswdo_monitoring_page_is_view_first_and_uses_real_service_metadata(): void
+    {
+        Carbon::setTestNow('2026-08-07 12:00:00');
+        [$case, $lswdo, $agency] = $this->actors();
+        $service = $this->service($case, $lswdo, $agency);
+        $service->update([
+            'target_completion_date' => today()->subDays(3),
+            'remarks' => 'Awaiting agency confirmation.',
+        ]);
+
+        $response = $this->actingAs($lswdo)->get(route('lswdo.eclip.basic-services.index', $case));
+
+        $response->assertOk()
+            ->assertSee('Basic service completion is monitored separately from E-CLIP eligibility.')
+            ->assertSee('3 days overdue')
+            ->assertSee('View Details')
+            ->assertSee('Edit')
+            ->assertSee('Awaiting agency confirmation.')
+            ->assertSee('class="card add-service-card mb-4 "', false)
+            ->assertSee('class="service-panel"', false);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_completed_service_is_never_overdue(): void
+    {
+        Carbon::setTestNow('2026-08-07 12:00:00');
+        [$case, $lswdo, $agency] = $this->actors();
+        $service = $this->service($case, $lswdo, $agency);
+        $service->update(['status' => 'completed', 'target_completion_date' => today()->subWeek()]);
+
+        $this->assertFalse($service->fresh()->isOverdue());
+        $this->assertNull($service->fresh()->targetDateDifferenceInDays());
+
+        Carbon::setTestNow();
     }
 
     private function actors(): array

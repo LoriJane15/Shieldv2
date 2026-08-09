@@ -17,7 +17,7 @@ class EclipDocumentController extends Controller
         EclipDocumentService $documents,
     ): RedirectResponse {
         $requirement = EclipDocumentRequirement::query()->findOrFail($request->integer('requirement_id'));
-        $documents->upload($eclipCase, $requirement, $request->file('document'), $request->user(), $request->ip());
+        $documents->upload($eclipCase, $requirement, $request->file('document'), $request->user(), $request->ip(), $request->userAgent());
 
         return back()->with('success', 'Document uploaded for JAPIC review.');
     }

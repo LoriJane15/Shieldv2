@@ -16,6 +16,7 @@ class EclipDocumentService
     public function __construct(
         private readonly EclipDocumentStorageService $storage,
         private readonly EclipCaseWorkflowService $workflow,
+        private readonly DocumentAccessLogger $accessLog,
     ) {}
 
     public function upload(
@@ -24,6 +25,7 @@ class EclipDocumentService
         UploadedFile $file,
         User $actor,
         ?string $ipAddress,
+        ?string $userAgent = null,
     ): EclipDocumentVersion {
         if (! $requirement->is_active) {
             throw ValidationException::withMessages(['document' => 'This document requirement is not active.']);
@@ -40,7 +42,7 @@ class EclipDocumentService
         $path = $this->storage->store($file, $document);
 
         try {
-            return DB::transaction(function () use ($case, $document, $file, $path, $checksum, $safeOriginalName, $actor, $ipAddress) {
+            return DB::transaction(function () use ($case, $document, $file, $path, $checksum, $safeOriginalName, $actor, $ipAddress, $userAgent) {
                 $lockedDocument = EclipDocument::query()->lockForUpdate()->findOrFail($document->id);
                 $nextVersion = ((int) $lockedDocument->versions()->max('version_number')) + 1;
                 $version = $lockedDocument->versions()->create([
@@ -51,9 +53,14 @@ class EclipDocumentService
                     'size_bytes' => $file->getSize(),
                     'sha256' => $checksum,
                     'uploaded_by' => $actor->id,
+                    'classification' => 'confidential',
+                    'status' => 'submitted',
+                    'submitted_at' => now(),
                 ]);
                 $lockedDocument->update(['status' => 'pending']);
                 $this->workflow->beginDocumentProcessing($case, $actor, $ipAddress);
+
+                $this->accessLog->record($actor, $lockedDocument, $nextVersion === 1 ? 'upload' : 'replace', $version->id, $ipAddress, $userAgent);
 
                 return $version;
             });
@@ -69,12 +76,13 @@ class EclipDocumentService
         string $decision,
         ?string $remarks,
         ?string $ipAddress,
+        ?string $userAgent = null,
     ): void {
         if ($decision === 'invalid' && blank($remarks)) {
             throw ValidationException::withMessages(['remarks' => 'Remarks are required when a document is invalid.']);
         }
 
-        DB::transaction(function () use ($document, $actor, $decision, $remarks, $ipAddress) {
+        DB::transaction(function () use ($document, $actor, $decision, $remarks, $ipAddress, $userAgent) {
             $lockedDocument = EclipDocument::query()->lockForUpdate()->findOrFail($document->id);
             $version = $lockedDocument->versions()->latest('version_number')->firstOrFail();
             $allowed = match ($decision) {
@@ -96,6 +104,8 @@ class EclipDocumentService
                 'reviewed_at' => now(),
             ]);
             $lockedDocument->update(['status' => $decision]);
+            $version->update(['status' => $decision === 'invalid' ? 'rejected' : $decision]);
+            $this->accessLog->record($actor, $lockedDocument, 'review', $version->id, $ipAddress, $userAgent);
             $case = $lockedDocument->eclipCase()->firstOrFail();
 
             if ($decision === 'invalid') {

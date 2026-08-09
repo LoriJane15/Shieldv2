@@ -13,8 +13,8 @@
 @section('content')
 <div class="eclip-cases">
     <section class="cases-hero mb-4" aria-labelledby="cases-title">
-        <div class="hero-content"><div class="hero-eyebrow mb-1">MBLRC case workspace</div><h2 id="cases-title" class="mb-1">E-CLIP Cases</h2><p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Create and monitor beneficiary cases across the E-CLIP workflow.</p></div>
-        <a href="{{ route('mblrc.eclip.create') }}" class="create-button"><i class="mdi mdi-plus-circle-outline"></i>Create E-CLIP Case</a>
+        <div class="hero-content"><div class="hero-eyebrow mb-1">MBLRC case workspace</div><h2 id="cases-title" class="mb-1">Related E-CLIP Cases</h2><p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Cases created through your completed integration enrollments and LSWDO referrals.</p></div>
+        <a href="{{ route('mblrc.enrollments.index') }}" class="create-button"><i class="mdi mdi-clipboard-account-outline"></i>Integration Enrollments</a>
     </section>
 
     <section class="card cases-card" aria-label="E-CLIP cases">
@@ -31,7 +31,7 @@
                     <td class="text-right"><a class="btn btn-sm btn-outline-primary view-button" href="{{ route('mblrc.eclip.show', $case) }}">View Case <i class="mdi mdi-arrow-right"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="6"><div class="empty-cases"><div class="empty-icon"><i class="mdi mdi-clipboard-text-outline"></i></div><strong>No E-CLIP cases yet</strong><span>Create a case to begin monitoring a beneficiary through the E-CLIP workflow.</span><div><a href="{{ route('mblrc.eclip.create') }}" class="btn btn-sm btn-outline-primary create-empty"><i class="mdi mdi-plus mr-1"></i>Create First Case</a></div></div></td></tr>
+                <tr><td colspan="6"><div class="empty-cases"><div class="empty-icon"><i class="mdi mdi-clipboard-text-outline"></i></div><strong>No related E-CLIP cases yet</strong><span>A case appears after an assigned LSWDO accepts a completed integration referral.</span><div><a href="{{ route('mblrc.enrollments.index') }}" class="btn btn-sm btn-outline-primary create-empty">Open Enrollments</a></div></div></td></tr>
             @endforelse
             </tbody>
         </table></div></div>

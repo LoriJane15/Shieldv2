@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'is_active',
         'logo',
         'municipality_id',
         'gov_agency_id',
@@ -34,6 +35,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -109,6 +111,21 @@ class User extends Authenticatable
     public function assignedEclipCases(): HasMany
     {
         return $this->hasMany(EclipCase::class, 'assigned_to');
+    }
+
+    public function eclipCaseParticipations(): HasMany
+    {
+        return $this->hasMany(EclipCaseParticipant::class);
+    }
+
+    public function mblrcEnrollments(): HasMany
+    {
+        return $this->hasMany(MblrcEnrollment::class, 'assigned_user_id');
+    }
+
+    public function assignedLswdoReferrals(): HasMany
+    {
+        return $this->hasMany(LswdoReferral::class, 'assigned_to');
     }
 
     public function eclipEligibilityReviews(): HasMany

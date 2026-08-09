@@ -164,12 +164,14 @@ class EclipCaseWorkflowService
     ): EclipCase {
         $target = match ($decision) {
             'eligible' => EclipCaseStatus::Eligible,
-            'ineligible' => EclipCaseStatus::Ineligible,
-            'returned' => EclipCaseStatus::ReturnedForCorrection,
+            'previously_assisted' => EclipCaseStatus::PreviouslyAssisted,
+            'for_clarification' => EclipCaseStatus::ForClarification,
+            'not_eligible', 'ineligible' => EclipCaseStatus::Ineligible,
+            'returned' => EclipCaseStatus::ForClarification,
             default => throw ValidationException::withMessages(['decision' => 'The eligibility decision is invalid.']),
         };
 
-        if (in_array($decision, ['ineligible', 'returned'], true) && blank($remarks)) {
+        if ($decision !== 'eligible' && blank($remarks)) {
             throw ValidationException::withMessages(['remarks' => 'Remarks are required for this decision.']);
         }
 
@@ -195,7 +197,7 @@ class EclipCaseWorkflowService
                 'eligibility_decided_at' => now(),
             ]);
 
-            if (in_array($decision, ['eligible', 'ineligible'], true)) {
+            if (in_array($decision, ['eligible', 'ineligible', 'not_eligible', 'previously_assisted'], true)) {
                 $this->officialWorkflow->recordEligibility($result, $actor, $decision, $remarks, $ipAddress);
             }
 

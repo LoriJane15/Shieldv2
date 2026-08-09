@@ -5,47 +5,101 @@ namespace App\Http\Controllers\Lswdo;
 use App\Enums\EclipCaseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Lswdo\DecideEligibilityRequest;
+use App\Http\Requests\Lswdo\IndexEligibilityCasesRequest;
 use App\Models\EclipCase;
 use App\Models\EclipDocumentRequirement;
+use App\Models\User;
 use App\Services\EclipCaseWorkflowService;
+use App\Services\EclipWorkflowPresentationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EclipCaseController extends Controller
 {
-    public function index(Request $request): View
+    public function index(IndexEligibilityCasesRequest $request): View
     {
-        $cases = EclipCase::query()
-            ->where('municipality_id', $request->user()->municipality_id)
-            ->whereIn('status', [
+        $queueStatuses = [
+            EclipCaseStatus::SubmittedForEligibility,
+            EclipCaseStatus::EligibilityReviewInProgress,
+            EclipCaseStatus::Eligible,
+            EclipCaseStatus::Ineligible,
+            EclipCaseStatus::DocumentProcessing,
+            EclipCaseStatus::DocumentsIncomplete,
+            EclipCaseStatus::DocumentsCertified,
+        ];
+
+        $baseQuery = EclipCase::query()
+            ->whereHas('participantAssignments', fn ($query) => $query
+                ->where('user_id', $request->user()->id)
+                ->where('is_active', true))
+            ->whereIn('status', array_map(fn (EclipCaseStatus $status) => $status->value, $queueStatuses));
+
+        $summary = [
+            'total' => (clone $baseQuery)->count(),
+            'awaiting' => (clone $baseQuery)->whereIn('status', [
                 EclipCaseStatus::SubmittedForEligibility->value,
                 EclipCaseStatus::EligibilityReviewInProgress->value,
-                EclipCaseStatus::Eligible->value,
-                EclipCaseStatus::Ineligible->value,
-                EclipCaseStatus::DocumentProcessing->value,
-                EclipCaseStatus::DocumentsIncomplete->value,
-                EclipCaseStatus::DocumentsCertified->value,
-            ])
-            ->with('formerRebel')
-            ->latest('submitted_at')
-            ->paginate(15);
+            ])->count(),
+            'eligible' => (clone $baseQuery)->where('status', EclipCaseStatus::Eligible->value)->count(),
+            'certified' => (clone $baseQuery)->where('status', EclipCaseStatus::DocumentsCertified->value)->count(),
+        ];
 
-        return view('lswdo.eclip.index', ['cases' => $cases]);
+        $filters = $request->validated();
+        $casesQuery = (clone $baseQuery)->with('formerRebel');
+
+        if ($search = $filters['search'] ?? null) {
+            $casesQuery->where(function ($query) use ($search) {
+                $query->where('case_number', 'like', "%{$search}%")
+                    ->orWhereHas('formerRebel', function ($formerRebelQuery) use ($search) {
+                        $formerRebelQuery->where('classified_id', 'like', "%{$search}%")
+                            ->orWhere('firstname', 'like', "%{$search}%")
+                            ->orWhere('middlename', 'like', "%{$search}%")
+                            ->orWhere('lastname', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($status = $filters['status'] ?? null) {
+            $casesQuery->where('status', $status);
+        }
+
+        match ($filters['date'] ?? null) {
+            'today' => $casesQuery->whereDate('submitted_at', today()),
+            'week' => $casesQuery->whereBetween('submitted_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $casesQuery->whereBetween('submitted_at', [now()->startOfMonth(), now()->endOfMonth()]),
+            default => null,
+        };
+
+        $sortDirection = ($filters['sort'] ?? 'newest') === 'oldest' ? 'asc' : 'desc';
+        $cases = $casesQuery->orderBy('submitted_at', $sortDirection)
+            ->orderBy('id', $sortDirection)
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('lswdo.eclip.index', [
+            'cases' => $cases,
+            'summary' => $summary,
+            'statusOptions' => collect($queueStatuses)->mapWithKeys(fn (EclipCaseStatus $status) => [$status->value => $status->label()]),
+            'hasActiveFilters' => filled($filters['search'] ?? null) || filled($filters['status'] ?? null) || filled($filters['date'] ?? null),
+        ]);
     }
 
-    public function show(EclipCase $eclipCase): View
+    public function show(Request $request, EclipCase $eclipCase, EclipWorkflowPresentationService $workflowPresentation): View
     {
         $this->authorize('view', $eclipCase);
         $eclipCase->load([
             'formerRebel.municipality', 'eligibilityReviews.reviewer', 'statusHistories.user',
             'documents.requirement', 'documents.versions.uploader', 'documents.latestVersion', 'documents.reviews.reviewer',
             'workflowActivities.histories.user',
+            'authenticationRequest.assignee',
         ]);
 
         return view('lswdo.eclip.show', [
             'case' => $eclipCase,
             'requirements' => EclipDocumentRequirement::query()->where('is_active', true)->orderBy('sort_order')->get(),
+            'workflow' => $workflowPresentation->forCase($eclipCase, $request->user()),
+            'japicUsers' => User::query()->where('role', 'japic')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

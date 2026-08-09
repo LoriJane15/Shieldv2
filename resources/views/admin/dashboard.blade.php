@@ -2,7 +2,6 @@
 @section('title', 'Katuparan Center')
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
     .embed-container { position: relative; height: 480px; overflow: hidden; border-radius: 10px; }
     #adminMap { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
@@ -43,44 +42,12 @@
 @endpush
 
 @section('content')
-<div class="row">
-    <div class="col-12 grid-margin">
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="embed-container">
-                    <div id="adminMap"></div>
-                    <div class="map-overlay">
-                        <div class="overlay-content">
-                            <h2>Welcome to SHIELD Program</h2>
-                            <p class="subtitle">Strengthening Institutions and Empowering Localities Against Discrimination Programs for Former Rebels</p>
-                            <div class="overlay-divider"></div>
-                            <div class="statistics-container">
-                                <div class="stats-column">
-                                    <div class="stat-item compact">
-                                        <span class="stat-number">{{ $stats['former_rebels'] }}</span>
-                                        <span class="stat-label">Total Former Rebels</span>
-                                    </div>
-                                    <h3 class="stats-title">RCSP Barangays per Municipality</h3>
-                                    <div class="municipality-grid">
-                                        @foreach ($municipalities->filter(fn ($m) => $m['total'] > 0)->chunk(ceil(max($municipalities->where('total','>',0)->count(),1)/2)) as $col)
-                                            <div class="municipality-column">
-                                                @foreach ($col as $m)
-                                                    <div class="municipality-item">
-                                                        <span class="municipality-name">{{ $m['name'] }}</span>
-                                                        <span class="municipality-count">{{ $m['total'] }}</span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="row mb-4"><div class="col-12"><div class="card border-0 bg-primary text-white"><div class="card-body p-4"><h2 class="text-white mb-2">SHIELD Cluster Monitoring</h2><p class="mb-0">Aggregated implementation, RCSP, agency, and workflow monitoring for authorized program oversight.</p></div></div></div></div>
+
+<div class="row mb-2">
+    @foreach([['value' => $stats['rcsp_barangays'], 'label' => 'RCSP barangays'], ['value' => $stats['pending_forms'], 'label' => 'Pending forms'], ['value' => $stats['for_verification'], 'label' => 'For verification'], ['value' => $stats['agencies'], 'label' => 'Registered agencies']] as $metric)
+        <div class="col-6 col-xl-3 mb-3"><div class="card h-100"><div class="card-body"><span class="stat-number text-dark">{{ number_format($metric['value']) }}</span><span class="text-muted">{{ $metric['label'] }}</span></div></div></div>
+    @endforeach
 </div>
 
 <div class="rcsp-stats-container">
@@ -111,27 +78,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Operational map with FR locations.
-    (function () {
-        const map = L.map('adminMap', { zoomControl: false }).setView([6.7497, 125.3572], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-        // Container is fixed-height + hidden overflow; recalc once laid out so tiles fill it.
-        setTimeout(() => map.invalidateSize(), 200);
-        const points = @json($frPoints);
-        const colors = { Active:'#22c55e', Reintegrated:'#2c4199', Inactive:'#94a3b8', 'Under Review':'#f59e0b' };
-        const bounds = [];
-        points.forEach(p => {
-            L.circleMarker([p.lat, p.lng], { radius:7, color: colors[p.status]||'#64748b', fillColor: colors[p.status]||'#64748b', fillOpacity:0.85, weight:2 })
-                .bindPopup('<strong>'+p.name+'</strong><br>'+p.status+'<br>'+(p.address||''))
-                .addTo(map);
-            bounds.push([p.lat, p.lng]);
-        });
-        if (bounds.length) map.fitBounds(bounds, { padding:[40,40] });
-    })();
-
     // RCSP barangays per municipality bar chart (real data).
     const labels = @json($municipalities->where('total','>',0)->pluck('name')->values());
     const totals = @json($municipalities->where('total','>',0)->pluck('total')->values());

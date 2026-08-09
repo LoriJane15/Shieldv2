@@ -165,6 +165,13 @@ class EclipDocumentWorkflowTest extends TestCase
             'municipality_id' => $municipality->id, 'created_by' => $mblrc->id,
             'status' => EclipCaseStatus::Eligible,
         ]);
+        $case->participantAssignments()->create([
+            'user_id' => $lswdo->id,
+            'participant_role' => 'case_processor',
+            'assigned_by' => $mblrc->id,
+            'assigned_at' => now(),
+            'is_active' => true,
+        ]);
 
         return [$case, $mblrc, $lswdo];
     }

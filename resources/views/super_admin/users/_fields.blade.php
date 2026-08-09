@@ -36,6 +36,18 @@
             @endforeach
         </select>
     </div>
+    <div class="col-sm-6">
+        <div class="account-status-control">
+            <div>
+                <label class="account-status-label" for="{{ $isEdit ? 'edit-is-active' : 'add-is-active' }}">Account status</label>
+                <span class="account-status-help">Allow this user to sign in</span>
+            </div>
+            <input type="hidden" name="is_active" value="0">
+            <input class="form-check-input account-status-switch" type="checkbox" role="switch" name="is_active" value="1"
+                   id="{{ $isEdit ? 'edit-is-active' : 'add-is-active' }}" @checked(old('is_active', true))>
+        </div>
+        @error('is_active') <p class="mt-1 text-danger small">{{ $message }}</p> @enderror
+    </div>
 
     {{-- Municipality-scoped roles --}}
     <div data-role-field="lgu,lswdo,dilg_provincial_focal,local_eclip_committee" class="col-sm-6 d-none">

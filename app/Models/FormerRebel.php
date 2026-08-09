@@ -30,7 +30,9 @@ class FormerRebel extends Model
 
     public function getFullNameAttribute(): string
     {
-        return trim("{$this->firstname} {$this->middlename} {$this->lastname} {$this->suffix}");
+        return collect([$this->firstname, $this->middlename, $this->lastname, $this->suffix])
+            ->filter(fn ($name) => filled($name))
+            ->join(' ');
     }
 
     /** Next sequential classified id, e.g. FR-#0001 (replaces getNextFRClassifiedID). */
@@ -82,6 +84,11 @@ class FormerRebel extends Model
         return $this->hasMany(EclipCase::class);
     }
 
+    public function mblrcEnrollment(): HasOne
+    {
+        return $this->hasOne(MblrcEnrollment::class);
+    }
+
     public function hasRecordedHistory(): bool
     {
         return $this->programStatus()->exists()
@@ -89,6 +96,7 @@ class FormerRebel extends Model
             || $this->locationHistories()->exists()
             || $this->skills()->exists()
             || $this->assistances()->exists()
-            || $this->eclipCases()->exists();
+            || $this->eclipCases()->exists()
+            || $this->mblrcEnrollment()->exists();
     }
 }

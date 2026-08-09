@@ -10,7 +10,7 @@ class EclipBasicServicePolicy
     public function view(User $user, EclipBasicService $service): bool
     {
         if ($user->hasRole('admin', 'super_admin')) {
-            return true;
+            return false;
         }
 
         if ($user->hasRole('lswdo')) {

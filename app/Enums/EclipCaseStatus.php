@@ -9,7 +9,14 @@ enum EclipCaseStatus: string
     case EligibilityReviewInProgress = 'eligibility_review_in_progress';
     case ReturnedForCorrection = 'returned_for_correction';
     case Eligible = 'eligible';
+    case AuthenticationPending = 'authentication_pending';
+    case AuthenticationUnderReview = 'authentication_under_review';
+    case AuthenticationReturned = 'authentication_returned';
+    case Authenticated = 'authenticated';
+    case NotAuthenticated = 'not_authenticated';
     case Ineligible = 'ineligible';
+    case PreviouslyAssisted = 'previously_assisted';
+    case ForClarification = 'for_clarification';
     case DocumentProcessing = 'document_processing';
     case DocumentsIncomplete = 'documents_incomplete';
     case DocumentsCertified = 'documents_certified';

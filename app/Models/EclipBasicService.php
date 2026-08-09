@@ -17,10 +17,48 @@ class EclipBasicService extends Model
         return ['referral_date' => 'date', 'target_completion_date' => 'date', 'completed_at' => 'datetime'];
     }
 
-    public function eclipCase(): BelongsTo { return $this->belongsTo(EclipCase::class); }
-    public function agency(): BelongsTo { return $this->belongsTo(GovAgency::class, 'gov_agency_id'); }
-    public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
-    public function updater(): BelongsTo { return $this->belongsTo(User::class, 'updated_by'); }
-    public function histories(): HasMany { return $this->hasMany(EclipBasicServiceHistory::class, 'basic_service_id'); }
-    public function documents(): HasMany { return $this->hasMany(EclipBasicServiceDocument::class, 'basic_service_id'); }
+    public function eclipCase(): BelongsTo
+    {
+        return $this->belongsTo(EclipCase::class);
+    }
+
+    public function agency(): BelongsTo
+    {
+        return $this->belongsTo(GovAgency::class, 'gov_agency_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(EclipBasicServiceHistory::class, 'basic_service_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EclipBasicServiceDocument::class, 'basic_service_id');
+    }
+
+    public function isOverdue(): bool
+    {
+        return ! in_array($this->status, ['completed', 'not_applicable'], true)
+            && $this->target_completion_date?->isBefore(today());
+    }
+
+    public function targetDateDifferenceInDays(): ?int
+    {
+        if (! $this->target_completion_date || in_array($this->status, ['completed', 'not_applicable'], true)) {
+            return null;
+        }
+
+        return today()->diffInDays($this->target_completion_date, false);
+    }
 }

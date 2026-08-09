@@ -58,6 +58,7 @@ class EclipCaseController extends Controller
             $request->validated('decision'),
             $request->validated('remarks'),
             $request->ip(),
+            $request->userAgent(),
         );
 
         return back()->with('success', 'Document review recorded.');

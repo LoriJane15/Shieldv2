@@ -24,8 +24,8 @@ return [
         ],
     ],
     'steps' => [
-        ['code' => '1', 'phase' => 1, 'title' => 'FR/FVE Signifies Intention to Surface', 'roles' => [], 'automatic' => true],
-        ['code' => '2', 'phase' => 1, 'title' => 'Orientation on the E-CLIP Program', 'roles' => [], 'automatic' => true, 'depends_on' => ['1']],
+        ['code' => '1', 'phase' => 1, 'title' => 'FR/FVE Signifies Intention to Surface', 'roles' => [], 'evidence_key' => 'intention_to_surface'],
+        ['code' => '2', 'phase' => 1, 'title' => 'Receiving Unit Coordinates with the FR/FVE and LSWDO', 'roles' => [], 'evidence_key' => 'receiving_unit_coordination', 'depends_on' => ['1']],
         ['code' => '3A', 'phase' => 2, 'title' => 'Validation of Previous Assistance', 'roles' => ['lswdo'], 'depends_on' => ['2']],
         ['code' => '3B', 'phase' => 2, 'title' => 'Endorsement for Processing', 'roles' => ['lswdo'], 'depends_on' => ['3A']],
         ['code' => '4A', 'phase' => 2, 'title' => 'JAPIC Authentication Procedures', 'roles' => ['japic'], 'depends_on' => ['3B'], 'working_days' => 10],

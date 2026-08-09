@@ -22,12 +22,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdmin;
 use Illuminate\Support\Facades\Route;
 
-// Public landing page — original static site copied to public/landing/.
-Route::get('/', fn () => response()->file(public_path('landing/index.html'), [
-    'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-    'Pragma' => 'no-cache',
-    'Expires' => '0',
-]))->name('landing');
+Route::get('/', fn () => response()->view('landing')->header('Cache-Control', 'no-store'))->name('landing');
 
 // Shared authenticated routes.
 Route::middleware('auth')->group(function () {
@@ -61,6 +56,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('super-admin')->name('su
     Route::post('/agencies', [SuperAdmin\AgencyController::class, 'store'])->name('agencies.store');
     Route::put('/agencies/{agency}', [SuperAdmin\AgencyController::class, 'update'])->name('agencies.update');
     Route::delete('/agencies/{agency}', [SuperAdmin\AgencyController::class, 'destroy'])->name('agencies.destroy');
+    Route::get('/audit-logs', [SuperAdmin\AuditLogController::class, 'index'])->name('audit-logs.index');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('katuparan')->name('admin.')->group(function () {
@@ -165,18 +161,21 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
     Route::post('/former-rebels/{formerRebel}/education-work', [Mblrc\ProfileActionController::class, 'updateEducationWork'])->name('fr.education.update');
 
     Route::get('/eclip', [Mblrc\EclipCaseController::class, 'index'])->name('eclip.index');
-    Route::get('/eclip/create', [Mblrc\EclipCaseController::class, 'create'])->name('eclip.create');
-    Route::post('/eclip', [Mblrc\EclipCaseController::class, 'store'])->name('eclip.store');
+    Route::get('/enrollments', [Mblrc\EnrollmentController::class, 'index'])->name('enrollments.index');
+    Route::post('/enrollments', [Mblrc\EnrollmentController::class, 'store'])->name('enrollments.store');
+    Route::post('/enrollments/{enrollment}/complete', [Mblrc\EnrollmentController::class, 'complete'])->name('enrollments.complete');
     Route::get('/eclip/{eclipCase}', [Mblrc\EclipCaseController::class, 'show'])->name('eclip.show');
-    Route::post('/eclip/{eclipCase}/submit', [Mblrc\EclipCaseController::class, 'submit'])->name('eclip.submit');
     Route::post('/eclip/{eclipCase}/documents', [Mblrc\EclipDocumentController::class, 'store'])->name('eclip.documents.store');
     Route::get('/eclip-document-versions/{version}', EclipDocumentDownloadController::class)->name('eclip.documents.download');
 });
 
 Route::middleware(['auth', 'role:lswdo'])->prefix('lswdo')->name('lswdo.')->group(function () {
+    Route::get('/referrals', [Lswdo\ReferralController::class, 'index'])->name('referrals.index');
+    Route::post('/referrals/{referral}/accept', [Lswdo\ReferralController::class, 'accept'])->name('referrals.accept');
     Route::get('/eclip', [Lswdo\EclipCaseController::class, 'index'])->name('eclip.index');
     Route::get('/eclip/{eclipCase}', [Lswdo\EclipCaseController::class, 'show'])->name('eclip.show');
     Route::post('/eclip/{eclipCase}/eligibility', [Lswdo\EclipCaseController::class, 'decide'])->name('eclip.eligibility.decide');
+    Route::post('/eclip/{eclipCase}/authentication', [Lswdo\AuthenticationController::class, 'store'])->name('eclip.authentication.store');
     Route::post('/eclip/{eclipCase}/documents', [Mblrc\EclipDocumentController::class, 'store'])->name('eclip.documents.store');
     Route::get('/eclip-document-versions/{version}', EclipDocumentDownloadController::class)->name('eclip.documents.download');
     Route::get('/eclip-document-versions/{version}/preview', [Lswdo\EclipDocumentPreviewController::class, 'caseDocument'])->name('eclip.documents.preview');
@@ -189,6 +188,9 @@ Route::middleware(['auth', 'role:lswdo'])->prefix('lswdo')->name('lswdo.')->grou
 });
 
 Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->group(function () {
+    Route::get('/authentication', [Japic\AuthenticationController::class, 'index'])->name('authentication.index');
+    Route::post('/authentication/{authentication}/start', [Japic\AuthenticationController::class, 'start'])->name('authentication.start');
+    Route::post('/authentication/{authentication}/decision', [Japic\AuthenticationController::class, 'decide'])->name('authentication.decide');
     Route::get('/eclip', [Japic\EclipCaseController::class, 'index'])->name('eclip.index');
     Route::get('/eclip/{eclipCase}', [Japic\EclipCaseController::class, 'show'])->name('eclip.show');
     Route::post('/eclip-documents/{document}/review', [Japic\EclipCaseController::class, 'review'])->name('eclip.documents.review');

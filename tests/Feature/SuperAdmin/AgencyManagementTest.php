@@ -6,6 +6,7 @@ use App\Models\AgencyImplanResponse;
 use App\Models\GovAgency;
 use App\Models\Implementation;
 use App\Models\User;
+use App\Services\AgencyLogoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -42,7 +43,17 @@ class AgencyManagementTest extends TestCase
 
         $agency = GovAgency::query()->where('acronym', 'A1')->firstOrFail();
         $oldLogo = $agency->profile;
+        $this->assertSame('agency-one.png', $agency->logo_original_name);
+        $this->assertSame('image/png', $agency->logo_mime_type);
+        $this->assertGreaterThan(0, $agency->logo_size_bytes);
+        $this->assertStringStartsWith('agency-logos/', $oldLogo);
         Storage::disk('public')->assertExists($oldLogo);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $superAdmin->id,
+            'action' => 'agency_logo_uploaded',
+            'entity_type' => GovAgency::class,
+            'entity_id' => $agency->id,
+        ]);
 
         $this->actingAs($superAdmin)->put(route('super_admin.agencies.update', $agency), [
             'name' => 'Agency One Updated',
@@ -52,9 +63,77 @@ class AgencyManagementTest extends TestCase
 
         $agency->refresh();
         $this->assertSame('Agency One Updated', $agency->name);
+        $this->assertSame('agency-one-updated.png', $agency->logo_original_name);
         $this->assertNotSame($oldLogo, $agency->profile);
         Storage::disk('public')->assertExists($agency->profile);
         Storage::disk('public')->assertMissing($oldLogo);
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $superAdmin->id,
+            'action' => 'agency_logo_replaced',
+            'entity_type' => GovAgency::class,
+            'entity_id' => $agency->id,
+        ]);
+    }
+
+    public function test_invalid_replacement_preserves_existing_logo_and_metadata(): void
+    {
+        Storage::fake('public');
+        $superAdmin = User::factory()->role('super_admin')->create();
+        $agency = GovAgency::query()->create([
+            'name' => 'Protected Logo Agency',
+            'acronym' => 'PLA',
+            'profile' => 'agency-logos/existing.png',
+            'logo_original_name' => 'existing.png',
+            'logo_mime_type' => 'image/png',
+            'logo_size_bytes' => 123,
+        ]);
+        Storage::disk('public')->put($agency->profile, 'existing-logo');
+
+        $this->actingAs($superAdmin)->put(route('super_admin.agencies.update', $agency), [
+            'name' => 'Protected Logo Agency Changed',
+            'acronym' => 'PLA',
+            'profile' => UploadedFile::fake()->create('malware.exe', 10, 'application/x-msdownload'),
+        ])->assertSessionHasErrors('profile');
+
+        $agency->refresh();
+        $this->assertSame('Protected Logo Agency', $agency->name);
+        $this->assertSame('agency-logos/existing.png', $agency->profile);
+        $this->assertSame('existing.png', $agency->logo_original_name);
+        $this->assertSame('image/png', $agency->logo_mime_type);
+        $this->assertSame(123, $agency->logo_size_bytes);
+        Storage::disk('public')->assertExists('agency-logos/existing.png');
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'agency_logo_replaced',
+            'entity_id' => $agency->id,
+        ]);
+    }
+
+    public function test_unsafe_legacy_logo_path_uses_fallback_and_is_never_deleted(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('outside-logo.png', 'must-remain');
+        $agency = GovAgency::query()->create([
+            'name' => 'Legacy Path Agency',
+            'acronym' => 'LPA',
+            'profile' => 'C:\\Users\\Admin\\agency.png',
+        ]);
+
+        $this->assertSame(asset('assets/img/kc-logo.svg'), $agency->profile_url);
+
+        app(AgencyLogoService::class)->delete('../outside-logo.png');
+        app(AgencyLogoService::class)->delete('C:\\Users\\Admin\\agency.png');
+        Storage::disk('public')->assertExists('outside-logo.png');
+    }
+
+    public function test_safe_legacy_logo_filename_uses_the_existing_legacy_asset_directory(): void
+    {
+        $agency = GovAgency::query()->create([
+            'name' => 'Safe Legacy Agency',
+            'acronym' => 'SLA',
+            'profile' => 'DILG.png',
+        ]);
+
+        $this->assertSame(asset('assets/uploadLogo/DILG.png'), $agency->profile_url);
     }
 
     public function test_agency_acronym_must_be_unique(): void
@@ -122,6 +201,12 @@ class AgencyManagementTest extends TestCase
 
         $this->assertDatabaseMissing('gov_agencies', ['id' => $agency->id]);
         Storage::disk('public')->assertMissing('agency-logos/unused.png');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $superAdmin->id,
+            'action' => 'agency_deleted',
+            'entity_type' => GovAgency::class,
+            'entity_id' => $agency->id,
+        ]);
     }
 
     public function test_agency_delete_action_uses_confirmation_modal(): void

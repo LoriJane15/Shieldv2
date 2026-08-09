@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\FormerRebel;
 use App\Models\GovAgency;
 use App\Models\Implementation;
 use App\Models\Municipality;
@@ -26,7 +25,6 @@ class DashboardController extends Controller
     public function index(): View
     {
         $stats = [
-            'former_rebels' => FormerRebel::count(),
             'rcsp_barangays' => RcspBarangay::count(),
             'pending_forms' => RcspForm::where('status', 'submitted')->distinct('rcsp_barangay_id')->count('rcsp_barangay_id'),
             'for_verification' => Implementation::where('status', 'for verification')->count(),
@@ -43,17 +41,6 @@ class DashboardController extends Controller
             ];
         });
 
-        // Former-rebel points for the operational map.
-        $frPoints = FormerRebel::whereNotNull('latitude')->whereNotNull('longitude')
-            ->get(['firstname', 'lastname', 'latitude', 'longitude', 'status', 'placement_address'])
-            ->map(fn ($fr) => [
-                'name' => trim("{$fr->firstname} {$fr->lastname}"),
-                'lat' => (float) $fr->latitude,
-                'lng' => (float) $fr->longitude,
-                'status' => $fr->status,
-                'address' => $fr->placement_address,
-            ]);
-
-        return view('admin.dashboard', compact('stats', 'municipalities', 'frPoints'));
+        return view('admin.dashboard', compact('stats', 'municipalities'));
     }
 }

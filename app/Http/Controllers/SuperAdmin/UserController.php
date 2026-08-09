@@ -43,6 +43,7 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
         $data = $this->scopeRoleFields($data);
         $storedLogo = null;
 
@@ -65,10 +66,18 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
         $data = $request->validated();
+        $data['is_active'] = $request->has('is_active')
+            ? $request->boolean('is_active')
+            : $user->is_active;
         abort_if(
             $user->is($request->user()) && $data['role'] !== 'super_admin',
             422,
             'You cannot remove your own Super Admin role.'
+        );
+        abort_if(
+            $user->is($request->user()) && ! $request->boolean('is_active'),
+            422,
+            'You cannot deactivate your own account.'
         );
         $data = $this->scopeRoleFields($data);
         $passwordChanged = ! empty($data['password']);
@@ -98,7 +107,7 @@ class UserController extends Controller
         if ($storedLogo) {
             $this->userLogos->delete($oldLogo);
         }
-        if ($passwordChanged) {
+        if ($passwordChanged || ! $user->is_active) {
             DB::table('sessions')->where('user_id', $user->id)->delete();
         }
 

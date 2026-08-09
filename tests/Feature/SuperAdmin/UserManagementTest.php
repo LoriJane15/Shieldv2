@@ -43,7 +43,32 @@ class UserManagementTest extends TestCase
             'role' => 'lgu',
             'municipality_id' => $municipality->id,
             'gov_agency_id' => null,
+            'is_active' => true,
         ]);
+    }
+
+    public function test_super_admin_can_deactivate_an_account_but_not_their_own(): void
+    {
+        $superAdmin = User::factory()->role('super_admin')->create();
+        $user = User::factory()->role('admin')->create();
+
+        $this->actingAs($superAdmin)->put(route('super_admin.users.update', $user), [
+            'name' => $user->name,
+            'username' => $user->username,
+            'role' => $user->role,
+            'is_active' => false,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertFalse($user->fresh()->is_active);
+
+        $this->actingAs($superAdmin)->put(route('super_admin.users.update', $superAdmin), [
+            'name' => $superAdmin->name,
+            'username' => $superAdmin->username,
+            'role' => 'super_admin',
+            'is_active' => false,
+        ])->assertUnprocessable();
+
+        $this->assertTrue($superAdmin->fresh()->is_active);
     }
 
     public function test_role_scope_and_username_are_validated(): void

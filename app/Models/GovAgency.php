@@ -2,13 +2,21 @@
 
 namespace App\Models;
 
+use App\Services\AgencyLogoService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class GovAgency extends Model
 {
-    protected $fillable = ['name', 'acronym', 'profile'];
+    protected $fillable = [
+        'name', 'acronym', 'profile', 'logo_original_name', 'logo_mime_type', 'logo_size_bytes',
+    ];
+
+    protected function casts(): array
+    {
+        return ['logo_size_bytes' => 'integer'];
+    }
 
     public function users(): HasMany
     {
@@ -36,10 +44,15 @@ class GovAgency extends Model
             return asset('assets/img/kc-logo.svg');
         }
 
-        if (Storage::disk('public')->exists($this->profile)) {
+        $logos = app(AgencyLogoService::class);
+        if ($logos->isManagedPath($this->profile) && Storage::disk('public')->exists($this->profile)) {
             return Storage::disk('public')->url($this->profile);
         }
 
-        return asset('assets/logoAgency/'.ltrim($this->profile, '/'));
+        if ($logos->isSafeLegacyPath($this->profile)) {
+            return asset('assets/uploadLogo/'.$this->profile);
+        }
+
+        return asset('assets/img/kc-logo.svg');
     }
 }

@@ -88,6 +88,63 @@ class EclipAssistanceAssessmentTest extends TestCase
             ->get(route('eclip_assessor.cases.show', $case))->assertForbidden();
     }
 
+    public function test_assessment_queue_is_scoped_filterable_and_workflow_aware(): void
+    {
+        [$readyCase, $assessor] = $this->caseAndAssessor();
+        $municipality = $readyCase->municipality;
+        $category = $this->category();
+
+        $draftCase = $this->queueCase($municipality, 'ECLIP-ASM-DRAFT', 'FR-#ASMD', EclipCaseStatus::AssistanceAssessment);
+        $draftRequest = $draftCase->assistanceRequest()->create([
+            'created_by' => $assessor->id,
+            'status' => 'draft',
+        ]);
+        $draftRequest->revisions()->create([
+            'category_id' => $category->id,
+            'revision_number' => 1,
+            'requested_amount' => '50000.00',
+            'assessed_amount' => '42500.00',
+            'justification' => 'Synthetic queue assessment.',
+            'created_by' => $assessor->id,
+        ]);
+
+        $reviewCase = $this->queueCase($municipality, 'ECLIP-ASM-REVIEW', 'FR-#ASMR', EclipCaseStatus::SubmittedForDilgReview);
+        $this->queueCase($municipality, 'ECLIP-ASM-APPROVED', 'FR-#ASMA', EclipCaseStatus::Approved);
+
+        $otherMunicipality = Municipality::query()->create(['name' => 'Outside Queue Municipality']);
+        $this->queueCase($otherMunicipality, 'ECLIP-ASM-OUTSIDE', 'FR-#ASMO', EclipCaseStatus::DocumentsCertified);
+
+        $response = $this->actingAs($assessor)->get(route('eclip_assessor.cases.index'));
+
+        $response->assertOk()
+            ->assertSee('Assistance Assessment Queue')
+            ->assertSee('Start Assessment')
+            ->assertSee('Continue Assessment')
+            ->assertSee('View Assessment')
+            ->assertSee('₱42,500.00')
+            ->assertSee('Not assessed yet')
+            ->assertSee('Waiting for Provincial Reviewer')
+            ->assertDontSee('ECLIP-ASM-OUTSIDE');
+
+        $this->actingAs($assessor)->get(route('eclip_assessor.cases.index', [
+            'search' => $reviewCase->case_number,
+            'status' => EclipCaseStatus::SubmittedForDilgReview->value,
+            'sort' => 'oldest',
+        ]))->assertOk()
+            ->assertSee($reviewCase->case_number)
+            ->assertDontSee($readyCase->case_number)
+            ->assertDontSee($draftCase->case_number);
+    }
+
+    public function test_assessment_queue_rejects_unknown_status_filters(): void
+    {
+        [, $assessor] = $this->caseAndAssessor();
+
+        $this->actingAs($assessor)->get(route('eclip_assessor.cases.index', [
+            'status' => EclipCaseStatus::FundsTransferred->value,
+        ]))->assertSessionHasErrors('status');
+    }
+
     public function test_inactive_category_cannot_be_used_or_submitted(): void
     {
         [$case, $assessor] = $this->caseAndAssessor();
@@ -146,6 +203,24 @@ class EclipAssistanceAssessmentTest extends TestCase
     {
         return EclipAssistanceCategory::query()->create([
             'code' => $code, 'name' => "{$code} Category", 'is_active' => true,
+        ]);
+    }
+
+    private function queueCase(Municipality $municipality, string $caseNumber, string $classifiedId, EclipCaseStatus $status): EclipCase
+    {
+        $formerRebel = FormerRebel::query()->create([
+            'classified_id' => $classifiedId,
+            'firstname' => 'Synthetic',
+            'lastname' => 'Queue',
+            'municipality_id' => $municipality->id,
+        ]);
+
+        return EclipCase::query()->create([
+            'case_number' => $caseNumber,
+            'former_rebel_id' => $formerRebel->id,
+            'municipality_id' => $municipality->id,
+            'created_by' => User::factory()->role('mblrc')->create()->id,
+            'status' => $status,
         ]);
     }
 

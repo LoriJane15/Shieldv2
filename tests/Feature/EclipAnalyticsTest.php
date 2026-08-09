@@ -72,6 +72,17 @@ class EclipAnalyticsTest extends TestCase
             ->assertViewHas('financial', fn (array $financial) => $financial['assessed'] === 1250.0);
     }
 
+    public function test_katuparan_admin_analytics_uses_the_horizontal_navigation_layout(): void
+    {
+        $admin = User::factory()->role('admin')->create();
+
+        $this->actingAs($admin)
+            ->get(route('eclip.analytics.index'))
+            ->assertOk()
+            ->assertSee('assets/css/horizontal-layout-light/style.css', false)
+            ->assertDontSee('assets/css/vertical-layout-light/style.css', false);
+    }
+
     public function test_aggregate_export_contains_no_beneficiary_identifiers_and_is_audited(): void
     {
         $this->caseIn('=Formula Municipality', 'FR-#PRIVATE-MARKER', EclipCaseStatus::Completed, '1000.00');

@@ -10,8 +10,12 @@ class EclipCasePolicy
 {
     public function view(User $user, EclipCase $case): bool
     {
-        if ($user->hasRole('admin', 'super_admin', 'mblrc')) {
-            return true;
+        if ($user->hasRole('admin', 'super_admin')) {
+            return false;
+        }
+
+        if ($user->hasRole('mblrc')) {
+            return $case->created_by === $user->id || $case->hasActiveParticipant($user);
         }
 
         if ($user->hasRole('japic')) {
@@ -23,8 +27,7 @@ class EclipCasePolicy
         }
 
         if ($user->hasRole('lswdo', 'eclip_assessor')) {
-            return $user->municipality_id !== null
-                && $user->municipality_id === $case->municipality_id
+            return $case->hasActiveParticipant($user)
                 && in_array($case->status, [
                     EclipCaseStatus::SubmittedForEligibility,
                     EclipCaseStatus::EligibilityReviewInProgress,
@@ -72,11 +75,11 @@ class EclipCasePolicy
 
         if ($user->hasRole('dilg_fms')) {
             return in_array($case->status, [
-                    EclipCaseStatus::Approved,
-                    EclipCaseStatus::FundAllocationPending,
-                    EclipCaseStatus::FundsAllocated,
-                    EclipCaseStatus::FundsTransferred,
-                ], true);
+                EclipCaseStatus::Approved,
+                EclipCaseStatus::FundAllocationPending,
+                EclipCaseStatus::FundsAllocated,
+                EclipCaseStatus::FundsTransferred,
+            ], true);
         }
 
         if ($user->hasRole('eclip_funding_officer')) {
@@ -95,9 +98,7 @@ class EclipCasePolicy
                 ], true);
         }
 
-        return $user->hasRole('lswdo')
-            && $user->municipality_id !== null
-            && $user->municipality_id === $case->municipality_id;
+        return false;
     }
 
     public function releaseAssistance(User $user, EclipCase $case): bool
@@ -110,8 +111,8 @@ class EclipCasePolicy
 
     public function downloadReleaseAcknowledgment(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('admin', 'super_admin', 'local_eclip_committee')
-            && (! $user->hasRole('local_eclip_committee') || $user->municipality_id === $case->municipality_id);
+        return $user->hasRole('local_eclip_committee')
+            && $user->municipality_id === $case->municipality_id;
     }
 
     public function manageFunding(User $user, EclipCase $case): bool
@@ -126,15 +127,14 @@ class EclipCasePolicy
 
     public function downloadFundingProof(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('admin', 'super_admin', 'dilg_fms')
+        return $user->hasRole('dilg_fms')
             || ($user->hasRole('eclip_funding_officer') && $user->municipality_id === $case->municipality_id);
     }
 
     public function assessAssistance(User $user, EclipCase $case): bool
     {
         return $user->hasRole('lswdo', 'eclip_assessor')
-            && $user->municipality_id !== null
-            && $user->municipality_id === $case->municipality_id
+            && $case->hasActiveParticipant($user)
             && in_array($case->status, [
                 EclipCaseStatus::DocumentsCertified,
                 EclipCaseStatus::AssistanceAssessment,
@@ -157,7 +157,7 @@ class EclipCasePolicy
 
     public function uploadDocument(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('lswdo') && $user->municipality_id === $case->municipality_id && in_array($case->status, [
+        return $user->hasRole('lswdo') && $case->hasActiveParticipant($user) && in_array($case->status, [
             EclipCaseStatus::Eligible,
             EclipCaseStatus::DocumentProcessing,
             EclipCaseStatus::DocumentsIncomplete,
@@ -174,19 +174,17 @@ class EclipCasePolicy
 
     public function downloadDocument(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('admin', 'super_admin', 'lswdo', 'japic')
-            && (! $user->hasRole('lswdo') || $user->municipality_id === $case->municipality_id);
+        return $user->hasRole('lswdo', 'japic') && $case->hasActiveParticipant($user);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole('mblrc');
+        return false;
     }
 
     public function submit(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('mblrc')
-            && in_array($case->status, [EclipCaseStatus::Draft, EclipCaseStatus::ReturnedForCorrection], true);
+        return false;
     }
 
     public function reviewEligibility(User $user, EclipCase $case): bool

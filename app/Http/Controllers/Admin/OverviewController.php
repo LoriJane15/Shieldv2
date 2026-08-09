@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\FormerRebel;
 use App\Models\Implementation;
 use App\Models\Municipality;
 use App\Models\RcspBarangay;
@@ -40,17 +39,7 @@ class OverviewController extends Controller
             'barangays' => RcspBarangay::with('barangay')->where('municipality_id', $m->id)->get(),
         ])->filter(fn ($r) => $r['barangays']->isNotEmpty());
 
-        $frPoints = FormerRebel::whereNotNull('latitude')->whereNotNull('longitude')
-            ->get(['firstname', 'lastname', 'placement_address', 'latitude', 'longitude', 'status'])
-            ->map(fn ($fr) => [
-                'name' => trim("{$fr->firstname} {$fr->lastname}"),
-                'address' => $fr->placement_address,
-                'lat' => (float) $fr->latitude,
-                'lng' => (float) $fr->longitude,
-                'status' => $fr->status,
-            ]);
-
-        return view('admin.overview.locations', compact('municipalities', 'frPoints'));
+        return view('admin.overview.locations', compact('municipalities'));
     }
 
     /** SHIELD 12-cluster reference with overall IMPLAN status rollup. */

@@ -202,22 +202,89 @@
     .step-inline-documents strong { color: #42526b; font-size: .67rem; text-transform: uppercase; }
     .step-empty-detail { color: #8492a6; font-size: .7rem; margin: 0; }
     [data-step-item][hidden] { display: none; }
+    .review-page { margin: 0 auto; max-width: 1560px; }
+    .case-status-label { display: block; font-size: .58rem; font-weight: 700; margin-right: .4rem; opacity: .72; text-transform: uppercase; }
+    .case-last-updated { align-items: center; display: flex; font-size: .68rem; gap: .35rem; margin-top: .65rem; opacity: .76; }
+    .case-context { align-items: center; background: #fff; border: 1px solid #dfe5ee; border-radius: 10px; box-shadow: 0 4px 14px rgba(23,43,77,.08); display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1rem; min-height: 48px; padding: .55rem .8rem; position: sticky; top: 70px; z-index: 17; }
+    .context-case { color: #263b5e; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+    .context-phase { color: #64748b; flex: 1; font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .context-progress { color: #52657f; font-size: .68rem; font-weight: 700; white-space: nowrap; }
+    .workflow-overview { display: block; padding: .85rem 1rem; }
+    .workflow-progress-heading { align-items: center; display: flex; justify-content: space-between; margin-bottom: .6rem; }
+    .workflow-progress-heading strong { color: #334155; font-size: .78rem; }
+    .workflow-progress-heading span { color: #5746af; font-size: .86rem; font-weight: 800; }
+    .workflow-progress { height: 9px; }
+    .workflow-progress-bar { background: linear-gradient(90deg, #6554c0, #3476d9); }
+    .workflow-breakdown { display: flex; flex-wrap: wrap; gap: .45rem 1rem; margin-top: .55rem; }
+    .workflow-breakdown span { align-items: center; color: #64748b; display: inline-flex; font-size: .68rem; gap: .35rem; }
+    .workflow-breakdown i { border-radius: 50%; display: inline-block; height: 7px; width: 7px; }
+    .count-complete i { background: #20a779; }.count-pending i { background: #d89a17; }.count-locked i { background: #a9b4c2; }
+    .phase-nav { position: relative; top: auto; z-index: 1; }
+    .phase-tab { min-height: 74px; }
+    .phase-tab.is-complete { background: #f4fbf8; border-color: #bfe7d7; color: #28775d; }
+    .phase-tab.is-current, .phase-tab[aria-selected="true"] { background: #f2f4ff; border-color: #6554c0; box-shadow: 0 3px 10px rgba(101,84,192,.1); color: #5141a5; }
+    .phase-tab.is-future { background: #fafbfc; color: #8a98aa; }
+    .phase-tab.is-attention { background: #fff9eb; border-color: #e7c671; color: #8a6500; }
+    .phase-state { display: block; font-size: .58rem; font-weight: 800; letter-spacing: .04em; margin-top: .2rem; text-transform: uppercase; }
+    .next-action-card { background: linear-gradient(100deg, #f5f3ff, #fff); border: 1px solid #cec7ef; border-left: 4px solid #6554c0; border-radius: 11px; margin: .9rem 0 1rem; padding: 1rem; }
+    .next-action-kicker { color: #6554c0; font-size: .62rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .next-action-layout { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-top: .45rem; }
+    .next-action-copy { min-width: 0; }
+    .next-action-title { color: #263b5e; font-size: .9rem; font-weight: 800; line-height: 1.35; margin: 0; }
+    .next-action-meta { align-items: center; display: flex; flex-wrap: wrap; gap: .45rem .8rem; margin-top: .45rem; }
+    .next-action-help { color: #64748b; font-size: .7rem; line-height: 1.45; margin: .45rem 0 0; }
+    .next-action-button { align-items: center; background: #6554c0; border: 1px solid #6554c0; border-radius: 8px; color: #fff; display: inline-flex; flex: 0 0 auto; font-size: .7rem; font-weight: 750; gap: .35rem; justify-content: center; min-height: 40px; padding: .5rem .8rem; }
+    .next-action-button:hover, .next-action-button:focus { background: #5545ad; color: #fff; outline: 3px solid rgba(101,84,192,.14); text-decoration: none; }
+    .next-action-empty { align-items: center; display: flex; gap: .65rem; }
+    .next-action-empty i { color: #20a779; font-size: 1.35rem; }
+    .next-action-empty strong { color: #334155; display: block; font-size: .82rem; }.next-action-empty span { color: #718096; display: block; font-size: .7rem; margin-top: .15rem; }
+    .workflow-status-badge { align-items: center; border-radius: 13px; display: inline-flex; font-size: .62rem; font-weight: 800; line-height: 1.2; min-height: 24px; padding: .28rem .55rem; text-transform: uppercase; }
+    .workflow-status-complete { background: #def5eb; color: #16845e; }.workflow-status-active { background: #e7efff; color: #2f6fed; }.workflow-status-pending { background: #fff3d6; color: #8a6500; }.workflow-status-attention { background: #fff0df; color: #a45f0c; }.workflow-status-rejected { background: #ffebed; color: #bd3e49; }.workflow-status-locked { background: #edf1f6; color: #718096; }
+    .responsible-agency { align-items: center; color: #596c84; display: inline-flex; font-size: .68rem; font-weight: 600; gap: .3rem; }
+    .responsible-agency i { color: #8193aa; font-size: .8rem; }
+    .phase-panel-header { padding: .8rem 1rem; }
+    .phase-control { min-height: 36px; }
+    .phase-steps { gap: .35rem; padding: .6rem; }
+    .official-step { border-radius: 8px; }
+    .official-step.is-next-step { border-color: #a99ee1; box-shadow: 0 2px 8px rgba(101,84,192,.08); }
+    .official-step.status-locked { background: #fafbfc; }
+    .step-summary { min-height: 50px; padding: .48rem .65rem; }
+    .step-summary .step-marker { flex-basis: 28px; height: 28px; width: 28px; }
+    .step-name { font-size: .76rem; }
+    .step-meta { font-size: .64rem; margin-top: .18rem; }
+    .step-lock-reason { color: #8794a6; font-size: .64rem; }
+    .step-expanded { padding: .65rem .75rem .7rem 3.35rem; }
+    .step-detail-grid { display: grid; gap: .65rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .step-detail { background: #f8fafc; border-radius: 7px; padding: .55rem .65rem; }
+    .step-detail-label { color: #8794a6; display: block; font-size: .58rem; font-weight: 800; margin-bottom: .2rem; text-transform: uppercase; }
+    .step-detail-value { color: #45566d; font-size: .68rem; line-height: 1.4; }
+    .step-dependencies { list-style: none; margin: .25rem 0 0; padding: 0; }.step-dependencies li { align-items: flex-start; color: #64748b; display: flex; font-size: .67rem; gap: .35rem; margin-top: .25rem; }.step-dependencies i { color: #9aa8b8; margin-top: .1rem; }
+    .case-sidebar { max-height: none; overflow: visible; padding-right: 0; top: 78px; }
+    .sidebar-card-header { align-items: center; display: flex; gap: .65rem; margin-bottom: .8rem; }
+    .sidebar-card-header .section-icon { flex-basis: 34px; height: 34px; width: 34px; }
+    .sidebar-card-header .section-title { font-size: .88rem; }
+    .sidebar-card-header .section-subtitle { font-size: .68rem; }
+    .sidebar-count { background: #f0edff; border-radius: 12px; color: #5d4eb0; font-size: .64rem; font-weight: 800; margin-left: auto; padding: .25rem .5rem; white-space: nowrap; }
+    .sidebar-alert { align-items: flex-start; background: #fff9e9; border: 1px solid #f0dfaa; border-radius: 8px; color: #725c1b; display: flex; font-size: .68rem; gap: .5rem; line-height: 1.45; padding: .65rem; }
+    .sidebar-alert i { flex: 0 0 auto; font-size: .9rem; }
+    .sidebar-disclosure { border-top: 1px solid #edf1f6; margin-top: .75rem; padding-top: .65rem; }
+    .sidebar-disclosure > summary { align-items: center; color: #50627a; cursor: pointer; display: flex; font-size: .7rem; font-weight: 700; justify-content: space-between; list-style: none; min-height: 36px; }
+    .sidebar-disclosure > summary::-webkit-details-marker { display: none; }.sidebar-disclosure[open] > summary i { transform: rotate(180deg); }.sidebar-disclosure > summary i { transition: transform .15s; }
+    .sidebar-document-list { display: grid; gap: .4rem; margin-top: .55rem; }
+    .sidebar-document-item { border: 1px solid #e6ebf2; border-radius: 8px; padding: .55rem; }
+    .sidebar-document-heading { align-items: center; display: flex; gap: .4rem; justify-content: space-between; }.sidebar-document-heading strong { color: #3f5067; font-size: .68rem; line-height: 1.35; }
+    .sidebar-upload { margin-top: .5rem; }
+    .sidebar-history-more { border-top: 1px solid #edf1f6; margin-top: .7rem; padding-top: .55rem; }
+    .sidebar-history-more summary { color: #6554c0; cursor: pointer; font-size: .68rem; font-weight: 700; list-style: none; }
     @media (min-width: 992px) {
-        .case-hero { padding: .75rem 1rem; position: sticky; top: 60px; z-index: 18; }
-        .case-hero > div > div:first-child { align-items: center; display: flex; gap: 1rem; min-width: 0; }
-        .case-eyebrow { display: none; }
-        .case-number { flex: 0 0 auto; font-size: 1.05rem; margin: 0 !important; }
-        .case-details { flex: 1; flex-wrap: nowrap; gap: .35rem .8rem; }
-        .case-detail { background: transparent; border: 0; gap: .4rem; min-height: 36px; padding: .15rem .35rem; }
-        .case-detail > i { background: rgba(255,255,255,.12); flex-basis: 28px; height: 28px; width: 28px; }
-        .case-detail small { font-size: .58rem; }
-        .case-detail strong { font-size: .72rem; white-space: nowrap; }
+        .case-hero { padding: 1.25rem 1.4rem; position: relative; top: auto; z-index: 1; }
+        .case-number { font-size: 1.65rem; }
         .case-status { margin-left: .75rem; white-space: nowrap; }
     }
     @media (prefers-reduced-motion: reduce) { .phase-live-dot { animation: none; } }
     @media (max-width: 991px) { .phase-nav { display: flex; margin-left: -1px; margin-right: -1px; overflow-x: auto; padding: 1px 1px .4rem; scroll-snap-type: x mandatory; } .phase-tab { flex: 0 0 155px; scroll-snap-align: start; } }
-    @media (max-width: 991px) { .case-workspace { display: block; } .case-sidebar { max-height: none; overflow: visible; padding-right: 0; position: static; } .phase-nav { top: 0; } }
-    @media (max-width: 767px) { .case-hero { padding: 1.2rem; } .case-number { font-size: 1.35rem; } .case-status { margin-top: .75rem; } .review-card .card-body { padding: 1.1rem; } .workflow-overview { align-items: stretch; flex-direction: column; gap: .55rem; } .workflow-tools { justify-content: flex-start; } .phase-panel-header { align-items: flex-start; flex-direction: column; gap: .75rem; } .step-expanded { padding-left: .8rem; } .step-status-options { grid-template-columns: 1fr; } .step-modal .modal-dialog { margin: .5rem; } .step-modal .modal-footer { align-items: stretch; flex-direction: column-reverse; gap: .6rem; } .step-save { width: 100%; } }
+    @media (max-width: 991px) { .case-workspace { display: block; } .case-sidebar { max-height: none; overflow: visible; padding-right: 0; position: static; } .case-context { position: static; } }
+    @media (max-width: 767px) { .case-hero { padding: 1.2rem; } .case-number { font-size: 1.35rem; } .case-status { margin-left: 0; margin-top: .75rem; } .case-context { align-items: flex-start; flex-direction: column; gap: .25rem; } .context-phase { white-space: normal; } .review-card .card-body { padding: 1rem; } .workflow-overview { align-items: stretch; flex-direction: column; gap: .55rem; } .workflow-tools { justify-content: flex-start; } .next-action-layout { align-items: flex-start; flex-direction: column; }.next-action-button { width: 100%; }.phase-panel-header { align-items: flex-start; flex-direction: column; gap: .75rem; } .phase-controls { width: 100%; }.phase-control { flex: 1; justify-content: center; }.step-expanded { padding-left: .7rem; }.step-detail-grid { grid-template-columns: 1fr; }.step-status-options { grid-template-columns: 1fr; } .step-modal .modal-dialog { margin: .5rem; } .step-modal .modal-footer { align-items: stretch; flex-direction: column-reverse; gap: .6rem; } .step-save { width: 100%; } }
 </style>
 @endpush
 
@@ -225,13 +292,9 @@
 @php
     $documentsByRequirement = $case->documents->keyBy('requirement_id');
     $submittedDocuments = $requirements->filter(fn ($requirement) => $documentsByRequirement->has($requirement->id))->count();
-    $workflowActivities = $case->workflowActivities;
-    $finishedActivities = $workflowActivities->whereIn('status', ['completed', 'not_applicable'])->count();
-    $workflowPercent = $workflowActivities->isEmpty() ? 0 : (int) round(($finishedActivities / $workflowActivities->count()) * 100);
-    $currentPhase = $workflowActivities->first(fn ($activity) => in_array($activity->status, ['pending', 'ongoing', 'late', 'returned_for_correction'], true))?->phase;
-    $phaseDefinitions = collect(config('eclip_workflow.phases', []));
-    $workflowPhases = $workflowActivities->groupBy('phase')->sortKeys();
-    $activePhase = $currentPhase ?? $workflowPhases->keys()->last();
+    $workflowActivities = $workflow['activities'];
+    $activePhase = $workflow['current_phase'];
+    $currentPhaseData = $workflow['phases']->get($activePhase);
 @endphp
 
 <div class="review-page">
@@ -243,14 +306,23 @@
                 <div class="case-eyebrow mb-1">E-CLIP Case</div>
                 <h2 id="case-number" class="case-number mb-3">{{ $case->case_number }}</h2>
                 <div class="case-details">
-                    <div class="case-detail"><i class="mdi mdi-account-key-outline"></i><div><small>Beneficiary ID</small><strong>{{ $case->formerRebel->classified_id }}</strong></div></div>
+                    <div class="case-detail"><i class="mdi mdi-account-key-outline"></i><div><small>Beneficiary</small><strong>{{ $case->formerRebel->classified_id }}</strong></div></div>
                     <div class="case-detail"><i class="mdi mdi-map-marker-outline"></i><div><small>Municipality</small><strong>{{ $case->formerRebel->municipality?->name ?? 'Not assigned' }}</strong></div></div>
                     <div class="case-detail"><i class="mdi mdi-calendar-check-outline"></i><div><small>Submitted</small><strong>{{ $case->submitted_at?->format('M d, Y') ?? 'Not recorded' }}</strong></div></div>
                 </div>
+                @if($workflow['last_updated'])<div class="case-last-updated"><i class="mdi mdi-update" aria-hidden="true"></i>Last updated <time datetime="{{ $workflow['last_updated']->toIso8601String() }}">{{ $workflow['last_updated']->format('M d, Y · h:i A') }}</time></div>@endif
             </div>
-            <span class="case-status"><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span>
+            <span class="case-status"><span class="case-status-label">Eligibility status</span><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span>
         </div>
     </section>
+
+    @if($currentPhaseData)
+        <div class="case-context" aria-label="Current workflow context">
+            <span class="context-case">{{ $case->case_number }}</span>
+            <span class="context-phase">Phase {{ $activePhase }} · {{ $currentPhaseData['name'] }}</span>
+            <span class="context-progress">{{ $currentPhaseData['finished'] }} / {{ $currentPhaseData['total'] }} completed</span>
+        </div>
+    @endif
 
     <div class="case-workspace">
         <main class="case-main">
@@ -261,9 +333,10 @@
                     <div class="section-icon mr-3"><i class="mdi mdi-timeline-check-outline"></i></div>
                     <div><h3 id="official-workflow-title" class="section-title">Official E-CLIP and Amnesty Workflow</h3><p class="section-subtitle">Phases and activities prescribed by the approved program flow.</p></div>
                 </div>
-                <div class="workflow-overview" aria-label="Workflow progress: {{ $workflowPercent }} percent">
-                    <div class="workflow-progress"><div class="workflow-progress-bar" style="width: {{ $workflowPercent }}%"></div></div>
-                    <span class="workflow-count">{{ $finishedActivities }}/{{ $workflowActivities->count() }} complete · {{ $workflowPercent }}%</span>
+                <div class="workflow-overview" aria-label="Overall E-CLIP workflow progress: {{ $workflow['percent'] }} percent">
+                    <div class="workflow-progress-heading"><strong>Overall E-CLIP Progress</strong><span>{{ $workflow['percent'] }}%</span></div>
+                    <div class="workflow-progress" role="progressbar" aria-valuenow="{{ $workflow['percent'] }}" aria-valuemin="0" aria-valuemax="100"><div class="workflow-progress-bar" style="width: {{ $workflow['percent'] }}%"></div></div>
+                    <div class="workflow-breakdown"><span class="count-complete"><i></i>{{ $workflow['counts']['completed'] }} completed</span><span class="count-pending"><i></i>{{ $workflow['counts']['pending'] }} pending</span><span class="count-locked"><i></i>{{ $workflow['counts']['locked'] }} locked</span></div>
                 </div>
                 <div class="workflow-tools" aria-label="Step display filters">
                     <span class="workflow-tools-label">Show steps</span>
@@ -271,72 +344,87 @@
                     <button type="button" class="step-filter" data-step-filter="actionable" aria-pressed="false">Active / Pending</button>
                 </div>
                 <div class="phase-nav" role="tablist" aria-label="Program phases" data-phase-tabs>
-                    @foreach($workflowPhases as $phase => $activities)
-                        @php
-                            $phaseFinished = $activities->whereIn('status', ['completed', 'not_applicable'])->count();
-                            $phaseComplete = $phaseFinished === $activities->count();
-                            $phaseHasAlert = $activities->contains(fn ($activity) => in_array($activity->status, ['late', 'returned_for_correction'], true));
-                        @endphp
-                        <button type="button" id="phase-tab-{{ $phase }}" class="phase-tab @if($phaseComplete) is-complete @endif @if($phaseHasAlert) is-alert @endif @if((int) $phase === (int) $activePhase) is-current @endif" role="tab" aria-selected="{{ (int) $phase === (int) $activePhase ? 'true' : 'false' }}" aria-controls="phase-panel-{{ $phase }}" tabindex="{{ (int) $phase === (int) $activePhase ? '0' : '-1' }}" data-phase-target="{{ $phase }}">
-                            <span class="phase-number">@if($phaseComplete)<i class="mdi mdi-check"></i>@else{{ $phase }}@endif</span>
+                    @foreach($workflow['phases'] as $phase => $phaseData)
+                        <button type="button" id="phase-tab-{{ $phase }}" class="phase-tab is-{{ $phaseData['state'] }} @if((int) $phase === (int) $activePhase) is-current @endif" role="tab" aria-selected="{{ (int) $phase === (int) $activePhase ? 'true' : 'false' }}" aria-controls="phase-panel-{{ $phase }}" tabindex="{{ (int) $phase === (int) $activePhase ? '0' : '-1' }}" data-phase-target="{{ $phase }}">
+                            <span class="phase-number">@if($phaseData['state'] === 'completed')<i class="mdi mdi-check"></i>@else{{ str_pad((string) $phase, 2, '0', STR_PAD_LEFT) }}@endif</span>
                             <span class="phase-tab-copy">
                                 <span class="phase-tab-heading">
-                                    <span class="phase-tab-title">{{ data_get($phaseDefinitions, "{$phase}.name", "Phase {$phase}") }}</span>
-                                    @if($currentPhase !== null && (int) $phase === (int) $currentPhase)
+                                    <span class="phase-tab-title">{{ $phaseData['name'] }}</span>
+                                    @if((int) $phase === (int) $activePhase)
                                         <span class="phase-live" aria-label="Current workflow phase" title="Current workflow phase"><span class="phase-live-dot" aria-hidden="true"></span></span>
                                     @endif
                                 </span>
-                                <span class="phase-tab-meta">{{ $phaseFinished }}/{{ $activities->count() }} steps complete</span>
+                                <span class="phase-tab-meta">{{ $phaseData['finished'] }}/{{ $phaseData['total'] }} steps complete</span>
+                                <span class="phase-state">{{ $phaseData['state'] === 'future' ? 'Future phase' : $phaseData['state'] }}</span>
                             </span>
                         </button>
                     @endforeach
                 </div>
-                @foreach($workflowPhases as $phase => $activities)
+
+                <section class="next-action-card" aria-labelledby="next-action-title">
+                    @if($workflow['next_activity'])
+                        @php
+                            $nextActivity = $workflow['next_activity'];
+                        @endphp
+                        <div class="next-action-kicker">Next action</div>
+                        <div class="next-action-layout">
+                            <div class="next-action-copy">
+                                <h4 id="next-action-title" class="next-action-title">Step {{ $nextActivity->step_code }} — {{ $nextActivity->title }}</h4>
+                                <div class="next-action-meta"><x-eclip.workflow-status-badge :status="$nextActivity->status" /><x-eclip.responsible-agency :labels="$workflow['next_meta']['responsible']" />@if($nextActivity->due_at)<span class="responsible-agency"><i class="mdi mdi-calendar-clock" aria-hidden="true"></i>Due {{ $nextActivity->due_at->format('M d, Y') }}</span>@endif</div>
+                                <p class="next-action-help">@if($workflow['next_meta']['can_update'])This step is ready for action by your office.@else Waiting for {{ implode(' / ', $workflow['next_meta']['responsible']) }} to complete this step.@endif</p>
+                            </div>
+                            <button type="button" class="next-action-button" data-open-step="{{ $nextActivity->id }}" data-open-phase="{{ $nextActivity->phase }}">{{ $workflow['next_meta']['can_update'] ? 'Open Step' : 'View Details' }} <i class="mdi mdi-arrow-right" aria-hidden="true"></i></button>
+                        </div>
+                    @else
+                        <div class="next-action-empty"><i class="mdi mdi-check-circle-outline" aria-hidden="true"></i><div><strong id="next-action-title">No action required at this time</strong><span>There is no currently actionable workflow step for this case.</span></div></div>
+                    @endif
+                </section>
+
+                @foreach($workflow['phases'] as $phase => $phaseData)
                     @php
-                        $phaseFinished = $activities->whereIn('status', ['completed', 'not_applicable'])->count();
-                        $phaseIndex = $workflowPhases->keys()->search($phase);
+                        $phaseIndex = $workflow['phases']->keys()->search($phase);
+                        $previousPhase = $workflow['phases']->values()->get($phaseIndex - 1);
+                        $nextPhase = $workflow['phases']->values()->get($phaseIndex + 1);
                     @endphp
                     <section id="phase-panel-{{ $phase }}" class="phase-panel" role="tabpanel" aria-labelledby="phase-tab-{{ $phase }}" data-phase-panel="{{ $phase }}" @if((int) $phase !== (int) $activePhase) hidden @endif>
                         <header class="phase-panel-header">
                             <div>
-                                <h4 class="phase-panel-title">Phase {{ $phase }} · {{ data_get($phaseDefinitions, "{$phase}.name", "Phase {$phase}") }}</h4>
-                                <p class="phase-panel-description">{{ data_get($phaseDefinitions, "{$phase}.description") }}</p>
-                                <p class="phase-panel-meta">{{ $phaseFinished }} of {{ $activities->count() }} steps completed</p>
+                                <h4 class="phase-panel-title">Phase {{ $phase }} · {{ $phaseData['name'] }}</h4>
+                                <p class="phase-panel-description">{{ $phaseData['description'] }}</p>
+                                <p class="phase-panel-meta">{{ $phaseData['finished'] }} of {{ $phaseData['total'] }} steps completed</p>
                             </div>
                             <div class="phase-controls">
-                                <button type="button" class="phase-control" data-phase-direction="previous" @disabled($phaseIndex === 0)><i class="mdi mdi-chevron-left"></i> Previous</button>
-                                <button type="button" class="phase-control" data-phase-direction="next" @disabled($phaseIndex === $workflowPhases->count() - 1)>Next <i class="mdi mdi-chevron-right"></i></button>
+                                <button type="button" class="phase-control" data-phase-direction="previous" @disabled(! $previousPhase)><i class="mdi mdi-chevron-left"></i>{{ $previousPhase ? $previousPhase['name'] : 'Previous Phase' }}</button>
+                                <button type="button" class="phase-control" data-phase-direction="next" @disabled(! $nextPhase)>{{ $nextPhase ? $nextPhase['name'] : 'Next Phase' }}<i class="mdi mdi-chevron-right"></i></button>
                             </div>
                         </header>
                         <div class="phase-steps">
-                            @foreach($activities as $activity)
+                            @foreach($phaseData['activities'] as $activity)
                                 @php
-                                    $stepDefinition = collect(config('eclip_workflow.steps'))->firstWhere('code', $activity->step_code);
                                     $statusSlug = str($activity->status)->slug();
+                                    $meta = $workflow['activity_meta']->get($activity->id);
+                                    $isNext = $workflow['next_activity']?->is($activity) ?? false;
                                 @endphp
-                                @php
-                                    $isActionable = in_array($activity->status, ['pending', 'ongoing', 'late', 'returned_for_correction'], true);
-                                @endphp
-                                <details class="official-step status-{{ $statusSlug }}" data-step-item data-step-state="{{ $isActionable ? 'actionable' : $activity->status }}" @if($isActionable) open @endif>
-                                    <summary class="step-summary">
-                                        <span class="step-marker">@if($activity->status === 'completed')<i class="mdi mdi-check"></i>@elseif($activity->status === 'locked')<i class="mdi mdi-lock-outline"></i>@else{{ $activity->step_code }}@endif</span>
+                                <details id="workflow-step-{{ $activity->id }}" class="official-step status-{{ $statusSlug }} {{ $isNext ? 'is-next-step' : '' }}" data-step-item data-step-id="{{ $activity->id }}" data-step-state="{{ $meta['is_actionable'] ? 'actionable' : $activity->status }}" @if($isNext) open @endif>
+                                    <summary class="step-summary" aria-expanded="{{ $isNext ? 'true' : 'false' }}">
+                                        <span class="step-marker">@if(in_array($activity->status, ['completed', 'not_applicable'], true))<i class="mdi mdi-check"></i>@elseif($activity->status === 'locked')<i class="mdi mdi-lock-outline"></i>@else{{ $activity->step_code }}@endif</span>
                                         <span class="step-content">
                                             <span class="step-name">Step {{ $activity->step_code }} — {{ $activity->title }}</span>
-                                            <span class="step-meta"><span class="step-badge step-badge-{{ $statusSlug }}">{{ str($activity->status)->replace('_', ' ') }}</span>@if($activity->due_at)<span><i class="mdi mdi-clock-outline"></i> Due {{ $activity->due_at->format('M d, Y') }}</span>@endif</span>
+                                            <span class="step-meta"><x-eclip.workflow-status-badge :status="$activity->status" /><x-eclip.responsible-agency :labels="$meta['responsible']" />@if($activity->due_at)<span><i class="mdi mdi-clock-outline"></i> Due {{ $activity->due_at->format('M d, Y') }}</span>@endif @if($activity->status === 'locked' && $meta['blocking_dependencies']->isNotEmpty())<span class="step-lock-reason">Requires {{ $meta['blocking_dependencies']->pluck('code')->map(fn ($code) => "Step {$code}")->join(' and ') }}</span>@endif</span>
                                         </span>
                                         <i class="mdi mdi-chevron-down step-chevron" aria-hidden="true"></i>
                                     </summary>
                                     <div class="step-expanded">
-                                        @if($activity->remarks)<div class="step-remarks"><i class="mdi mdi-message-text-outline"></i> {{ $activity->remarks }}</div>@endif
-                                        @if(! empty($activity->required_documents))
-                                            <div class="step-inline-documents"><strong>Required documents</strong><span>{{ implode(' · ', $activity->required_documents) }}</span></div>
-                                        @endif
-                                        @if(! $activity->remarks && empty($activity->required_documents))
-                                            <p class="step-empty-detail">No additional requirements or remarks are recorded for this step.</p>
-                                        @endif
-                                        @can('updateWorkflowActivity', $activity)
-                                            <button type="button" class="step-action-button" data-bs-toggle="modal" data-bs-target="#step-modal-{{ $activity->id }}"><i class="mdi mdi-pencil-outline"></i> Update step</button>
-                                        @endcan
+                                        <div class="step-detail-grid">
+                                            <div class="step-detail"><span class="step-detail-label">Responsible</span><x-eclip.responsible-agency :labels="$meta['responsible']" /></div>
+                                            <div class="step-detail"><span class="step-detail-label">Due date</span><span class="step-detail-value">{{ $activity->due_at?->format('M d, Y') ?? 'No due date recorded' }}</span></div>
+                                            @if(! empty($activity->required_documents))<div class="step-detail"><span class="step-detail-label">Required documents</span><span class="step-detail-value">{{ implode(' · ', $activity->required_documents) }}</span></div>@endif
+                                            @if($activity->remarks)<div class="step-detail"><span class="step-detail-label">Remarks</span><span class="step-detail-value">{{ $activity->remarks }}</span></div>@endif
+                                            @if($activity->status === 'locked' && $meta['dependencies']->isNotEmpty())<div class="step-detail"><span class="step-detail-label">Unlock requirements</span><ul class="step-dependencies">@foreach($meta['dependencies'] as $dependency)<li><i class="mdi {{ $dependency['complete'] ? 'mdi-check-circle-outline text-success' : 'mdi-lock-outline' }}" aria-hidden="true"></i><span>Step {{ $dependency['code'] }} — {{ $dependency['title'] }}</span></li>@endforeach</ul></div>@endif
+                                            <div class="step-detail"><span class="step-detail-label">Activity</span><span class="step-detail-value">Last updated {{ $activity->updated_at->format('M d, Y · h:i A') }}</span></div>
+                                        </div>
+                                        @if(! $activity->remarks && empty($activity->required_documents) && $activity->status !== 'locked')<p class="step-empty-detail mt-2">No additional requirements or remarks are recorded.</p>@endif
+                                        @if($meta['can_update'])<button type="button" class="step-action-button" data-bs-toggle="modal" data-bs-target="#step-modal-{{ $activity->id }}"><i class="mdi mdi-pencil-outline"></i> Update step</button>@elseif($meta['is_actionable'])<p class="step-empty-detail mt-2">You can view this step, but only {{ implode(' / ', $meta['responsible']) }} can update it.</p>@endif
                                     </div>
                                 </details>
                             @endforeach
@@ -426,22 +514,28 @@
                             <fieldset>
                                 <legend class="remarks-label mb-2">Decision</legend>
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="decision-option eligible">
                                             <input type="radio" name="decision" value="eligible" @checked(old('decision') === 'eligible') required>
                                             <span class="decision-content"><i class="mdi mdi-check-circle-outline"></i><span><strong>Eligible</strong><small>Proceed with E-CLIP processing</small></span></span>
                                         </label>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="decision-option ineligible">
-                                            <input type="radio" name="decision" value="ineligible" @checked(old('decision') === 'ineligible') required>
-                                            <span class="decision-content"><i class="mdi mdi-close-circle-outline"></i><span><strong>Ineligible</strong><small>Does not meet requirements</small></span></span>
+                                            <input type="radio" name="decision" value="previously_assisted" @checked(old('decision') === 'previously_assisted') required>
+                                            <span class="decision-content"><i class="mdi mdi-history"></i><span><strong>Previously Assisted</strong><small>Stop ordinary assistance flow</small></span></span>
                                         </label>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="decision-option returned">
-                                            <input type="radio" name="decision" value="returned" @checked(old('decision') === 'returned') required>
-                                            <span class="decision-content"><i class="mdi mdi-undo-variant"></i><span><strong>Return</strong><small>Send back for correction</small></span></span>
+                                            <input type="radio" name="decision" value="for_clarification" @checked(old('decision') === 'for_clarification') required>
+                                            <span class="decision-content"><i class="mdi mdi-help-circle-outline"></i><span><strong>For Clarification</strong><small>Return for clarification</small></span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="decision-option ineligible">
+                                            <input type="radio" name="decision" value="not_eligible" @checked(old('decision') === 'not_eligible') required>
+                                            <span class="decision-content"><i class="mdi mdi-close-circle-outline"></i><span><strong>Not Eligible</strong><small>Stop normal processing</small></span></span>
                                         </label>
                                     </div>
                                 </div>
@@ -463,76 +557,87 @@
                 </section>
             @endcan
 
-        </main>
-        <aside class="case-sidebar" aria-label="Case documents, services, and history">
-            @can('uploadDocument', $case)
-                <section class="card review-card mb-4" aria-labelledby="documents-title">
+            @if($case->status === \App\Enums\EclipCaseStatus::Eligible && !$case->authenticationRequest)
+                <section class="card review-card mb-4" aria-labelledby="authentication-request-title">
                     <div class="card-body">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-                            <div class="d-flex align-items-center mr-3">
-                                <div class="section-icon mr-3"><i class="mdi mdi-folder-multiple-outline" aria-hidden="true"></i></div>
-                                <div><h3 id="documents-title" class="section-title">Supporting Documents</h3><p class="section-subtitle">Review existing files or upload a new version.</p></div>
-                            </div>
-                            @if($requirements->isNotEmpty())
-                                <span class="checklist-progress mt-2 mt-sm-0"><strong>{{ $submittedDocuments }}</strong> of <strong>{{ $requirements->count() }}</strong> requirements uploaded</span>
-                            @endif
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="section-icon mr-3"><i class="mdi mdi-shield-check-outline"></i></div>
+                            <div><h3 id="authentication-request-title" class="section-title">Request JAPIC Authentication</h3><p class="section-subtitle">Assign one authorized reviewer. Authentication requires an explicit JAPIC decision.</p></div>
                         </div>
-
-                        @if($requirements->isEmpty())
-                            <div class="alert alert-warning document-checklist-alert mb-0"><i class="mdi mdi-alert-outline" aria-hidden="true"></i><span>The Katuparan Center has not configured the official document checklist.</span></div>
-                        @else
-                            @foreach($requirements as $requirement)
-                                @php
-                                    $document = $documentsByRequirement->get($requirement->id);
-                                    $documentStatus = $document?->status ?? 'missing';
-                                @endphp
-                                <article class="document-item">
-                                    <div class="document-heading">
-                                        <div class="requirement-name">{{ $loop->iteration }}. {{ $requirement->name }} @if($requirement->is_required)<span class="required-mark" title="Required">*</span>@endif</div>
-                                        <span class="document-status status-{{ str($documentStatus)->slug() }}">{{ str($documentStatus)->replace('_', ' ')->title() }}</span>
-                                    </div>
-                                    <div class="document-body">
-                                        <div class="row align-items-start">
-                                            <div class="col-lg-6 mb-3 mb-lg-0">
-                                                <div class="version-grid">
-                                                    @forelse($document?->versions?->sortByDesc('version_number') ?? [] as $version)
-                                                        <a class="document-preview-link" href="{{ route('lswdo.eclip.documents.preview', $version) }}" title="Preview {{ $version->original_name }}">
-                                                            <i class="mdi mdi-eye-outline"></i>
-                                                            <span><strong>Version {{ $version->version_number }} @if($loop->first)<span class="latest-badge">Latest</span>@endif</strong><small>{{ $version->original_name }}</small></span>
-                                                        </a>
-                                                    @empty
-                                                        <div class="no-document"><i class="mdi mdi-file-hidden"></i>No document uploaded yet</div>
-                                                    @endforelse
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <form method="POST" action="{{ route('lswdo.eclip.documents.store', $case) }}" enctype="multipart/form-data" class="supporting-upload" data-document-upload>
-                                                    @csrf
-                                                    <input type="hidden" name="requirement_id" value="{{ $requirement->id }}">
-                                                    <input id="requirement-file-{{ $requirement->id }}" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required data-document-input>
-                                                    <label for="requirement-file-{{ $requirement->id }}" class="supporting-upload-picker">
-                                                        <span class="supporting-upload-icon"><i class="mdi mdi-cloud-upload-outline"></i></span>
-                                                        <span><span class="supporting-upload-title">Choose a file</span><span class="supporting-upload-help text-muted">PDF, JPG, or PNG · Maximum 10 MB</span></span>
-                                                    </label>
-                                                    <span class="supporting-upload-name" data-document-name>No file selected</span>
-                                                    @error('document')<div class="text-danger small mb-2" role="alert">{{ $message }}</div>@enderror
-                                                    <button class="btn btn-sm btn-outline-primary btn-block" data-upload-button><i class="mdi mdi-upload mr-1"></i>{{ $document ? 'Upload New Version' : 'Upload Document' }}</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            @endforeach
-                            <p class="section-subtitle mt-3 mb-0"><i class="mdi mdi-history mr-1"></i>Uploading a replacement retains earlier versions and resets the JAPIC review.</p>
-                        @endif
+                        <form method="POST" action="{{ route('lswdo.eclip.authentication.store', $case) }}" class="d-flex flex-column flex-md-row gap-2">
+                            @csrf
+                            <label class="sr-only" for="assigned-japic">Assigned JAPIC reviewer</label>
+                            <select id="assigned-japic" name="assigned_to" class="form-select" required>
+                                <option value="">Select JAPIC reviewer</option>
+                                @foreach($japicUsers as $reviewer)<option value="{{ $reviewer->id }}">{{ $reviewer->name }}</option>@endforeach
+                            </select>
+                            <button class="btn btn-primary text-nowrap">Assign and request</button>
+                        </form>
                     </div>
                 </section>
-            @endcan
+            @elseif($case->authenticationRequest)
+                <section class="card review-card mb-4">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div><h3 class="section-title">JAPIC Authentication</h3><p class="section-subtitle">Assigned to {{ $case->authenticationRequest->assignee->name }}</p></div>
+                        <x-eclip.workflow-status-badge :status="$case->authenticationRequest->status" />
+                    </div>
+                </section>
+            @endif
+
+        </main>
+        <aside class="case-sidebar" aria-label="Case documents, services, and history">
+            <section class="card review-card mb-4" aria-labelledby="documents-title">
+                <div class="card-body">
+                    <div class="sidebar-card-header">
+                        <div class="section-icon"><i class="mdi mdi-folder-multiple-outline" aria-hidden="true"></i></div>
+                        <div><h3 id="documents-title" class="section-title">Supporting Documents</h3><p class="section-subtitle">Official case requirements and files.</p></div>
+                        @if($requirements->isNotEmpty())<span class="sidebar-count">{{ $submittedDocuments }} / {{ $requirements->count() }}</span>@endif
+                    </div>
+                    @if($requirements->isEmpty())
+                        <div class="sidebar-alert"><i class="mdi mdi-alert-outline" aria-hidden="true"></i><span><strong>Document checklist unavailable</strong><br>The official checklist has not yet been configured by Katuparan Center.</span></div>
+                    @else
+                        <div class="checklist-progress"><strong>{{ $submittedDocuments }}</strong> of <strong>{{ $requirements->count() }}</strong> requirements have an uploaded document.</div>
+                        <details class="sidebar-disclosure" @if($errors->has('document')) open @endif>
+                            <summary>View document checklist <i class="mdi mdi-chevron-down" aria-hidden="true"></i></summary>
+                            <div class="sidebar-document-list">
+                                @foreach($requirements as $requirement)
+                                    @php
+                                        $document = $documentsByRequirement->get($requirement->id);
+                                        $documentStatus = $document?->status ?? 'missing';
+                                    @endphp
+                                    <article class="sidebar-document-item">
+                                        <div class="sidebar-document-heading"><strong>{{ $requirement->name }} @if($requirement->is_required)<span class="required-mark" title="Required">*</span>@endif</strong><span class="document-status status-{{ str($documentStatus)->slug() }}">{{ str($documentStatus)->replace('_', ' ')->title() }}</span></div>
+                                        <div class="version-grid mt-2">
+                                            @forelse($document?->versions?->sortByDesc('version_number') ?? [] as $version)
+                                                <a class="document-preview-link" href="{{ route('lswdo.eclip.documents.preview', $version) }}" title="Preview {{ $version->original_name }}"><i class="mdi mdi-eye-outline"></i><span><strong>Version {{ $version->version_number }} @if($loop->first)<span class="latest-badge">Latest</span>@endif</strong><small>{{ $version->original_name }}</small></span></a>
+                                            @empty
+                                                <div class="no-document"><i class="mdi mdi-file-hidden"></i>No document uploaded</div>
+                                            @endforelse
+                                        </div>
+                                        @can('uploadDocument', $case)
+                                            <form method="POST" action="{{ route('lswdo.eclip.documents.store', $case) }}" enctype="multipart/form-data" class="supporting-upload sidebar-upload" data-document-upload>
+                                                @csrf
+                                                <input type="hidden" name="requirement_id" value="{{ $requirement->id }}">
+                                                <input id="requirement-file-{{ $requirement->id }}" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required data-document-input>
+                                                <label for="requirement-file-{{ $requirement->id }}" class="supporting-upload-picker"><span class="supporting-upload-icon"><i class="mdi mdi-cloud-upload-outline"></i></span><span><span class="supporting-upload-title">Choose a file</span><span class="supporting-upload-help text-muted">PDF, JPG, or PNG · Maximum 10 MB</span></span></label>
+                                                <span class="supporting-upload-name" data-document-name>No file selected</span>
+                                                @error('document')<div class="text-danger small mb-2" role="alert">{{ $message }}</div>@enderror
+                                                <button class="btn btn-sm btn-outline-primary btn-block" data-upload-button><i class="mdi mdi-upload mr-1"></i>{{ $document ? 'Upload New Version' : 'Upload Document' }}</button>
+                                            </form>
+                                        @endcan
+                                    </article>
+                                @endforeach
+                            </div>
+                            @can('uploadDocument', $case)<p class="section-subtitle mt-2 mb-0"><i class="mdi mdi-history mr-1"></i>Replacement uploads retain earlier versions and reset JAPIC review.</p>@endcan
+                        </details>
+                    @endif
+                </div>
+            </section>
 
             <section class="card review-card mb-4" aria-labelledby="actions-title">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="section-icon mr-3"><i class="mdi mdi-heart-pulse"></i></div>
+                    <div class="sidebar-card-header">
+                        <div class="section-icon"><i class="mdi mdi-heart-pulse"></i></div>
                         <div><h3 id="actions-title" class="section-title">Case Services</h3><p class="section-subtitle">Related reintegration monitoring.</p></div>
                     </div>
                     <a href="{{ route('lswdo.eclip.basic-services.index', $case) }}" class="service-link"><i class="mdi mdi-clipboard-pulse-outline"></i><span>Monitor Basic Services</span><i class="mdi mdi-chevron-right"></i></a>
@@ -541,22 +646,25 @@
 
             <section class="card review-card mb-4" aria-labelledby="history-title">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="section-icon mr-3"><i class="mdi mdi-history"></i></div>
+                    <div class="sidebar-card-header">
+                        <div class="section-icon"><i class="mdi mdi-history"></i></div>
                         <div><h3 id="history-title" class="section-title">Case History</h3><p class="section-subtitle">Recorded workflow activity.</p></div>
                     </div>
                     <ol class="history-timeline">
-                        @forelse($case->statusHistories->sortByDesc('created_at') as $history)
+                        @forelse($case->statusHistories->sortByDesc('created_at')->take(5) as $history)
                             <li class="history-item">
                                 <span class="history-dot" aria-hidden="true"></span>
                                 <div class="history-status">{{ $history->to_status->label() }}</div>
-                                <div class="history-meta"><i class="mdi mdi-account-outline"></i> {{ $history->user->name }} · <time datetime="{{ $history->created_at->toIso8601String() }}">{{ $history->created_at->format('M d, Y · h:i A') }}</time></div>
+                                <div class="history-meta"><i class="mdi mdi-account-outline"></i> {{ $history->user?->name ?? 'System' }} · <time datetime="{{ $history->created_at->toIso8601String() }}">{{ $history->created_at->format('M d, Y · h:i A') }}</time></div>
                                 @if($history->remarks)<div class="history-remarks">{{ $history->remarks }}</div>@endif
                             </li>
                         @empty
                             <li class="text-muted small">No case activity has been recorded.</li>
                         @endforelse
                     </ol>
+                    @if($case->statusHistories->count() > 5)
+                        <details class="sidebar-history-more"><summary>View full history ({{ $case->statusHistories->count() }})</summary><ol class="history-timeline mt-3">@foreach($case->statusHistories->sortByDesc('created_at')->skip(5) as $history)<li class="history-item"><span class="history-dot" aria-hidden="true"></span><div class="history-status">{{ $history->to_status->label() }}</div><div class="history-meta"><i class="mdi mdi-account-outline"></i> {{ $history->user?->name ?? 'System' }} · <time datetime="{{ $history->created_at->toIso8601String() }}">{{ $history->created_at->format('M d, Y · h:i A') }}</time></div>@if($history->remarks)<div class="history-remarks">{{ $history->remarks }}</div>@endif</li>@endforeach</ol></details>
+                    @endif
                 </div>
             </section>
         </aside>
@@ -621,6 +729,28 @@ document.querySelectorAll('[data-phase-direction]').forEach(function (button) {
 
 var requestedPhase = window.location.hash.match(/^#phase-(\d+)$/);
 if (requestedPhase) showPhase(requestedPhase[1], false);
+
+document.querySelectorAll('[data-step-item]').forEach(function (step) {
+    step.addEventListener('toggle', function () {
+        var summary = step.querySelector('summary');
+        if (summary) summary.setAttribute('aria-expanded', step.open ? 'true' : 'false');
+        if (!step.open) return;
+        document.querySelectorAll('[data-step-item][open]').forEach(function (otherStep) {
+            if (otherStep !== step) otherStep.open = false;
+        });
+    });
+});
+
+document.querySelectorAll('[data-open-step]').forEach(function (button) {
+    button.addEventListener('click', function () {
+        showPhase(button.dataset.openPhase, true);
+        var step = document.querySelector('[data-step-id="' + button.dataset.openStep + '"]');
+        if (!step) return;
+        step.open = true;
+        step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(function () { step.querySelector('summary')?.focus(); }, 350);
+    });
+});
 
 document.querySelectorAll('[data-step-filter]').forEach(function (button) {
     button.addEventListener('click', function () {

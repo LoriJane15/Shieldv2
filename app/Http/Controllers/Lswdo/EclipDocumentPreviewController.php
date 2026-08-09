@@ -5,15 +5,18 @@ namespace App\Http\Controllers\Lswdo;
 use App\Http\Controllers\Controller;
 use App\Models\EclipBasicServiceDocument;
 use App\Models\EclipDocumentVersion;
+use App\Services\DocumentAccessLogger;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EclipDocumentPreviewController extends Controller
 {
-    public function caseDocument(EclipDocumentVersion $version): View
+    public function caseDocument(Request $request, EclipDocumentVersion $version, DocumentAccessLogger $accessLog): View
     {
         $version->loadMissing(['document.eclipCase.formerRebel', 'document.requirement', 'uploader']);
         $case = $version->document->eclipCase;
         $this->authorize('downloadDocument', $case);
+        $accessLog->record($request->user(), $version->document, 'view', $version->id, $request->ip(), $request->userAgent());
 
         return view('lswdo.eclip.document-preview', [
             'title' => $version->document->requirement->name,

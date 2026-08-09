@@ -1,4 +1,4 @@
-@extends('layouts.skydash-v')
+@extends(auth()->user()->hasRole('admin') ? 'layouts.skydash-h' : 'layouts.skydash-v')
 @section('title', 'E-CLIP Analytics')
 @section('heading', 'E-CLIP Analytics and Reporting')
 

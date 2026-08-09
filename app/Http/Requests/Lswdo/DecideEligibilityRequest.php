@@ -15,8 +15,8 @@ class DecideEligibilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'decision' => ['required', Rule::in(['eligible', 'ineligible', 'returned'])],
-            'remarks' => ['nullable', 'string', 'max:5000', 'required_if:decision,ineligible,returned'],
+            'decision' => ['required', Rule::in(['eligible', 'previously_assisted', 'for_clarification', 'not_eligible'])],
+            'remarks' => ['nullable', 'string', 'max:5000', 'required_unless:decision,eligible'],
         ];
     }
 }

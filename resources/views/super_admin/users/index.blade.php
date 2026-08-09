@@ -4,6 +4,88 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/css/user-logo-cropper.css') }}">
+    <style>
+        .user-management-modal .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-width: 720px;
+            min-height: calc(100% - 3.5rem);
+        }
+        .user-management-modal .modal-content {
+            border-radius: 16px;
+            max-height: calc(100vh - 3.5rem);
+            overflow: hidden;
+        }
+        .user-management-modal [data-user-form] {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .user-management-modal .modal-header {
+            align-items: center;
+            background: linear-gradient(110deg, #35127d, #4b1ca0);
+            height: auto;
+            min-height: 68px;
+            padding: 1rem 1.5rem;
+        }
+        .user-management-modal .modal-title { color: #fff; font-size: 1.05rem; margin: 0; }
+        .user-management-modal .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+            margin: 0;
+            opacity: .85;
+            padding: .5rem;
+            position: static;
+        }
+        .user-management-modal .btn-close:hover { opacity: 1; }
+        .user-management-modal .modal-body {
+            min-height: 0;
+            overflow-y: auto;
+            padding: 1.5rem;
+            scrollbar-gutter: stable;
+        }
+        .user-management-modal .modal-footer {
+            background: #fff;
+            border-top: 1px solid #e8ecf2;
+            flex: 0 0 auto;
+            padding: 1rem 1.5rem;
+        }
+        html.user-modal-page-locked,
+        body.user-modal-page-locked { overflow: hidden !important; }
+        body.user-modal-page-locked {
+            left: 0;
+            position: fixed;
+            right: 0;
+            width: 100%;
+        }
+        .account-status-control {
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #d8e0ea;
+            border-radius: .375rem;
+            display: flex;
+            justify-content: space-between;
+            min-height: 39px;
+            padding: .45rem .75rem;
+        }
+        .account-status-label { color: #334155; display: block; font-size: .78rem; font-weight: 600; line-height: 1.2; margin: 0; }
+        .account-status-help { color: #8492a6; display: block; font-size: .66rem; line-height: 1.2; margin-top: .15rem; }
+        .account-status-switch {
+            cursor: pointer;
+            flex: 0 0 auto;
+            float: none !important;
+            margin: 0 !important;
+        }
+        @media (max-width: 575.98px) {
+            .user-management-modal .modal-dialog {
+                margin: .75rem !important;
+                min-height: calc(100% - 1.5rem);
+            }
+            .user-management-modal .modal-content { max-height: calc(100vh - 1.5rem); }
+            .user-management-modal .modal-header,
+            .user-management-modal .modal-body,
+            .user-management-modal .modal-footer { padding-left: 1rem; padding-right: 1rem; }
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -46,6 +128,7 @@
                                     <th>Full Name</th>
                                     <th>Username</th>
                                     <th>Role</th>
+                                    <th>Status</th>
                                     <th>Scope</th>
                                     <th>Created at</th>
                                     <th class="text-end">Action</th>
@@ -62,6 +145,7 @@
                                         <td class="fw-medium">{{ $u->name }}</td>
                                         <td>{{ '@'.$u->username }}</td>
                                         <td>{{ $roles[$u->role]['label'] ?? $u->role }}</td>
+                                        <td><span class="badge {{ $u->is_active ? 'bg-success' : 'bg-secondary' }}">{{ $u->is_active ? 'Active' : 'Inactive' }}</span></td>
                                         <td>{{ $u->municipality?->name ?? $u->govAgency?->acronym ?? '—' }}</td>
                                         <td>{{ $u->created_at?->timezone(config('app.display_timezone'))->format('M d, Y') ?? '—' }}</td>
                                         <td>
@@ -72,6 +156,7 @@
                                                    data-username="{{ $u->username }}"
                                                    data-name="{{ $u->name }}"
                                                    data-role="{{ $u->role }}"
+                                                   data-active="{{ $u->is_active ? 'true' : 'false' }}"
                                                    data-municipality="{{ $u->municipality_id }}"
                                                    data-agency="{{ $u->gov_agency_id }}"
                                                    data-logo="{{ $u->logo_url }}"
@@ -100,7 +185,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>
+                                    <tr><td colspan="8" class="text-center text-muted py-4">No users found.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -115,45 +200,45 @@
     @include('super_admin.partials.delete-confirmation')
 
     {{-- Add modal --}}
-    <div class="modal fade" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade user-management-modal" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="addUserModalLabel">Create system user</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ route('super_admin.users.store') }}" enctype="multipart/form-data" data-user-form novalidate>
+                <form method="POST" action="{{ route('super_admin.users.store') }}" enctype="multipart/form-data" data-user-form novalidate>
+                    <div class="modal-body">
                         @csrf
                         @include('super_admin.users._fields', ['isEdit' => false])
-                        <div class="d-flex justify-content-end gap-2 pt-2">
-                            <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
-                            <button class="btn btn-success">Create user</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
+                        <button class="btn btn-success">Create user</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     {{-- Edit modal (shared, JS-populated) --}}
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade user-management-modal" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="editUserModalLabel">Edit system user</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form method="POST" enctype="multipart/form-data" data-user-form data-edit-form novalidate>
+                <form method="POST" enctype="multipart/form-data" data-user-form data-edit-form novalidate>
+                    <div class="modal-body">
                         @csrf @method('PUT')
                         @include('super_admin.users._fields', ['isEdit' => true])
-                        <div class="d-flex justify-content-end gap-2 pt-2">
-                            <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
-                            <button class="btn btn-primary">Save changes</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Cancel</button>
+                        <button class="btn btn-primary">Save changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -161,6 +246,28 @@
 
 @push('scripts')
     <script>
+        let userModalPageScrollY = 0;
+
+        document.querySelectorAll('.user-management-modal').forEach((modal) => {
+            modal.addEventListener('show.bs.modal', () => {
+                userModalPageScrollY = window.scrollY;
+                document.documentElement.classList.add('user-modal-page-locked');
+                document.body.classList.add('user-modal-page-locked');
+                document.body.style.top = `-${userModalPageScrollY}px`;
+            });
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                if (document.querySelector('.user-management-modal.show')) {
+                    return;
+                }
+
+                document.documentElement.classList.remove('user-modal-page-locked');
+                document.body.classList.remove('user-modal-page-locked');
+                document.body.style.top = '';
+                window.scrollTo(0, userModalPageScrollY);
+            });
+        });
+
         // Role-conditional field visibility (both modals).
         function syncRoleFields(form) {
             const role = form.querySelector('[name=role]').value;
@@ -287,6 +394,7 @@
                 f.querySelector('[name=username]').value = btn.dataset.username;
                 f.querySelector('[name=name]').value = btn.dataset.name;
                 f.querySelector('[name=role]').value = btn.dataset.role;
+                f.querySelector('[name=is_active][type=checkbox]').checked = btn.dataset.active === 'true';
                 f.querySelector('[name=municipality_id]').value = btn.dataset.municipality || '';
                 f.querySelector('[name=gov_agency_id]').value = btn.dataset.agency || '';
                 f.querySelector('[name=password]').value = '';

@@ -3,27 +3,13 @@
 @section('heading', 'RCSP Locations')
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    .map-wrapper { padding: 20px; }
-    .map-embed {
-        overflow: hidden; border-radius: 20px; position: relative;
-        height: 65vh; min-height: 480px; max-width: 100%;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
-    }
-    #locationsMap { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .location-note { background: #eef5ff; border: 1px solid #d7e6ff; border-radius: 10px; color: #365b88; padding: 1rem; }
 </style>
 @endpush
 
 @section('content')
-    {{-- Full-width operational map (original showed the final_mapping iframe here) --}}
-    <div class="card position-relative mb-4">
-        <div class="map-wrapper">
-            <div class="map-embed">
-                <div id="locationsMap"></div>
-            </div>
-        </div>
-    </div>
+    <div class="location-note mb-4"><i class="mdi mdi-shield-lock-outline mr-1"></i>Beneficiary names, addresses, and precise coordinates are excluded from this monitoring view.</div>
 
     {{-- RCSP barangays grouped by municipality --}}
     <div class="row">
@@ -50,24 +36,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function () {
-    const map = L.map('locationsMap').setView([6.7497, 125.3572], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    setTimeout(() => map.invalidateSize(), 200);
-    const points = @json($frPoints);
-    const colors = { Active:'#22c55e', Reintegrated:'#2c4199', Inactive:'#94a3b8', 'Under Review':'#f59e0b' };
-    const bounds = [];
-    points.forEach(p => {
-        L.circleMarker([p.lat, p.lng], { radius:7, color: colors[p.status]||'#64748b', fillColor: colors[p.status]||'#64748b', fillOpacity:.85, weight:2 })
-            .bindPopup('<strong>'+p.name+'</strong><br>'+p.status+'<br>'+(p.address||''))
-            .addTo(map);
-        bounds.push([p.lat, p.lng]);
-    });
-    if (bounds.length) map.fitBounds(bounds, { padding:[40,40] });
-})();
-</script>
-@endpush

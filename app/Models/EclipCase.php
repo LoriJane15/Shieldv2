@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Enums\EclipCaseStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class EclipCase extends Model
 {
     protected $fillable = [
-        'case_number', 'former_rebel_id', 'municipality_id', 'created_by',
+        'case_number', 'former_rebel_id', 'lswdo_referral_id', 'municipality_id', 'created_by',
         'assigned_to', 'status', 'submitted_at', 'eligibility_decided_at',
     ];
 
@@ -27,6 +28,32 @@ class EclipCase extends Model
     public function formerRebel(): BelongsTo
     {
         return $this->belongsTo(FormerRebel::class);
+    }
+
+    public function referral(): BelongsTo
+    {
+        return $this->belongsTo(LswdoReferral::class, 'lswdo_referral_id');
+    }
+
+    public function participantAssignments(): HasMany
+    {
+        return $this->hasMany(EclipCaseParticipant::class);
+    }
+
+    public function participants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'eclip_case_participants')
+            ->withPivot(['participant_role', 'assigned_by', 'assigned_at', 'ended_at', 'is_active'])
+            ->withTimestamps();
+    }
+
+    public function hasActiveParticipant(User $user, ?string $role = null): bool
+    {
+        return $this->participantAssignments()
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->when($role, fn ($query) => $query->where('participant_role', $role))
+            ->exists();
     }
 
     public function municipality(): BelongsTo
@@ -87,5 +114,10 @@ class EclipCase extends Model
     public function workflowActivities(): HasMany
     {
         return $this->hasMany(EclipWorkflowActivity::class)->orderBy('id');
+    }
+
+    public function authenticationRequest(): HasOne
+    {
+        return $this->hasOne(EclipAuthenticationRequest::class);
     }
 }

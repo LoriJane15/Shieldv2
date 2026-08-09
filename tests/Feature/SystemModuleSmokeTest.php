@@ -25,6 +25,7 @@ class SystemModuleSmokeTest extends TestCase
                 'super_admin.dashboard',
                 'super_admin.users.index',
                 'super_admin.agencies.index',
+                'super_admin.audit-logs.index',
             ],
             'admin' => [
                 'admin.dashboard',

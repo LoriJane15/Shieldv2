@@ -20,6 +20,12 @@ class EclipCaseController extends Controller
     public function index(Request $request): View
     {
         $cases = EclipCase::query()
+            ->where(function ($query) use ($request) {
+                $query->where('created_by', $request->user()->id)
+                    ->orWhereHas('participantAssignments', fn ($participants) => $participants
+                        ->where('user_id', $request->user()->id)
+                        ->where('is_active', true));
+            })
             ->with(['formerRebel.municipality', 'assignee'])
             ->latest()
             ->paginate(15);

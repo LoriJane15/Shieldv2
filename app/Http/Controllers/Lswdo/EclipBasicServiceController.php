@@ -18,7 +18,16 @@ class EclipBasicServiceController extends Controller
     public function index(Request $request, EclipCase $eclipCase): View
     {
         abort_unless($request->user()->municipality_id === $eclipCase->municipality_id, 403);
-        $eclipCase->load(['formerRebel', 'basicServices.agency', 'basicServices.documents.uploader', 'basicServices.histories.user']);
+        $eclipCase->load([
+            'formerRebel',
+            'basicServices' => fn ($query) => $query->latest('updated_at'),
+            'basicServices.agency',
+            'basicServices.updater',
+            'basicServices.documents' => fn ($query) => $query->latest('version_number'),
+            'basicServices.documents.uploader',
+            'basicServices.histories' => fn ($query) => $query->latest()->limit(5),
+            'basicServices.histories.user',
+        ]);
 
         return view('lswdo.eclip.basic-services', ['case' => $eclipCase, 'agencies' => GovAgency::query()->orderBy('name')->get(), 'types' => config('shield.eclip_basic_service_types')]);
     }
