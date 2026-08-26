@@ -6,6 +6,7 @@ use App\Models\Barangay;
 use App\Models\FormerRebel;
 use App\Models\FormerRebelRegistrationDraft;
 use App\Models\FrGovernmentAssistance;
+use App\Models\MblrcEnrollment;
 use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -232,6 +233,57 @@ class FormerRebelWorkflowTest extends TestCase
             ->assertSee('data-program-confirm-save', false)
             ->assertSee('data-program-success-close', false)
             ->assertSee('program-status-modal-open', false);
+    }
+
+    public function test_legacy_program_status_cannot_bypass_official_integration_completion(): void
+    {
+        $formerRebel = $this->createFormerRebel();
+
+        $this->actingAs($this->mblrc)
+            ->putJson(route('mblrc.fr.program-status.update', $formerRebel), [
+                'reintegration_status' => 'Completed',
+                'reintegration_date' => '2026-08-01',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reintegration_status');
+
+        $this->actingAs($this->mblrc)
+            ->get(route('mblrc.fr.show', $formerRebel))
+            ->assertOk()
+            ->assertSeeText('Start Integration Monitoring')
+            ->assertSeeText('Legacy status updates do not create an LSWDO referral');
+
+        $this->assertDatabaseMissing('fr_program_statuses', ['former_rebel_id' => $formerRebel->id]);
+        $this->assertDatabaseCount('lswdo_referrals', 0);
+    }
+
+    public function test_formal_integration_enrollment_prevents_conflicting_manual_program_status_updates(): void
+    {
+        $formerRebel = $this->createFormerRebel();
+        MblrcEnrollment::query()->create([
+            'former_rebel_id' => $formerRebel->id,
+            'assigned_user_id' => $this->mblrc->id,
+            'created_by' => $this->mblrc->id,
+            'status' => 'in_progress',
+            'integration_started_at' => '2026-05-01',
+        ]);
+
+        $this->actingAs($this->mblrc)
+            ->putJson(route('mblrc.fr.program-status.update', $formerRebel), [
+                'reintegration_status' => 'Completed',
+                'reintegration_date' => '2026-08-01',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('reintegration_status');
+
+        $this->actingAs($this->mblrc)
+            ->get(route('mblrc.fr.show', $formerRebel))
+            ->assertOk()
+            ->assertSeeText('Open Integration Monitoring')
+            ->assertSeeText('synchronized from the official three-month Integration Monitoring record')
+            ->assertDontSeeText('Edit Legacy Status');
+
+        $this->assertDatabaseMissing('fr_program_statuses', ['former_rebel_id' => $formerRebel->id]);
     }
 
     public function test_readding_a_skill_updates_its_proficiency_without_duplication(): void

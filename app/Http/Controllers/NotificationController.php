@@ -47,8 +47,13 @@ class NotificationController extends Controller
             'japic.eclip.show',
             'pnp.eclip-fea.show',
             'afp.eclip-fea.show',
+            'local_eclip.surfaced.index',
         ];
         $routeName = $notification->data['route'] ?? null;
+
+        if ($routeName === 'local_eclip.surfaced.index') {
+            return redirect()->route($routeName);
+        }
 
         return in_array($routeName, $allowedRoutes, true) && isset($notification->data['case_id'])
             ? redirect()->route($routeName, $notification->data['case_id'])

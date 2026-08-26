@@ -46,8 +46,13 @@ class UpdateEclipWorkflowActivityRequest extends FormRequest
                 'datetime-local' => ['nullable', 'date'],
                 'month' => ['nullable', 'date_format:Y-m'],
                 'number' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'],
+                'select' => ['nullable', Rule::in(array_keys($field['options'] ?? []))],
                 default => ['nullable', 'string', 'max:5000'],
             };
+
+            if (($field['required_on_complete'] ?? false) && $this->input('status') === 'completed') {
+                array_unshift($rules["data.{$field['key']}"], 'required');
+            }
         }
 
         return $rules;

@@ -23,4 +23,10 @@ class EclipBasicServiceHistory extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('Basic-service history entries are immutable.'));
+        static::deleting(fn () => throw new \LogicException('Basic-service history entries are immutable.'));
+    }
 }

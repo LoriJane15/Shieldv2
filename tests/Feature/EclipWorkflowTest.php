@@ -55,6 +55,13 @@ class EclipWorkflowTest extends TestCase
         $case = $this->caseFor($formerRebel, EclipCaseStatus::SubmittedForEligibility);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
         $this->assignProcessor($case, $lswdo);
+        $step2 = $case->workflowActivities()->where('step_code', '2')->firstOrFail();
+        app(EclipOfficialWorkflowService::class)->update($step2, $lswdo, 'completed', null, [
+            'receiving_committee' => 'Local E-CLIP Committee',
+            'submission_date' => now()->toDateString(),
+            'confirmation_timestamp' => now()->format('Y-m-d\TH:i'),
+            'notification_reference' => 'LEC-TEST-001',
+        ], null);
 
         $this->actingAs($lswdo)->post(route('lswdo.eclip.eligibility.decide', $case), [
             'decision' => 'eligible',
@@ -135,7 +142,6 @@ class EclipWorkflowTest extends TestCase
         if ($status === EclipCaseStatus::SubmittedForEligibility) {
             app(EclipOfficialWorkflowService::class)->initialize($case, null, null, [
                 'intention_to_surface' => ['source' => 'Test intake', 'source_record' => 'INT-001'],
-                'receiving_unit_coordination' => ['source' => 'Test intake', 'source_record' => 'COORD-001'],
             ]);
         }
 

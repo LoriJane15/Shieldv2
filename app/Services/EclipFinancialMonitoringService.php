@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class EclipFinancialMonitoringService
 {
+    public function __construct(private readonly EclipOfficialWorkflowService $officialWorkflow) {}
+
     public function createLiquidation(EclipCase $case, array $data, User $actor, ?string $ipAddress, ?string $userAgent): EclipLiquidationRequirement
     {
         return DB::transaction(function () use ($case, $data, $actor, $ipAddress, $userAgent) {
@@ -59,21 +61,15 @@ class EclipFinancialMonitoringService
 
     private function record(EclipCase $case, Model $entity, string $action, ?array $previous, array $new, User $actor, ?string $ipAddress, ?string $userAgent, string $stepCode): void
     {
-        $activity = $case->workflowActivities()->where('step_code', $stepCode)->first();
-        if ($activity) {
-            $actor->loadMissing(['municipality', 'govAgency']);
-            $activity->histories()->create([
-                'user_id' => $actor->id,
-                'event' => $action,
-                'actor_role' => $actor->role,
-                'actor_office' => $actor->govAgency?->name ?? $actor->municipality?->name ?? config("shield.roles.{$actor->role}.label"),
-                'from_status' => $activity->status,
-                'to_status' => $activity->status,
-                'remarks' => $new['return_reason'] ?? $new['remarks'] ?? null,
-                'data' => ['entity_id' => $entity->getKey(), 'previous' => $previous, 'new' => $new],
-                'ip_address' => $ipAddress,
-            ]);
-        }
+        $this->officialWorkflow->recordDomainEvent(
+            $case,
+            $stepCode,
+            $actor,
+            $action,
+            $new['return_reason'] ?? $new['remarks'] ?? null,
+            ['entity_id' => $entity->getKey(), 'previous' => $previous, 'new' => $new],
+            $ipAddress,
+        );
 
         AuditLog::query()->create([
             'user_id' => $actor->id,

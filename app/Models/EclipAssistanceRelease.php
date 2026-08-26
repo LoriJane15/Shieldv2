@@ -9,14 +9,19 @@ class EclipAssistanceRelease extends Model
 {
     protected $fillable = [
         'eclip_case_id', 'assistance_request_id', 'assistance_revision_id', 'amount',
-        'release_reference', 'released_at', 'remarks', 'acknowledgment_path',
+        'release_reference', 'released_at', 'recipient', 'remarks', 'received_confirmed_at',
+        'received_confirmed_by', 'acknowledgment_path',
         'acknowledgment_original_name', 'acknowledgment_mime_type',
         'acknowledgment_size_bytes', 'acknowledgment_sha256', 'released_by',
     ];
 
     protected function casts(): array
     {
-        return ['amount' => 'decimal:2', 'released_at' => 'date'];
+        return [
+            'amount' => 'decimal:2',
+            'released_at' => 'date',
+            'received_confirmed_at' => 'datetime',
+        ];
     }
 
     public function releaser(): BelongsTo
@@ -27,5 +32,10 @@ class EclipAssistanceRelease extends Model
     public function eclipCase(): BelongsTo
     {
         return $this->belongsTo(EclipCase::class);
+    }
+
+    public function receivedConfirmer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'received_confirmed_by');
     }
 }

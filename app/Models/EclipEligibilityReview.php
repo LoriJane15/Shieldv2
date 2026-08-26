@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EclipEligibilityReview extends Model
 {
-    protected $fillable = ['eclip_case_id', 'reviewed_by', 'decision', 'remarks', 'reviewed_at'];
+    protected $fillable = [
+        'eclip_case_id', 'reviewed_by', 'decision', 'referral_status',
+        'referred_program', 'remarks', 'reviewed_at',
+    ];
 
     protected function casts(): array
     {
@@ -22,5 +25,11 @@ class EclipEligibilityReview extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('Eligibility decisions are immutable.'));
+        static::deleting(fn () => throw new \LogicException('Eligibility decisions are immutable.'));
     }
 }

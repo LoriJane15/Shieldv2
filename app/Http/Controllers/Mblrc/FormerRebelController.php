@@ -98,6 +98,7 @@ class FormerRebelController extends Controller
     {
         $formerRebel->load([
             'barangay', 'municipality', 'programStatus',
+            'mblrcEnrollment',
             'skills', 'assistances', 'educationWorks', 'locationHistories',
         ]);
 

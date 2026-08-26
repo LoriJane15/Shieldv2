@@ -121,6 +121,16 @@ class EclipCase extends Model
         return $this->hasMany(EclipIntervention::class);
     }
 
+    public function reintegrationPlanItems(): HasMany
+    {
+        return $this->hasMany(EclipReintegrationPlanItem::class);
+    }
+
+    public function livelihoodBeneficiaryAssistances(): HasMany
+    {
+        return $this->hasMany(EclipLivelihoodBeneficiaryAssistance::class);
+    }
+
     public function liquidationRequirements(): HasMany
     {
         return $this->hasMany(EclipLiquidationRequirement::class);

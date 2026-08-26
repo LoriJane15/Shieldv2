@@ -26,4 +26,10 @@ class EclipDilgReview extends Model
     {
         return $this->belongsTo(EclipAssistanceRevision::class, 'assistance_revision_id');
     }
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('DILG review decisions are immutable.'));
+        static::deleting(fn () => throw new \LogicException('DILG review decisions are immutable.'));
+    }
 }

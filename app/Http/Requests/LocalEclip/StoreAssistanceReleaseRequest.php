@@ -18,6 +18,7 @@ class StoreAssistanceReleaseRequest extends FormRequest
             'amount' => ['required', 'numeric', 'gt:0', 'decimal:0,2', 'max:9999999999999.99'],
             'release_reference' => ['required', 'string', 'max:150', Rule::unique('eclip_assistance_releases', 'release_reference')],
             'released_at' => ['required', 'date', 'before_or_equal:today'],
+            'recipient' => ['required', 'string', 'max:255'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'acknowledgment' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ];

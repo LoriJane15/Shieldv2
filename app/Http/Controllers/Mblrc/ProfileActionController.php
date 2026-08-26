@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -25,10 +26,22 @@ class ProfileActionController extends Controller
 
     public function updateProgramStatus(Request $request, FormerRebel $formerRebel): JsonResponse
     {
+        if ($formerRebel->mblrcEnrollment()->exists()) {
+            throw ValidationException::withMessages([
+                'reintegration_status' => 'This program status is managed by Integration Monitoring. Complete or update the assigned enrollment there.',
+            ]);
+        }
+
         $data = $request->validate([
             'reintegration_status' => ['required', Rule::in(['Not-Started', 'On-going', 'Completed'])],
             'reintegration_date' => ['nullable', 'date'],
         ]);
+
+        if ($data['reintegration_status'] === 'Completed') {
+            throw ValidationException::withMessages([
+                'reintegration_status' => 'Official completion must be recorded through Integration Monitoring so the three-month evidence is verified and the LSWDO referral is created.',
+            ]);
+        }
 
         $formerRebel->programStatus()->updateOrCreate(
             ['former_rebel_id' => $formerRebel->id],

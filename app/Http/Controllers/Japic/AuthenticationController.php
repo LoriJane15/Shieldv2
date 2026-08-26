@@ -16,7 +16,11 @@ class AuthenticationController extends Controller
     {
         $requests = EclipAuthenticationRequest::query()
             ->where('assigned_to', $request->user()->id)
-            ->with(['eclipCase.formerRebel:id,classified_id', 'histories.user'])
+            ->with([
+                'eclipCase.formerRebel:id,classified_id',
+                'eclipCase.workflowActivities' => fn ($query) => $query->where('step_code', '4A')->with('documents'),
+                'histories.user',
+            ])
             ->latest('requested_at')->paginate(20);
 
         return view('japic.authentication.index', compact('requests'));

@@ -23,6 +23,8 @@ class EclipDilgReviewTest extends TestCase
 
         $this->actingAs($reviewer)->post(route('dilg_reviewer.cases.decide', $case), [
             'decision' => 'approved', 'feedback' => null,
+            'form_10_reference' => 'FORM10-LEGACY-001',
+            'endorsement_date' => now()->toDateString(),
         ])->assertRedirect();
 
         $this->assertSame(EclipCaseStatus::Approved, $case->fresh()->status);
@@ -51,16 +53,22 @@ class EclipDilgReviewTest extends TestCase
 
         $this->actingAs($provincial)->post(route('dilg_reviewer.cases.decide', $case), [
             'decision' => 'endorsed',
+            'form_8_reference' => 'FORM8-001',
+            'endorsement_date' => now()->toDateString(),
         ])->assertRedirect();
         $this->assertSame(EclipCaseStatus::ProvincialEndorsed, $case->fresh()->status);
 
         $this->actingAs($regional)->post(route('dilg_reviewer.cases.decide', $case), [
             'decision' => 'endorsed',
+            'form_9_reference' => 'FORM9-001',
+            'endorsement_date' => now()->toDateString(),
         ])->assertRedirect();
         $this->assertSame(EclipCaseStatus::RegionalEndorsed, $case->fresh()->status);
 
         $this->actingAs($national)->post(route('dilg_reviewer.cases.decide', $case), [
             'decision' => 'approved',
+            'form_10_reference' => 'FORM10-001',
+            'endorsement_date' => now()->toDateString(),
         ])->assertRedirect();
 
         $this->assertSame(EclipCaseStatus::Approved, $case->fresh()->status);

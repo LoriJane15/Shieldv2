@@ -199,7 +199,14 @@
                             <i class="mdi mdi-clipboard-text-outline me-2" style="font-size:1.8rem;color:#3D0075;"></i>
                             <h3 class="font-weight-bold mb-0" style="color:#3D0075;">3-MONTHS PROGRAM STATUS</h3>
                         </div>
-                        <button type="button" class="btn" style="background-color:#3D0075;color:#fff;" data-bs-toggle="collapse" data-bs-target="#editStatusForm">Edit Status</button>
+                        @if(!$fr->mblrcEnrollment)
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editStatusForm">Edit Legacy Status</button>
+                                <a href="{{ route('mblrc.enrollments.index') }}" class="btn" style="background-color:#3D0075;color:#fff;">Start Integration Monitoring</a>
+                            </div>
+                        @else
+                            <a href="{{ route('mblrc.enrollments.index').'#enrollment-'.$fr->mblrcEnrollment->id }}" class="btn btn-outline-primary">Open Integration Monitoring</a>
+                        @endif
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -221,12 +228,16 @@
                             </div>
                         </div>
                     </div>
+                    @if($fr->mblrcEnrollment)
+                        <div class="alert alert-info mt-3 mb-0"><i class="mdi mdi-information-outline mr-1" aria-hidden="true"></i>This status is synchronized from the official three-month Integration Monitoring record.</div>
+                    @else
+                    <div class="alert alert-warning mt-3 mb-0"><i class="mdi mdi-alert-outline mr-1" aria-hidden="true"></i>Legacy status updates do not create an LSWDO referral. Use Integration Monitoring for official three-month completion and referral.</div>
                     <div class="collapse mt-3" id="editStatusForm">
                         <form data-program-form class="row g-2 align-items-end">
                             <div class="col-md-5">
                                 <label class="form-label">Reintegration Status</label>
                                 <select name="reintegration_status" class="form-select" required>
-                                    @foreach (['Not-Started', 'On-going', 'Completed'] as $s)
+                                    @foreach (['Not-Started', 'On-going'] as $s)
                                         <option value="{{ $s }}" @selected($ps?->reintegration_status === $s)>{{ $s }}</option>
                                     @endforeach
                                 </select>
@@ -240,6 +251,7 @@
                             </div>
                         </form>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>

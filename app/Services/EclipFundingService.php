@@ -16,6 +16,7 @@ class EclipFundingService
 {
     public function __construct(
         private readonly EclipCaseWorkflowService $workflow,
+        private readonly EclipOfficialWorkflowService $officialWorkflow,
         private readonly EclipFundProofStorageService $proofs,
     ) {}
 
@@ -42,6 +43,23 @@ class EclipFundingService
                 $revision = $approvedReview->revision()->firstOrFail();
                 $approvedCents = $this->moneyToCents($revision->assessed_amount);
                 $type = $data['type'];
+
+                if ($type === 'allocation' && ! $actor->hasRole('dilg_fms', 'eclip_funding_officer')) {
+                    throw ValidationException::withMessages(['type' => 'Only the authorized DILG FMS office may record an SR/NTA allocation.']);
+                }
+                if ($type === 'transfer' && ! $actor->hasRole('dilg_regional')) {
+                    throw ValidationException::withMessages(['type' => 'Only the DILG Regional Office may record the transfer to the P/HUC/ICC office.']);
+                }
+
+                $officialActivitiesExist = $lockedCase->workflowActivities()->exists();
+                if ($type === 'allocation' && $officialActivitiesExist
+                    && $lockedCase->workflowActivities()->where('step_code', '6G')->value('status') !== 'completed') {
+                    throw ValidationException::withMessages(['type' => 'Complete official Step 6G, including the SR/NTA fields and evidence, before recording the allocation ledger.']);
+                }
+                if ($type === 'transfer' && $officialActivitiesExist
+                    && $lockedCase->workflowActivities()->where('step_code', '6H')->value('status') !== 'completed') {
+                    throw ValidationException::withMessages(['type' => 'Complete Step 6H and record the fund transfer in E-CLIP IS before the Regional Office transfer.']);
+                }
 
                 if ($type === 'allocation' && ! in_array($lockedCase->status, [EclipCaseStatus::Approved, EclipCaseStatus::FundAllocationPending], true)) {
                     throw ValidationException::withMessages(['type' => 'Allocations can only be recorded for an approved case awaiting allocation.']);
@@ -70,12 +88,55 @@ class EclipFundingService
                 ]);
 
                 if ($type === 'allocation') {
+                    $this->officialWorkflow->recordDomainEvent(
+                        $lockedCase,
+                        '6G',
+                        $actor,
+                        'fund_allocation_recorded',
+                        $data['remarks'] ?? null,
+                        [
+                            'allocation_reference' => $data['reference_number'],
+                            'allocation_date' => $data['transaction_date'],
+                            'allocation_amount' => $data['amount'],
+                        ],
+                        $ipAddress,
+                    );
                     $lockedCase = $this->workflow->beginFundAllocation($lockedCase, $actor, $ipAddress);
                     if ($newTotalCents === $approvedCents) {
                         $this->workflow->markFundsAllocated($lockedCase, $actor, $ipAddress);
                     }
-                } elseif ($newTotalCents === $limitCents) {
-                    $this->workflow->markFundsTransferred($lockedCase, $actor, $ipAddress);
+                } else {
+                    $workflowData = [
+                        'nta_received_date' => $data['nta_received_date'] ?? null,
+                        'fund_transfer_date' => $data['transaction_date'],
+                        'amount_transferred' => $newTotalCents / 100,
+                        'recipient_office' => $data['recipient_office'] ?? null,
+                        'proof_reference' => $data['reference_number'],
+                    ];
+
+                    if ($newTotalCents === $limitCents) {
+                        $this->officialWorkflow->transitionDomainActivity(
+                            $lockedCase,
+                            '6I',
+                            $actor,
+                            'completed',
+                            'regional_fund_transfer_completed',
+                            $data['remarks'] ?? 'Funds transferred to the authorized P/HUC/ICC office.',
+                            $workflowData,
+                            $ipAddress,
+                        );
+                        $this->workflow->markFundsTransferred($lockedCase, $actor, $ipAddress);
+                    } else {
+                        $this->officialWorkflow->recordDomainEvent(
+                            $lockedCase,
+                            '6I',
+                            $actor,
+                            'regional_fund_transfer_recorded',
+                            $data['remarks'] ?? null,
+                            $workflowData,
+                            $ipAddress,
+                        );
+                    }
                 }
 
                 return $transaction;

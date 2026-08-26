@@ -141,6 +141,11 @@ class IntegrationMonitoringTest extends TestCase
             'action' => 'integration_enrollment_started',
             'entity_type' => MblrcEnrollment::class,
         ]);
+        $this->assertDatabaseHas('fr_program_statuses', [
+            'former_rebel_id' => $beneficiary->id,
+            'reintegration_status' => 'On-going',
+            'reintegration_date' => null,
+        ]);
     }
 
     public function test_lookup_does_not_expose_an_enrollment_assigned_to_another_mblrc_user(): void

@@ -82,6 +82,10 @@ class EclipAuthenticationService
             if ($decision === 'authenticated' && blank($certificationReference)) {
                 throw ValidationException::withMessages(['certification_reference' => 'A certification reference is required.']);
             }
+            $activity = $locked->eclipCase->workflowActivities()->where('step_code', '4A')->firstOrFail();
+            if ($decision === 'authenticated' && ! $activity->documents()->where('document_type', 'JAPIC Certification')->exists()) {
+                throw ValidationException::withMessages(['certification_document' => 'Upload the JAPIC Certification before recording an authenticated decision.']);
+            }
             if (in_array($decision, ['returned', 'not_authenticated'], true) && blank($remarks)) {
                 throw ValidationException::withMessages(['remarks' => 'Remarks are required for this decision.']);
             }
@@ -99,7 +103,6 @@ class EclipAuthenticationService
                 'remarks' => $remarks, 'data' => $decision === 'authenticated' ? ['certification_reference' => $certificationReference] : null,
                 'ip_address' => $ipAddress,
             ]);
-            $activity = $locked->eclipCase->workflowActivities()->where('step_code', '4A')->firstOrFail();
             $activityStatus = match ($decision) {
                 'authenticated' => 'completed',
                 'returned' => 'returned_for_correction',

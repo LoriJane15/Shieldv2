@@ -10,7 +10,7 @@ class StoreEclipFeaDocumentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manageFea', $this->route('eclipCase')) ?? false;
+        return $this->user()?->can('uploadFeaDocument', $this->route('eclipCase')) ?? false;
     }
 
     public function rules(): array

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EclipCaseStatus;
+use App\Models\AuditLog;
 use App\Models\EclipCase;
 use App\Models\LswdoReferral;
 use App\Models\MblrcEnrollment;
@@ -18,11 +19,15 @@ class MblrcReferralService
         MblrcEnrollment $enrollment,
         array $data,
         User $actor,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): LswdoReferral {
-        return DB::transaction(function () use ($enrollment, $data, $actor) {
+        return DB::transaction(function () use ($enrollment, $data, $actor, $ipAddress, $userAgent) {
             $locked = MblrcEnrollment::query()->lockForUpdate()->findOrFail($enrollment->id);
 
             if ($locked->referral()->exists()) {
+                $this->synchronizeCompletedProfile($locked, $actor);
+
                 return $locked->referral()->firstOrFail();
             }
 
@@ -35,7 +40,7 @@ class MblrcReferralService
             }
 
             $evidence = $data['phase_one_evidence'] ?? [];
-            foreach (['intention_to_surface', 'receiving_unit_coordination'] as $requiredEvidence) {
+            foreach (['intention_to_surface'] as $requiredEvidence) {
                 if (blank($evidence[$requiredEvidence]['source'] ?? null) || blank($evidence[$requiredEvidence]['source_record'] ?? null)) {
                     throw ValidationException::withMessages([
                         "phase_one_evidence.{$requiredEvidence}" => 'Verified source and source record are required.',
@@ -43,6 +48,7 @@ class MblrcReferralService
                 }
             }
 
+            $previousEnrollmentStatus = $locked->status;
             $locked->update([
                 'status' => 'completed',
                 'integration_completed_at' => $completedAt->toDateString(),
@@ -50,6 +56,7 @@ class MblrcReferralService
                 'location_verification_remarks' => $data['location_verification_remarks'] ?? null,
                 'phase_one_evidence' => $evidence,
             ]);
+            $profileChanges = $this->synchronizeCompletedProfile($locked, $actor);
 
             $eligibleLswdoUsers = User::query()
                 ->where('role', 'lswdo')
@@ -58,7 +65,7 @@ class MblrcReferralService
                 ->get();
             $assignee = $eligibleLswdoUsers->count() === 1 ? $eligibleLswdoUsers->first() : null;
 
-            return LswdoReferral::query()->create([
+            $referral = LswdoReferral::query()->create([
                 'referral_number' => 'LSWDO-'.Str::upper((string) Str::ulid()),
                 'mblrc_enrollment_id' => $locked->id,
                 'former_rebel_id' => $locked->former_rebel_id,
@@ -68,7 +75,58 @@ class MblrcReferralService
                 'status' => 'pending',
                 'referred_at' => now(),
             ]);
+
+            AuditLog::query()->create([
+                'user_id' => $actor->id,
+                'action' => 'integration_enrollment_completed',
+                'entity_type' => MblrcEnrollment::class,
+                'entity_id' => $locked->id,
+                'previous_values' => [
+                    'status' => $previousEnrollmentStatus,
+                    'profile_status' => $profileChanges['previous_profile_status'],
+                    'program_status' => $profileChanges['previous_program_status'],
+                ],
+                'new_values' => [
+                    'status' => 'completed',
+                    'integration_completed_at' => $completedAt->toDateString(),
+                    'verified_municipality_id' => (int) $data['verified_municipality_id'],
+                    'profile_status' => $profileChanges['profile_status'],
+                    'program_status' => 'Completed',
+                    'referral_id' => $referral->id,
+                ],
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent,
+            ]);
+
+            return $referral;
         }, 3);
+    }
+
+    private function synchronizeCompletedProfile(MblrcEnrollment $enrollment, User $actor): array
+    {
+        $formerRebel = $enrollment->formerRebel()->lockForUpdate()->firstOrFail();
+        $programStatus = $formerRebel->programStatus()->first();
+        $previousProfileStatus = $formerRebel->status;
+        $previousProgramStatus = $programStatus?->reintegration_status;
+
+        if (in_array($formerRebel->status, ['Active', 'Completed'], true)) {
+            $formerRebel->update(['status' => 'Reintegrated']);
+        }
+
+        $formerRebel->programStatus()->updateOrCreate(
+            ['former_rebel_id' => $formerRebel->id],
+            [
+                'reintegration_status' => 'Completed',
+                'reintegration_date' => $enrollment->integration_completed_at?->toDateString(),
+                'updated_by' => $actor->name,
+            ],
+        );
+
+        return [
+            'previous_profile_status' => $previousProfileStatus,
+            'previous_program_status' => $previousProgramStatus,
+            'profile_status' => $formerRebel->fresh()->status,
+        ];
     }
 
     public function accept(

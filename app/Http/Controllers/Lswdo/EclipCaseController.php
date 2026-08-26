@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Lswdo\DecideEligibilityRequest;
 use App\Http\Requests\Lswdo\IndexEligibilityCasesRequest;
 use App\Models\EclipCase;
-use App\Models\EclipDocumentRequirement;
 use App\Models\User;
 use App\Services\EclipCaseWorkflowService;
 use App\Services\EclipWorkflowPresentationService;
@@ -84,17 +83,20 @@ class EclipCaseController extends Controller
         $this->authorize('view', $eclipCase);
         $eclipCase->load([
             'formerRebel.municipality', 'eligibilityReviews.reviewer', 'statusHistories.user',
-            'documents.requirement', 'documents.versions.uploader', 'documents.latestVersion', 'documents.reviews.reviewer',
             'workflowActivities.histories.user', 'workflowActivities.documents.uploader',
             'authenticationRequest.assignee',
             'feaDocuments.uploader',
+            'assistanceReleases.releaser',
+            'assistanceReleases.receivedConfirmer',
             'interventions.histories.user',
+            'reintegrationPlanItems.interventions',
+            'reintegrationPlanItems.histories',
+            'livelihoodBeneficiaryAssistances.histories',
             'participantAssignments.user',
         ]);
 
         return view('lswdo.eclip.show', [
             'case' => $eclipCase,
-            'requirements' => EclipDocumentRequirement::query()->where('is_active', true)->orderBy('sort_order')->get(),
             'workflow' => $workflowPresentation->forCase($eclipCase, $request->user()),
             'japicUsers' => User::query()->where('role', 'japic')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'feaProcessors' => User::query()->whereIn('role', ['pnp', 'afp'])->where('is_active', true)->orderBy('name')->get(['id', 'name', 'role']),
@@ -112,6 +114,8 @@ class EclipCaseController extends Controller
             $request->validated('decision'),
             $request->validated('remarks'),
             $request->ip(),
+            $request->validated('referral_status'),
+            $request->validated('referred_program'),
         );
 
         return redirect()->route('lswdo.eclip.show', $eclipCase)->with('success', 'Eligibility decision recorded.');

@@ -19,7 +19,7 @@ class ReleaseController extends Controller
     public function index(Request $request): View
     {
         $cases = EclipCase::query()->where('municipality_id', $request->user()->municipality_id)
-            ->whereIn('status', [EclipCaseStatus::FundsTransferred->value, EclipCaseStatus::ReleasePending->value, EclipCaseStatus::Completed->value])
+            ->whereIn('status', [EclipCaseStatus::FundsTransferred->value, EclipCaseStatus::ReleasePending->value, EclipCaseStatus::AssistanceReleased->value, EclipCaseStatus::Completed->value])
             ->with(['formerRebel', 'fundTransactions', 'assistanceReleases'])
             ->latest('updated_at')->paginate(15);
 

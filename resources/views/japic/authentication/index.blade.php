@@ -35,12 +35,25 @@
             </tr>
             @if($authentication->status === 'under_review')
             <tr class="collapse" id="decision-{{ $authentication->id }}"><td colspan="6">
+                @php($japicActivity = $authentication->eclipCase->workflowActivities->firstWhere('step_code', '4A'))
+                <div class="p-3 mb-3 border rounded bg-white">
+                    <strong class="d-block mb-2">JAPIC Certification</strong>
+                    @if($japicActivity?->documents->isNotEmpty())
+                        @foreach($japicActivity->documents->sortByDesc('version_number') as $certificate)
+                            <a class="btn btn-sm btn-outline-primary mr-2 mb-2" target="_blank" rel="noopener" href="{{ route('eclip.workflow-documents.download', $certificate) }}"><i class="mdi mdi-file-eye-outline mr-1"></i>View {{ $certificate->original_name }}</a>
+                        @endforeach
+                    @endif
+                    @if($japicActivity)
+                        <form method="POST" action="{{ route('eclip.workflow-documents.store', $japicActivity) }}" enctype="multipart/form-data" class="form-row align-items-end mt-2">@csrf<input type="hidden" name="document_type" value="JAPIC Certification"><div class="form-group col-md-8 mb-0"><label class="form-label" for="japic-certification-{{ $authentication->id }}">Upload signed certification</label><input id="japic-certification-{{ $authentication->id }}" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" class="form-control" required></div><div class="form-group col-md-4 mb-0"><button class="btn btn-outline-primary btn-block">Upload Certification</button></div></form>
+                    @endif
+                </div>
                 <form method="POST" action="{{ route('japic.authentication.decide', $authentication) }}" class="row g-3 p-3 bg-light rounded">
                     @csrf
                     <div class="col-md-4"><label class="form-label">Decision</label><select name="decision" class="form-select" required><option value="authenticated">Authenticated</option><option value="returned">Returned</option><option value="not_authenticated">Not Authenticated</option></select></div>
                     <div class="col-md-4"><label class="form-label">Certification reference</label><input name="certification_reference" class="form-control"></div>
                     <div class="col-md-4"><label class="form-label">Remarks</label><textarea name="remarks" class="form-control" rows="2"></textarea></div>
                     <div class="col-12 text-end"><button class="btn btn-success">Submit explicit decision</button></div>
+                    @error('certification_document')<div class="col-12 text-danger small">{{ $message }}</div>@enderror
                 </form>
             </td></tr>
             @endif

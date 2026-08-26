@@ -51,17 +51,19 @@ class EclipFundingWorkflowTest extends TestCase
     public function test_transfer_requires_private_proof_and_advances_when_fully_transferred(): void
     {
         Storage::fake('local');
-        [$case, $officer] = $this->approvedCase();
+        [$case, $officer, $regional] = $this->approvedCase();
         $this->record($case, $officer, 'allocation', '1000.00', 'ALLOC-FULL');
 
-        $this->actingAs($officer)->post(route('eclip_funding.transactions.store', $case), [
+        $this->actingAs($regional)->post(route('eclip_funding.transactions.store', $case), [
             'type' => 'transfer', 'amount' => '1000.00', 'reference_number' => 'TRANSFER-NO-PROOF',
             'transaction_date' => now()->toDateString(),
+            'nta_received_date' => now()->toDateString(), 'recipient_office' => 'DILG P/HUC/ICC Office',
         ])->assertSessionHasErrors('proof');
 
-        $this->actingAs($officer)->post(route('eclip_funding.transactions.store', $case), [
+        $this->actingAs($regional)->post(route('eclip_funding.transactions.store', $case), [
             'type' => 'transfer', 'amount' => '1000.00', 'reference_number' => 'TRANSFER-001',
             'transaction_date' => now()->toDateString(),
+            'nta_received_date' => now()->toDateString(), 'recipient_office' => 'DILG P/HUC/ICC Office',
             'proof' => UploadedFile::fake()->create('transfer-proof.pdf', 40, 'application/pdf'),
         ])->assertRedirect();
 
@@ -71,19 +73,20 @@ class EclipFundingWorkflowTest extends TestCase
         $this->assertSame(EclipCaseStatus::FundsTransferred, $case->fresh()->status);
         $this->assertCount(1, User::query()->where('role', 'local_eclip_committee')->firstOrFail()->notifications()->get());
 
-        $this->actingAs($officer)->get(route('eclip_funding.transactions.proof', $transaction))
+        $this->actingAs($regional)->get(route('eclip_funding.transactions.proof', $transaction))
             ->assertOk()->assertHeader('Cache-Control', 'no-store, private');
     }
 
     public function test_transfer_cannot_exceed_allocated_total(): void
     {
         Storage::fake('local');
-        [$case, $officer] = $this->approvedCase();
+        [$case, $officer, $regional] = $this->approvedCase();
         $this->record($case, $officer, 'allocation', '1000.00', 'ALLOC-FULL');
 
-        $this->actingAs($officer)->post(route('eclip_funding.transactions.store', $case), [
+        $this->actingAs($regional)->post(route('eclip_funding.transactions.store', $case), [
             'type' => 'transfer', 'amount' => '1000.01', 'reference_number' => 'TRANSFER-OVER',
             'transaction_date' => now()->toDateString(),
+            'nta_received_date' => now()->toDateString(), 'recipient_office' => 'DILG P/HUC/ICC Office',
             'proof' => UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'),
         ])->assertSessionHasErrors('amount');
 
@@ -106,11 +109,12 @@ class EclipFundingWorkflowTest extends TestCase
     public function test_unauthorized_role_cannot_download_funding_proof(): void
     {
         Storage::fake('local');
-        [$case, $officer] = $this->approvedCase();
+        [$case, $officer, $regional] = $this->approvedCase();
         $this->record($case, $officer, 'allocation', '1000.00', 'ALLOC-FULL');
-        $this->actingAs($officer)->post(route('eclip_funding.transactions.store', $case), [
+        $this->actingAs($regional)->post(route('eclip_funding.transactions.store', $case), [
             'type' => 'transfer', 'amount' => '1000.00', 'reference_number' => 'TRANSFER-001',
             'transaction_date' => now()->toDateString(),
+            'nta_received_date' => now()->toDateString(), 'recipient_office' => 'DILG P/HUC/ICC Office',
             'proof' => UploadedFile::fake()->create('proof.pdf', 20, 'application/pdf'),
         ])->assertRedirect();
         $transaction = $case->fundTransactions()->where('type', 'transfer')->firstOrFail();
@@ -130,6 +134,7 @@ class EclipFundingWorkflowTest extends TestCase
         $assessor = User::factory()->role('eclip_assessor')->create(['municipality_id' => $municipality->id]);
         $reviewer = User::factory()->role('dilg_reviewer')->create(['municipality_id' => $municipality->id]);
         $officer = User::factory()->role('eclip_funding_officer')->create(['municipality_id' => $municipality->id]);
+        $regional = User::factory()->role('dilg_regional')->create();
         User::factory()->role('local_eclip_committee')->create(['municipality_id' => $municipality->id]);
         $case = EclipCase::query()->create([
             'case_number' => 'ECLIP-FND-000001', 'former_rebel_id' => $formerRebel->id,
@@ -148,7 +153,7 @@ class EclipFundingWorkflowTest extends TestCase
             'reviewed_by' => $reviewer->id, 'decision' => 'approved', 'reviewed_at' => now(),
         ]);
 
-        return [$case, $officer];
+        return [$case, $officer, $regional];
     }
 
     private function record(EclipCase $case, User $officer, string $type, string $amount, string $reference): void

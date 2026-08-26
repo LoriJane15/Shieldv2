@@ -453,10 +453,9 @@ class DevelopmentSeeder extends Seeder
             $officialWorkflow = app(EclipOfficialWorkflowService::class);
             $officialWorkflow->initialize($case, $users['lswdo'], '127.0.0.1', [
                 'intention_to_surface' => ['source' => 'Synthetic MBLRC enrollment', 'source_record' => $case->case_number],
-                'receiving_unit_coordination' => ['source' => 'Synthetic coordination record', 'source_record' => $case->case_number],
             ]);
 
-            $case->statusHistories()->updateOrCreate(
+            $case->statusHistories()->firstOrCreate(
                 ['to_status' => $status->value],
                 [
                     'user_id' => $this->actorForStatus($status, $users)->id,
@@ -467,7 +466,7 @@ class DevelopmentSeeder extends Seeder
             );
 
             if ($index >= 2) {
-                $case->eligibilityReviews()->updateOrCreate(
+                $case->eligibilityReviews()->firstOrCreate(
                     ['reviewed_by' => $users['lswdo']->id, 'decision' => 'eligible'],
                     ['remarks' => 'Synthetic eligibility review.', 'reviewed_at' => now()->subDays(12)]
                 );
@@ -515,7 +514,7 @@ class DevelopmentSeeder extends Seeder
             }
             if ($status === EclipCaseStatus::FundsTransferred) {
                 foreach (['allocation', 'transfer'] as $type) {
-                    $case->fundTransactions()->updateOrCreate(
+                    $case->fundTransactions()->firstOrCreate(
                         ['type' => $type, 'reference_number' => 'DEMO-'.strtoupper($type).'-'.$number],
                         [
                             'assistance_request_id' => $assistanceRequest->id,
@@ -554,7 +553,7 @@ class DevelopmentSeeder extends Seeder
         string $level,
         string $decision,
     ): void {
-        $case->dilgReviews()->updateOrCreate(
+        $case->dilgReviews()->firstOrCreate(
             ['review_level' => $level, 'assistance_revision_id' => $revisionId],
             [
                 'assistance_request_id' => $request->id,

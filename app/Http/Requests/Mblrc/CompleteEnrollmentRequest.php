@@ -23,8 +23,10 @@ class CompleteEnrollmentRequest extends FormRequest
             'phase_one_evidence' => ['required', 'array'],
             'phase_one_evidence.intention_to_surface.source' => ['required', 'string', 'max:100'],
             'phase_one_evidence.intention_to_surface.source_record' => ['required', 'string', 'max:255'],
-            'phase_one_evidence.receiving_unit_coordination.source' => ['required', 'string', 'max:100'],
-            'phase_one_evidence.receiving_unit_coordination.source_record' => ['required', 'string', 'max:255'],
+            'phase_one_evidence.intention_to_surface.intention_date' => ['required', 'date', 'before_or_equal:today'],
+            'phase_one_evidence.intention_to_surface.receiving_unit' => ['required', 'string', 'max:255'],
+            'phase_one_evidence.intention_to_surface.graduate_list_reference' => ['required', 'string', 'max:255'],
+            'phase_one_evidence.intention_to_surface.submission_date' => ['required', 'date', 'before_or_equal:today'],
         ];
     }
 }

@@ -55,8 +55,8 @@ class User extends Authenticatable
             'gov_agency' => 'gov_agency.dashboard',
             'lgu' => 'lgu.dashboard',
             'mblrc' => 'mblrc.dashboard',
-            'lswdo' => 'lswdo.eclip.index',
-            'japic' => 'japic.eclip.index',
+            'lswdo' => 'lswdo.dashboard',
+            'japic' => 'japic.dashboard',
             'eclip_assessor' => 'eclip_assessor.cases.index', // legacy compatibility
             'dilg_reviewer' => 'dilg_reviewer.cases.index', // legacy compatibility
             'eclip_funding_officer' => 'eclip_funding.cases.index', // legacy compatibility

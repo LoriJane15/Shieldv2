@@ -42,6 +42,15 @@ class MblrcEnrollmentService
                 'integration_started_at' => $startedAt,
             ]);
 
+            $formerRebel->programStatus()->updateOrCreate(
+                ['former_rebel_id' => $formerRebel->id],
+                [
+                    'reintegration_status' => 'On-going',
+                    'reintegration_date' => null,
+                    'updated_by' => $actor->name,
+                ],
+            );
+
             AuditLog::query()->create([
                 'user_id' => $actor->id,
                 'action' => 'integration_enrollment_started',
@@ -51,6 +60,7 @@ class MblrcEnrollmentService
                 'new_values' => [
                     'former_rebel_id' => $formerRebel->id,
                     'status' => $enrollment->status,
+                    'program_status' => 'On-going',
                     'integration_started_at' => $enrollment->integration_started_at?->toDateString(),
                 ],
                 'ip_address' => $ipAddress,

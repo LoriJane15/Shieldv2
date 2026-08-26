@@ -37,8 +37,11 @@ class EclipIntakeAssignmentTest extends TestCase
             'integration_completed_at' => '2026-04-01',
             'verified_municipality_id' => $municipality->id,
             'phase_one_evidence' => [
-                'intention_to_surface' => ['source' => 'MBLRC enrollment', 'source_record' => 'INT-9001'],
-                'receiving_unit_coordination' => ['source' => 'Coordination log', 'source_record' => 'COORD-9001'],
+                'intention_to_surface' => [
+                    'source' => 'MBLRC enrollment', 'source_record' => 'INT-9001',
+                    'intention_date' => '2026-04-01', 'receiving_unit' => 'MBLRC',
+                    'graduate_list_reference' => 'GRAD-9001', 'submission_date' => '2026-04-01',
+                ],
             ],
         ];
         $service = app(MblrcReferralService::class);
@@ -49,6 +52,18 @@ class EclipIntakeAssignmentTest extends TestCase
         $this->assertTrue($firstReferral->is($secondReferral));
         $this->assertSame($lswdo->id, $firstReferral->assigned_to);
         $this->assertDatabaseCount('lswdo_referrals', 1);
+        $this->assertSame('Reintegrated', $beneficiary->fresh()->status);
+        $this->assertDatabaseHas('fr_program_statuses', [
+            'former_rebel_id' => $beneficiary->id,
+            'reintegration_status' => 'Completed',
+        ]);
+        $this->assertSame('2026-04-01', $beneficiary->programStatus()->firstOrFail()->reintegration_date->toDateString());
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $mblrc->id,
+            'action' => 'integration_enrollment_completed',
+            'entity_type' => MblrcEnrollment::class,
+            'entity_id' => $enrollment->id,
+        ]);
 
         $firstCase = $service->accept($firstReferral, $lswdo, app(EclipOfficialWorkflowService::class), '127.0.0.1');
         $secondCase = $service->accept($firstReferral->fresh(), $lswdo, app(EclipOfficialWorkflowService::class), '127.0.0.1');
@@ -69,7 +84,7 @@ class EclipIntakeAssignmentTest extends TestCase
         $this->assertDatabaseHas('eclip_workflow_activities', [
             'eclip_case_id' => $firstCase->id,
             'step_code' => '2',
-            'status' => 'completed',
+            'status' => 'pending',
         ]);
     }
 
@@ -91,8 +106,11 @@ class EclipIntakeAssignmentTest extends TestCase
             'integration_completed_at' => '2026-04-01',
             'verified_municipality_id' => $municipality->id,
             'phase_one_evidence' => [
-                'intention_to_surface' => ['source' => 'Source', 'source_record' => 'A'],
-                'receiving_unit_coordination' => ['source' => 'Source', 'source_record' => 'B'],
+                'intention_to_surface' => [
+                    'source' => 'Source', 'source_record' => 'A',
+                    'intention_date' => '2026-04-01', 'receiving_unit' => 'MBLRC',
+                    'graduate_list_reference' => 'GRAD-9002', 'submission_date' => '2026-04-01',
+                ],
             ],
         ], $mblrc);
 

@@ -14,6 +14,8 @@
     @media(max-width:420px){.kpi-grid{grid-template-columns:1fr}.kpi-card:last-child{grid-column:auto}.quick-action{min-width:100%}.analytics-metrics,.analytics-metrics.metrics-four{grid-template-columns:1fr 1fr}.analytics-card-content{padding:.7rem}.analytics-card .chart-wrap{height:210px}}
     @media(prefers-reduced-motion:reduce){.analytics-loading .analytics-metric-value,.analytics-loading .chart-wrap::after,.analytics-loaded .analytics-metric,.analytics-loaded .chart-wrap canvas,.analytics-loaded .analytics-chart-state{animation:none!important;filter:none!important;opacity:1!important;transform:none!important}}
 
+    .map-expand-button{align-items:center;background:#fff;border:1px solid #dfe4eb;border-radius:7px;color:#526177;display:inline-flex;flex:0 0 auto;font-size:.62rem;font-weight:750;gap:.32rem;min-height:34px;padding:.38rem .62rem}.map-expand-button:hover,.map-expand-button:focus{background:#f4f0f9;border-color:#cbbade;color:var(--ops-purple);outline:0}.map-expand-button:focus-visible{box-shadow:0 0 0 3px rgba(64,21,149,.14)}.map-expand-button i{font-size:.85rem}.map-expand-modal .modal-dialog{margin:1rem auto;max-width:1280px;width:calc(100% - 2rem)}.map-expand-modal .modal-content{border:0;border-radius:16px;box-shadow:0 28px 80px rgba(22,27,43,.34);max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);overflow:hidden}.map-expand-modal .modal-header{align-items:center;background:linear-gradient(110deg,#280274,#401595);border:0;color:#fff;min-height:76px;padding:1rem 1.2rem}.map-expand-modal-heading{align-items:center;display:flex;gap:.7rem;min-width:0}.map-expand-modal-icon{align-items:center;background:rgba(255,255,255,.12);border-radius:9px;display:flex;flex:0 0 38px;font-size:1.05rem;height:38px;justify-content:center;width:38px}.map-expand-modal .modal-title{color:#fff;font-size:.95rem;font-weight:780;margin:0}.map-expand-modal-subtitle{color:rgba(255,255,255,.78);font-size:.64rem;margin:.12rem 0 0}.map-expand-close{align-items:center;background:rgba(255,255,255,.1);border:0;border-radius:50%;color:#fff;display:flex;flex:0 0 38px;font-size:1.15rem;height:38px;justify-content:center;margin-left:1rem;padding:0;width:38px}.map-expand-close:hover,.map-expand-close:focus{background:rgba(255,255,255,.2);color:#fff;outline:0}.map-expand-modal .modal-body{background:#fff;min-height:0;overflow:hidden;padding:0}.map-modal-host .map-toolbar{border-bottom:1px solid #edf0f4}.map-modal-host .fr-map{height:calc(100vh - 190px);height:calc(100dvh - 190px);max-height:720px;min-height:440px}.map-expand-modal .leaflet-container{isolation:isolate}@media(max-width:767px){.map-expand-button span{display:none}.map-expand-button{justify-content:center;padding:.35rem;width:34px}.map-expand-modal .modal-dialog{margin:.5rem auto;width:calc(100% - 1rem)}.map-expand-modal .modal-content{border-radius:12px;max-height:calc(100vh - 1rem);max-height:calc(100dvh - 1rem)}.map-expand-modal .modal-header{min-height:68px;padding:.85rem}.map-expand-modal-subtitle{display:none}.map-modal-host .map-toolbar{max-height:142px;overflow-y:auto}.map-modal-host .fr-map{height:calc(100vh - 220px);height:calc(100dvh - 220px);max-height:none;min-height:300px}}
+
 </style>
 @endpush
 
@@ -75,14 +77,30 @@
     </div>
 
     <section class="ops-card map-card" id="locations" aria-labelledby="locations-title">
-        <header class="ops-card-header"><div class="ops-card-title"><span class="ops-card-icon"><i class="mdi mdi-map-marker-radius" aria-hidden="true"></i></span><div><h3 id="locations-title">Geographic Monitoring Map</h3><p>Authorized geotagged FR/FVE records with program and location context.</p></div></div></header>
-        <div class="map-toolbar" aria-label="Map controls">
-            <div class="map-filter-group" role="group" aria-label="Filter map records by status"><button class="map-filter" type="button" data-map-filter="all" aria-pressed="true">All</button><button class="map-filter" type="button" data-map-filter="active" aria-pressed="false">Active</button><button class="map-filter" type="button" data-map-filter="ongoing" aria-pressed="false">Ongoing</button><button class="map-filter" type="button" data-map-filter="completed" aria-pressed="false">Completed</button></div>
-            <label class="map-search" for="map-location-search"><i class="mdi mdi-magnify" aria-hidden="true"></i><span class="sr-only">Search mapped locations</span><input id="map-location-search" type="search" placeholder="Search identifier, municipality, or location" autocomplete="off" data-map-search></label>
-            <div class="map-layer-group" role="group" aria-label="Select map layer"><button class="map-layer" type="button" data-map-layer="map" aria-pressed="true">Map</button><button class="map-layer" type="button" data-map-layer="satellite" aria-pressed="false">Satellite</button></div><span class="map-result-count" data-map-result-count aria-live="polite">Loading locations…</span>
+        <header class="ops-card-header"><div class="ops-card-title"><span class="ops-card-icon"><i class="mdi mdi-map-marker-radius" aria-hidden="true"></i></span><div><h3 id="locations-title">Geographic Monitoring Map</h3><p>Authorized geotagged FR/FVE records with program and location context.</p></div></div><button type="button" class="map-expand-button" data-bs-toggle="modal" data-bs-target="#mapExpandModal" data-map-expand aria-haspopup="dialog" aria-controls="mapExpandModal"><i class="mdi mdi-fullscreen" aria-hidden="true"></i><span>Expand Map</span></button></header>
+        <div data-map-source>
+            <div data-map-workspace>
+                <div class="map-toolbar" aria-label="Map controls">
+                    <div class="map-filter-group" role="group" aria-label="Filter map records by status"><button class="map-filter" type="button" data-map-filter="all" aria-pressed="true">All</button><button class="map-filter" type="button" data-map-filter="active" aria-pressed="false">Active</button><button class="map-filter" type="button" data-map-filter="ongoing" aria-pressed="false">Ongoing</button><button class="map-filter" type="button" data-map-filter="completed" aria-pressed="false">Completed</button></div>
+                    <label class="map-search" for="map-location-search"><i class="mdi mdi-magnify" aria-hidden="true"></i><span class="sr-only">Search mapped locations</span><input id="map-location-search" type="search" placeholder="Search identifier, municipality, or location" autocomplete="off" data-map-search></label>
+                    <div class="map-layer-group" role="group" aria-label="Select map layer"><button class="map-layer" type="button" data-map-layer="map" aria-pressed="true">Map</button><button class="map-layer" type="button" data-map-layer="satellite" aria-pressed="false">Satellite</button></div><span class="map-result-count" data-map-result-count aria-live="polite">Loading locations…</span>
+                </div>
+                <div id="frMap" class="fr-map" data-locations="{{ route('mblrc.fr.locations') }}"></div>
+            </div>
         </div>
-        <div id="frMap" class="fr-map" data-locations="{{ route('mblrc.fr.locations') }}"></div>
     </section>
+</div>
+
+<div class="modal fade map-expand-modal" id="mapExpandModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="map-expand-title" aria-describedby="map-expand-description" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <header class="modal-header">
+                <div class="map-expand-modal-heading"><span class="map-expand-modal-icon"><i class="mdi mdi-map-marker-radius" aria-hidden="true"></i></span><div><h3 class="modal-title" id="map-expand-title">Geographic Monitoring Map</h3><p class="map-expand-modal-subtitle" id="map-expand-description">Expanded authorized location monitoring workspace.</p></div></div>
+                <button type="button" class="map-expand-close" data-bs-dismiss="modal" aria-label="Close expanded map"><i class="mdi mdi-close" aria-hidden="true"></i></button>
+            </header>
+            <div class="modal-body"><div class="map-modal-host" data-map-modal-host></div></div>
+        </div>
+    </div>
 </div>
 <div id="mblrcData" data-analytics="{{ route('mblrc.analytics') }}" hidden></div>
 @endsection
@@ -204,6 +222,11 @@
     document.querySelectorAll('[data-map-filter]').forEach(function (button) { button.addEventListener('click', function () { currentFilter = button.dataset.mapFilter; document.querySelectorAll('[data-map-filter]').forEach(function (item) { item.setAttribute('aria-pressed', item === button ? 'true' : 'false'); }); renderMarkers(true); }); });
     searchInput.addEventListener('input', function () { renderMarkers(true); });
     document.querySelectorAll('[data-map-layer]').forEach(function (button) { button.addEventListener('click', function () { var satellite = button.dataset.mapLayer === 'satellite'; if (satellite) { map.removeLayer(streetLayer); satelliteLayer.addTo(map); } else { map.removeLayer(satelliteLayer); streetLayer.addTo(map); } document.querySelectorAll('[data-map-layer]').forEach(function (item) { item.setAttribute('aria-pressed', item === button ? 'true' : 'false'); }); }); });
+    var mapModal = document.getElementById('mapExpandModal'); var mapWorkspace = document.querySelector('[data-map-workspace]'); var mapSource = document.querySelector('[data-map-source]'); var mapModalHost = document.querySelector('[data-map-modal-host]'); var mapExpandButton = document.querySelector('[data-map-expand]');
+    function resizeMap() { window.requestAnimationFrame(function () { map.invalidateSize({ pan: false }); }); }
+    mapModal.addEventListener('show.bs.modal', function () { mapModalHost.appendChild(mapWorkspace); });
+    mapModal.addEventListener('shown.bs.modal', resizeMap);
+    mapModal.addEventListener('hidden.bs.modal', function () { mapSource.appendChild(mapWorkspace); resizeMap(); if (mapExpandButton) mapExpandButton.focus(); });
 })();
 </script>
 @endpush

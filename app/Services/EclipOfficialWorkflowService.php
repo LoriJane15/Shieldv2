@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Enums\EclipCaseStatus;
 use App\Models\EclipCase;
+use App\Models\EclipFeaDocument;
 use App\Models\EclipWorkflowActivity;
 use App\Models\User;
+use App\Notifications\EclipCaseActionNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class EclipOfficialWorkflowService
@@ -34,6 +38,7 @@ class EclipOfficialWorkflowService
                         'completed_at' => $systemCompleted ? now() : null,
                         'completed_by' => null,
                         'data' => $systemCompleted ? [
+                            ...$evidence,
                             'system_completed' => true,
                             'verified_source' => $evidence['source'],
                             'source_record' => $evidence['source_record'],
@@ -58,7 +63,7 @@ class EclipOfficialWorkflowService
         });
     }
 
-    public function recordEligibility(EclipCase $case, User $actor, string $decision, ?string $remarks, ?string $ipAddress): void
+    public function recordEligibility(EclipCase $case, User $actor, string $decision, ?string $remarks, ?string $ipAddress, array $data = []): void
     {
         $this->initialize($case, $actor, $ipAddress);
         $activity = $case->workflowActivities()->where('step_code', '3A')->firstOrFail();
@@ -69,7 +74,7 @@ class EclipOfficialWorkflowService
             default => 'not_eligible',
         };
 
-        $this->update($activity, $actor, $status, $remarks, ['eligibility_result' => $decision], $ipAddress);
+        $this->update($activity, $actor, $status, $remarks, ['eligibility_result' => $decision, ...$data], $ipAddress);
     }
 
     public function synchronizeEligibleIntake(EclipCase $case, User $actor, ?string $ipAddress): void
@@ -124,9 +129,16 @@ class EclipOfficialWorkflowService
         });
     }
 
-    public function update(EclipWorkflowActivity $activity, User $actor, string $status, ?string $remarks, array $data, ?string $ipAddress): EclipWorkflowActivity
-    {
-        return DB::transaction(function () use ($activity, $actor, $status, $remarks, $data, $ipAddress) {
+    public function update(
+        EclipWorkflowActivity $activity,
+        User $actor,
+        string $status,
+        ?string $remarks,
+        array $data,
+        ?string $ipAddress,
+        string $event = 'status_changed',
+    ): EclipWorkflowActivity {
+        return DB::transaction(function () use ($activity, $actor, $status, $remarks, $data, $ipAddress, $event) {
             $locked = EclipWorkflowActivity::query()->with('eclipCase')->lockForUpdate()->findOrFail($activity->id);
             if (($locked->data['system_completed'] ?? false) === true) {
                 throw ValidationException::withMessages(['status' => 'A system-completed activity cannot be changed manually.']);
@@ -172,7 +184,7 @@ class EclipOfficialWorkflowService
             $locked->update($attributes);
             $locked->histories()->create([
                 ...$this->actorContext($actor),
-                'event' => 'status_changed',
+                'event' => $event,
                 'from_status' => $from,
                 'to_status' => $status,
                 'remarks' => $remarks,
@@ -188,7 +200,100 @@ class EclipOfficialWorkflowService
                 $locked->eclipCase->workflowActivities()->where('id', '!=', $locked->id)->whereNotIn('status', ['completed', 'not_applicable'])->update(['status' => 'locked']);
             }
 
+            if ($locked->step_code === '2' && $status === 'completed') {
+                $this->notifyLocalCommittee($locked->eclipCase);
+            }
+
+            if ($locked->step_code === '14' && $status === 'completed') {
+                $this->completeCase($locked->eclipCase, $actor, $remarks, $ipAddress);
+            }
+
             return $locked->fresh();
+        });
+    }
+
+    public function transitionDomainActivity(
+        EclipCase $case,
+        string $stepCode,
+        User $actor,
+        string $status,
+        string $event,
+        ?string $remarks,
+        array $data,
+        ?string $ipAddress,
+    ): ?EclipWorkflowActivity {
+        $activity = $case->workflowActivities()->where('step_code', $stepCode)->first();
+        if (! $activity) {
+            if ($case->workflowActivities()->exists()) {
+                throw ValidationException::withMessages(['status' => "Official Step {$stepCode} is missing from this case."]);
+            }
+
+            return null;
+        }
+
+        if ($activity->status === $status || ($status === 'completed' && $activity->status === 'completed')) {
+            $activity->histories()->create([
+                ...$this->actorContext($actor),
+                'event' => $event,
+                'from_status' => $activity->status,
+                'to_status' => $activity->status,
+                'remarks' => $remarks,
+                'data' => $data,
+                'ip_address' => $ipAddress,
+            ]);
+
+            return $activity->fresh();
+        }
+
+        if ($activity->status === 'locked') {
+            throw ValidationException::withMessages(['status' => "Official Step {$stepCode} is still locked by an unfinished prerequisite."]);
+        }
+
+        return $this->update($activity, $actor, $status, $remarks, $data, $ipAddress, $event);
+    }
+
+    public function recordDomainEvent(
+        EclipCase $case,
+        string $stepCode,
+        User $actor,
+        string $event,
+        ?string $remarks,
+        array $data,
+        ?string $ipAddress,
+    ): ?EclipWorkflowActivity {
+        return DB::transaction(function () use ($case, $stepCode, $actor, $event, $remarks, $data, $ipAddress) {
+            $activity = $case->workflowActivities()->where('step_code', $stepCode)->lockForUpdate()->first();
+            if (! $activity) {
+                if ($case->workflowActivities()->exists()) {
+                    throw ValidationException::withMessages(['status' => "Official Step {$stepCode} is missing from this case."]);
+                }
+
+                return null;
+            }
+
+            if ($activity->status === 'locked') {
+                throw ValidationException::withMessages(['status' => "Official Step {$stepCode} is still locked by an unfinished prerequisite."]);
+            }
+
+            $fromStatus = $activity->status;
+            $toStatus = in_array($fromStatus, ['pending', 'late', 'returned_for_correction'], true) ? 'ongoing' : $fromStatus;
+            $activity->update([
+                'status' => $toStatus,
+                'started_at' => $toStatus === 'ongoing' ? ($activity->started_at ?? now()) : $activity->started_at,
+                'data' => [...($activity->data ?? []), ...$data],
+            ]);
+
+            $activity->histories()->create([
+                ...$this->actorContext($actor),
+                'event' => $event,
+                'from_status' => $fromStatus,
+                'to_status' => $toStatus,
+                'remarks' => $remarks,
+                'data' => $data,
+                'ip_address' => $ipAddress,
+            ]);
+
+            return $activity->fresh();
         });
     }
 
@@ -206,7 +311,7 @@ class EclipOfficialWorkflowService
             }
             $availableAt = now();
             $fromStatus = $activity->status;
-            $activity->update(['status' => 'pending', 'available_at' => $availableAt, 'due_at' => $this->dueAt($availableAt, $definition['working_days'] ?? null)]);
+            $activity->update(['status' => 'pending', 'available_at' => $availableAt, 'due_at' => $this->dueAt($availableAt, $definition)]);
             $activity->histories()->create([
                 ...$this->actorContext($actor),
                 'event' => $fromStatus === 'returned_for_correction' ? 'resubmitted' : 'unlocked',
@@ -243,6 +348,28 @@ class EclipOfficialWorkflowService
 
     private function ensureCanComplete(EclipWorkflowActivity $activity, array $definition, array $data): void
     {
+        $missingRequiredFields = collect($definition['fields'] ?? [])
+            ->filter(fn (array $field) => ($field['required_on_complete'] ?? false) && blank($data[$field['key']] ?? null))
+            ->pluck('label');
+        if ($missingRequiredFields->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'status' => 'Complete the following required fields before finishing this step: '.$missingRequiredFields->join(', ').'.',
+            ]);
+        }
+
+        if ($activity->step_code === '4B') {
+            $uploadedTypes = $activity->eclipCase->feaDocuments()->distinct()->pluck('document_type');
+            $missingTypes = collect(EclipFeaDocument::REQUIRED_TYPES)->diff($uploadedTypes);
+
+            if ($missingTypes->isNotEmpty()) {
+                $missingLabels = $missingTypes->map(fn (string $type) => EclipFeaDocument::TYPE_LABELS[$type] ?? strtoupper($type));
+
+                throw ValidationException::withMessages([
+                    'document' => 'Upload the following required FEA records before completing this step: '.$missingLabels->join(', ').'.',
+                ]);
+            }
+        }
+
         if (($definition['enforce_documents'] ?? false) === true) {
             $uploadedTypes = $activity->documents()->distinct()->pluck('document_type');
             $missing = collect($definition['documents'] ?? [])->diff($uploadedTypes);
@@ -260,6 +387,13 @@ class EclipOfficialWorkflowService
             }
         }
 
+        if ($activity->step_code === '4D') {
+            $interventions = $activity->eclipCase->interventions()->where('stage', 'social_protection')->get();
+            if ($interventions->isEmpty()) {
+                throw ValidationException::withMessages(['status' => 'Record at least one social-protection service before completing this step.']);
+            }
+        }
+
         if ($activity->step_code === '6A') {
             $missingChecklist = collect([
                 'initial_interview_uploaded',
@@ -270,6 +404,14 @@ class EclipOfficialWorkflowService
             if ($missingChecklist->isNotEmpty()) {
                 throw ValidationException::withMessages(['status' => 'Confirm the four core E-CLIP IS files as uploaded before completing this step.']);
             }
+        }
+
+        if ($activity->step_code === '6H' && ($data['eclip_is_recorded'] ?? false) !== true) {
+            throw ValidationException::withMessages(['status' => 'Confirm that the SR and transferred amount were recorded in E-CLIP IS.']);
+        }
+
+        if ($activity->step_code === '7A' && ($data['check_status'] ?? null) !== 'completed') {
+            throw ValidationException::withMessages(['status' => 'Set the check processing status to Completed before finishing Step 7A.']);
         }
 
         if ($activity->step_code === '7B' && ! $activity->eclipCase->assistanceReleases()->exists()) {
@@ -287,6 +429,32 @@ class EclipOfficialWorkflowService
             throw ValidationException::withMessages(['status' => 'An accepted regional disbursement report is required before completing this step.']);
         }
 
+        if ($activity->step_code === '10' && ! $activity->eclipCase->reintegrationPlanItems()->exists()) {
+            throw ValidationException::withMessages(['status' => 'Record at least one approved reintegration-plan item before completing Step 10.']);
+        }
+
+        if ($activity->step_code === '11') {
+            $interventions = $activity->eclipCase->interventions()->where('stage', 'reintegration')->get();
+            if ($interventions->isEmpty() || $interventions->contains(fn ($intervention) => ! $intervention->reintegration_plan_item_id)) {
+                throw ValidationException::withMessages(['status' => 'Create at least one reintegration intervention linked to an approved plan item before completing Step 11.']);
+            }
+        }
+
+        if ($activity->step_code === '12') {
+            $assistances = $activity->eclipCase->livelihoodBeneficiaryAssistances()->get();
+            if ($assistances->isEmpty() || $assistances->contains(fn ($assistance) => $assistance->approval_status !== 'approved' || $assistance->release_status !== 'released' || ! $assistance->release_date)) {
+                throw ValidationException::withMessages(['status' => 'Record an approved and released identified-beneficiary livelihood assistance before completing Step 12.']);
+            }
+        }
+
+        if ($activity->step_code === '13') {
+            $incomplete = collect(['healing_status', 'reconciliation_status', 'livelihood_status'])
+                ->contains(fn (string $key) => ($data[$key] ?? null) === 'not_completed');
+            if ($incomplete) {
+                throw ValidationException::withMessages(['status' => 'Healing, reconciliation, and livelihood items must be completed or marked not applicable before community transition is completed.']);
+            }
+        }
+
         if ($activity->step_code !== '14') {
             return;
         }
@@ -296,11 +464,19 @@ class EclipOfficialWorkflowService
             throw ValidationException::withMessages(['status' => 'Record the applicable reintegration interventions before closing the case.']);
         }
 
-        $unfinished = $interventions->first(fn ($intervention) => ! in_array($intervention->status, ['completed', 'not_applicable'], true)
+        $unfinished = $interventions->first(fn ($intervention) => ! in_array($intervention->status, ['completed', 'transferred', 'not_applicable'], true)
             || ($intervention->status === 'completed' && blank($intervention->outcome))
+            || ($intervention->status === 'transferred' && blank($intervention->receiving_agency))
             || ($intervention->status === 'not_applicable' && blank($intervention->remarks)));
         if ($unfinished) {
             throw ValidationException::withMessages(['status' => 'Every required intervention must have a final outcome or a documented not-applicable reason before closure.']);
+        }
+
+        $planItems = $activity->eclipCase->reintegrationPlanItems()->with('interventions')->get();
+        $unfinishedPlan = $planItems->first(fn ($item) => ! in_array($item->status, ['completed', 'transferred', 'not_applicable'], true)
+            || $item->interventions->isEmpty());
+        if ($unfinishedPlan) {
+            throw ValidationException::withMessages(['status' => 'Every reintegration-plan item must have a linked intervention and a recorded final status before closure.']);
         }
     }
 
@@ -321,8 +497,24 @@ class EclipOfficialWorkflowService
         ];
     }
 
-    private function dueAt($from, ?int $workingDays): ?CarbonImmutable
+    private function dueAt($from, array $definition): ?CarbonImmutable
     {
+        if (($definition['code'] ?? null) === '9') {
+            $date = CarbonImmutable::parse($from)->addMonthNoOverflow()->startOfMonth();
+            $workingDays = 0;
+            while ($workingDays < 5) {
+                if (! $date->isWeekend()) {
+                    $workingDays++;
+                }
+                if ($workingDays < 5) {
+                    $date = $date->addDay();
+                }
+            }
+
+            return $date->endOfDay();
+        }
+
+        $workingDays = $definition['working_days'] ?? null;
         if (! $workingDays) {
             return null;
         }
@@ -345,6 +537,32 @@ class EclipOfficialWorkflowService
 
     private function canReturn(string $code): bool
     {
-        return in_array($code, ['4A', '6D', '6E', '6F'], true);
+        return in_array($code, ['4A', '6D', '6E', '6F', '7A'], true);
+    }
+
+    private function notifyLocalCommittee(EclipCase $case): void
+    {
+        Notification::send(
+            User::query()->where('role', 'local_eclip_committee')->where('municipality_id', $case->municipality_id)->where('is_active', true)->get(),
+            new EclipCaseActionNotification($case, 'LSWDO recorded a surfaced FR/FVE notification for your municipality.', 'local_eclip.surfaced.index'),
+        );
+    }
+
+    private function completeCase(EclipCase $case, User $actor, ?string $remarks, ?string $ipAddress): void
+    {
+        $lockedCase = EclipCase::query()->lockForUpdate()->findOrFail($case->id);
+        if ($lockedCase->status === EclipCaseStatus::Completed) {
+            return;
+        }
+
+        $from = $lockedCase->status;
+        $lockedCase->update(['status' => EclipCaseStatus::Completed]);
+        $lockedCase->statusHistories()->create([
+            'user_id' => $actor->id,
+            'from_status' => $from?->value,
+            'to_status' => EclipCaseStatus::Completed->value,
+            'remarks' => $remarks ?: 'All required and applicable reintegration interventions have final outcomes.',
+            'ip_address' => $ipAddress,
+        ]);
     }
 }

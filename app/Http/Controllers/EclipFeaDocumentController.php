@@ -6,9 +6,10 @@ use App\Http\Requests\StoreEclipFeaDocumentRequest;
 use App\Models\EclipCase;
 use App\Models\EclipFeaDocument;
 use App\Services\EclipDocumentStorageService;
+use App\Services\EclipFeaDocumentService;
+use App\Services\EclipFeaWorkspaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,7 +18,10 @@ class EclipFeaDocumentController extends Controller
     public function index(Request $request): View
     {
         $cases = EclipCase::query()
-            ->whereHas('participantAssignments', fn ($query) => $query->where('user_id', $request->user()->id)->where('is_active', true))
+            ->whereHas('participantAssignments', fn ($query) => $query
+                ->where('user_id', $request->user()->id)
+                ->where('participant_role', 'fea_processor')
+                ->where('is_active', true))
             ->whereHas('workflowActivities', fn ($query) => $query->where('step_code', '4B')->whereIn('status', ['pending', 'ongoing', 'late', 'returned_for_correction']))
             ->with(['formerRebel', 'workflowActivities' => fn ($query) => $query->where('step_code', '4B')])
             ->latest()
@@ -26,35 +30,25 @@ class EclipFeaDocumentController extends Controller
         return view('eclip_fea.index', ['cases' => $cases]);
     }
 
-    public function show(Request $request, EclipCase $eclipCase): View
+    public function show(Request $request, EclipCase $eclipCase, EclipFeaWorkspaceService $workspace): View
     {
         $this->authorize('manageFea', $eclipCase);
-        $eclipCase->load(['formerRebel.municipality', 'feaDocuments.uploader', 'workflowActivities' => fn ($query) => $query->where('step_code', '4B')]);
 
-        return view('eclip_fea.show', ['case' => $eclipCase]);
+        return view('eclip_fea.show', [
+            'case' => $eclipCase,
+            'workspace' => $workspace->forCase($eclipCase, $request->user()),
+        ]);
     }
 
-    public function store(StoreEclipFeaDocumentRequest $request, EclipCase $eclipCase, EclipDocumentStorageService $storage): RedirectResponse
+    public function store(StoreEclipFeaDocumentRequest $request, EclipCase $eclipCase, EclipFeaDocumentService $documents): RedirectResponse
     {
-        $file = $request->file('document');
-        $path = $storage->storeFea($file, $eclipCase->id);
-
-        try {
-            DB::transaction(function () use ($request, $eclipCase, $file, $path) {
-                $eclipCase->feaDocuments()->create([
-                    'document_type' => $request->validated('document_type'),
-                    'storage_path' => $path,
-                    'original_name' => basename(str_replace('\\', '/', $file->getClientOriginalName())),
-                    'mime_type' => $file->getMimeType() ?: 'application/octet-stream',
-                    'size_bytes' => $file->getSize(),
-                    'sha256' => hash_file('sha256', $file->getRealPath()),
-                    'uploaded_by' => $request->user()->id,
-                ]);
-            });
-        } catch (\Throwable $exception) {
-            $storage->delete($path);
-            throw $exception;
-        }
+        $documents->store(
+            $eclipCase,
+            $request->validated('document_type'),
+            $request->file('document'),
+            $request->user(),
+            $request->ip(),
+        );
 
         return back()->with('success', 'FEA document uploaded securely.');
     }

@@ -14,6 +14,7 @@ class EclipAssistanceReleaseService
 {
     public function __construct(
         private readonly EclipCaseWorkflowService $workflow,
+        private readonly EclipOfficialWorkflowService $officialWorkflow,
         private readonly EclipReleaseAcknowledgmentStorageService $acknowledgments,
     ) {}
 
@@ -34,6 +35,11 @@ class EclipAssistanceReleaseService
                 $lockedCase = EclipCase::query()->lockForUpdate()->findOrFail($case->id);
                 if (! in_array($lockedCase->status, [EclipCaseStatus::FundsTransferred, EclipCaseStatus::ReleasePending], true)) {
                     throw ValidationException::withMessages(['status' => 'This case is not ready for assistance release.']);
+                }
+
+                $step7A = $lockedCase->workflowActivities()->where('step_code', '7A')->first();
+                if ($step7A && $step7A->status !== 'completed') {
+                    throw ValidationException::withMessages(['status' => 'Complete Step 7A check processing before recording an assistance release.']);
                 }
 
                 $approvedReview = $lockedCase->dilgReviews()->where('decision', 'approved')->latest('reviewed_at')->firstOrFail();
@@ -68,6 +74,21 @@ class EclipAssistanceReleaseService
                 );
 
                 $lockedCase = $this->workflow->beginAssistanceRelease($lockedCase, $actor, $ipAddress);
+                $this->officialWorkflow->recordDomainEvent(
+                    $lockedCase,
+                    '7B',
+                    $actor,
+                    'assistance_release_recorded',
+                    $release->remarks,
+                    [
+                        'release_id' => $release->id,
+                        'release_reference' => $release->release_reference,
+                        'recipient' => $release->recipient,
+                        'amount' => $release->amount,
+                        'released_at' => $release->released_at?->toDateString(),
+                    ],
+                    $ipAddress,
+                );
                 if ($newTotalCents === $transferredCents) {
                     $this->workflow->completeAssistanceRelease($lockedCase, $actor, $ipAddress);
                 }
@@ -78,6 +99,50 @@ class EclipAssistanceReleaseService
             $this->acknowledgments->delete($path);
             throw $exception;
         }
+    }
+
+    public function confirmReceived(EclipAssistanceRelease $release, User $actor, ?string $remarks, ?string $ipAddress): EclipAssistanceRelease
+    {
+        return DB::transaction(function () use ($release, $actor, $remarks, $ipAddress) {
+            $locked = EclipAssistanceRelease::query()->with('eclipCase')->lockForUpdate()->findOrFail($release->id);
+            if ($locked->received_confirmed_at) {
+                return $locked;
+            }
+
+            $locked->update([
+                'received_confirmed_at' => now(),
+                'received_confirmed_by' => $actor->id,
+                'remarks' => $remarks ?: $locked->remarks,
+            ]);
+
+            $case = $locked->eclipCase;
+            $allConfirmed = $case->assistanceReleases()->exists()
+                && ! $case->assistanceReleases()->whereNull('received_confirmed_at')->exists();
+            if ($allConfirmed) {
+                $this->officialWorkflow->transitionDomainActivity(
+                    $case,
+                    '7B',
+                    $actor,
+                    'completed',
+                    'beneficiary_receipt_confirmed',
+                    $remarks ?: 'LSWDO confirmed receipt of all released assistance by the FR/FVE.',
+                    ['confirmed_release_id' => $locked->id, 'received_confirmed_at' => now()->toIso8601String()],
+                    $ipAddress,
+                );
+            } else {
+                $this->officialWorkflow->recordDomainEvent(
+                    $case,
+                    '7B',
+                    $actor,
+                    'beneficiary_receipt_confirmed',
+                    $remarks,
+                    ['confirmed_release_id' => $locked->id, 'received_confirmed_at' => now()->toIso8601String()],
+                    $ipAddress,
+                );
+            }
+
+            return $locked->fresh();
+        });
     }
 
     private function moneyToCents(string|int|float|null $amount): int

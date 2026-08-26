@@ -18,6 +18,7 @@ use App\Http\Controllers\Ib39;
 use App\Http\Controllers\Japic;
 use App\Http\Controllers\Lgu;
 use App\Http\Controllers\LocalEclip\ReleaseController;
+use App\Http\Controllers\LocalEclip\SurfacedFormerRebelController;
 use App\Http\Controllers\Lswdo;
 use App\Http\Controllers\Mblrc;
 use App\Http\Controllers\NotificationController;
@@ -51,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/eclip-workflow/{eclipCase}', [EclipWorkflowController::class, 'show'])->name('eclip.workflow.show');
     Route::post('/eclip-workflow-activities/{activity}/documents', [EclipWorkflowDocumentController::class, 'store'])->name('eclip.workflow-documents.store');
     Route::get('/eclip-workflow-documents/{document}', [EclipWorkflowDocumentController::class, 'download'])->name('eclip.workflow-documents.download');
+    Route::get('/eclip-assistance-releases/{release}/acknowledgment', [ReleaseController::class, 'download'])->name('eclip.releases.acknowledgment');
 });
 
 /*
@@ -188,6 +190,7 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
 });
 
 Route::middleware(['auth', 'role:lswdo'])->prefix('lswdo')->name('lswdo.')->group(function () {
+    Route::get('/', [Lswdo\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/referrals', [Lswdo\ReferralController::class, 'index'])->name('referrals.index');
     Route::post('/referrals/{referral}/accept', [Lswdo\ReferralController::class, 'accept'])->name('referrals.accept');
     Route::get('/eclip', [Lswdo\EclipCaseController::class, 'index'])->name('eclip.index');
@@ -197,6 +200,11 @@ Route::middleware(['auth', 'role:lswdo'])->prefix('lswdo')->name('lswdo.')->grou
     Route::post('/eclip/{eclipCase}/fea-processor', [Lswdo\EclipFeaAssignmentController::class, 'store'])->name('eclip.fea-processor.store');
     Route::post('/eclip/{eclipCase}/interventions', [Lswdo\EclipInterventionController::class, 'store'])->name('eclip.interventions.store');
     Route::put('/eclip-interventions/{eclipIntervention}', [Lswdo\EclipInterventionController::class, 'update'])->name('eclip.interventions.update');
+    Route::post('/eclip/{eclipCase}/reintegration-plan-items', [Lswdo\EclipReintegrationPlanController::class, 'store'])->name('eclip.reintegration-plan-items.store');
+    Route::put('/eclip-reintegration-plan-items/{planItem}', [Lswdo\EclipReintegrationPlanController::class, 'update'])->name('eclip.reintegration-plan-items.update');
+    Route::post('/eclip/{eclipCase}/livelihood-beneficiary-assistances', [Lswdo\EclipLivelihoodBeneficiaryAssistanceController::class, 'store'])->name('eclip.livelihood-assistances.store');
+    Route::put('/eclip-livelihood-beneficiary-assistances/{livelihoodAssistance}', [Lswdo\EclipLivelihoodBeneficiaryAssistanceController::class, 'update'])->name('eclip.livelihood-assistances.update');
+    Route::post('/eclip-assistance-releases/{release}/confirm-received', [Lswdo\AssistanceReceiptController::class, 'store'])->name('eclip.releases.confirm-received');
     Route::post('/eclip/{eclipCase}/documents', [Mblrc\EclipDocumentController::class, 'store'])->name('eclip.documents.store');
     Route::get('/eclip-document-versions/{version}', EclipDocumentDownloadController::class)->name('eclip.documents.download');
     Route::get('/eclip-document-versions/{version}/preview', [Lswdo\EclipDocumentPreviewController::class, 'caseDocument'])->name('eclip.documents.preview');
@@ -209,6 +217,7 @@ Route::middleware(['auth', 'role:lswdo'])->prefix('lswdo')->name('lswdo.')->grou
 });
 
 Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->group(function () {
+    Route::get('/', [Japic\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/authentication', [Japic\AuthenticationController::class, 'index'])->name('authentication.index');
     Route::post('/authentication/{authentication}/start', [Japic\AuthenticationController::class, 'start'])->name('authentication.start');
     Route::post('/authentication/{authentication}/decision', [Japic\AuthenticationController::class, 'decide'])->name('authentication.decide');
@@ -237,7 +246,7 @@ Route::middleware(['auth', 'role:dilg_provincial_focal,dilg_regional,nboo_eclip_
     Route::post('/cases/{eclipCase}/decision', [EclipReviewController::class, 'decide'])->name('cases.decide');
 });
 
-Route::middleware(['auth', 'role:dilg_fms,eclip_funding_officer'])->prefix('eclip-funding')->name('eclip_funding.')->group(function () {
+Route::middleware(['auth', 'role:dilg_fms,dilg_regional,eclip_funding_officer'])->prefix('eclip-funding')->name('eclip_funding.')->group(function () {
     Route::get('/cases', [FundingController::class, 'index'])->name('cases.index');
     Route::get('/cases/{eclipCase}', [FundingController::class, 'show'])->name('cases.show');
     Route::post('/cases/{eclipCase}/transactions', [FundingController::class, 'store'])->name('transactions.store');
@@ -245,6 +254,7 @@ Route::middleware(['auth', 'role:dilg_fms,eclip_funding_officer'])->prefix('ecli
 });
 
 Route::middleware(['auth', 'role:local_eclip_committee'])->prefix('local-eclip')->name('local_eclip.')->group(function () {
+    Route::get('/surfaced-former-rebels', [SurfacedFormerRebelController::class, 'index'])->name('surfaced.index');
     Route::get('/cases', [ReleaseController::class, 'index'])->name('cases.index');
     Route::get('/cases/{eclipCase}', [ReleaseController::class, 'show'])->name('cases.show');
     Route::post('/cases/{eclipCase}/releases', [ReleaseController::class, 'store'])->name('releases.store');

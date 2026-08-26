@@ -60,10 +60,10 @@ class RolePrivacyNavigationTest extends TestCase
             'super_admin' => ['System Analytics', 'General Audit Logs'],
             'admin' => ['SHIELD Monitoring', 'Cluster Analytics', 'Cluster Monitoring', 'Contribution Monitoring'],
             'mblrc' => ['FR/FVE Registry', 'Integration Monitoring', 'E-CLIP Cases'],
-            'lswdo' => ['MBLRC Referrals', 'E-CLIP Cases'],
-            'japic' => ['Authentication Queue', 'E-CLIP Documents'],
-            'pnp' => ['Dashboard', 'FEA Processing'],
-            'local_eclip_committee' => ['Assistance Release', 'Analytics'],
+            'lswdo' => ['Dashboard', 'MBLRC Referrals', 'E-CLIP Cases'],
+            'japic' => ['Dashboard', 'Authentication Queue', 'E-CLIP Documents'],
+            'pnp' => ['Dashboard', 'FEA Queue'],
+            'local_eclip_committee' => ['Surfaced FR/FVE', 'Assistance Release', 'Analytics'],
         ];
 
         foreach ($expectations as $role => $labels) {

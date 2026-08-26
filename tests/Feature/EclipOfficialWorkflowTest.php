@@ -94,6 +94,16 @@ class EclipOfficialWorkflowTest extends TestCase
             'responsible_roles' => ['lswdo'],
             'available_at' => now(),
         ]);
+        $case->interventions()->create([
+            'stage' => 'social_protection',
+            'title' => 'Counseling',
+            'provider' => 'Synthetic LSWDO',
+            'status' => 'completed',
+            'completed_at' => now(),
+            'outcome' => 'Service delivered.',
+            'created_by' => $lswdo->id,
+            'updated_by' => $lswdo->id,
+        ]);
 
         $this->actingAs($lswdo)->patch(route('eclip.workflow-activities.update', $activity), [
             'status' => 'completed',
@@ -252,7 +262,15 @@ class EclipOfficialWorkflowTest extends TestCase
     {
         $activity = $case->workflowActivities()->where('step_code', '2')->firstOrFail();
         $this->actingAs($lswdo)
-            ->patch(route('eclip.workflow-activities.update', $activity), ['status' => 'completed'])
+            ->patch(route('eclip.workflow-activities.update', $activity), [
+                'status' => 'completed',
+                'data' => [
+                    'receiving_committee' => 'Local E-CLIP Committee',
+                    'submission_date' => now()->toDateString(),
+                    'confirmation_timestamp' => now()->format('Y-m-d\TH:i'),
+                    'notification_reference' => 'LEC-NOTICE-001',
+                ],
+            ])
             ->assertRedirect();
     }
 }

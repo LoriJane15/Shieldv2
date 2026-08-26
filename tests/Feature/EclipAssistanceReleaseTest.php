@@ -18,7 +18,7 @@ class EclipAssistanceReleaseTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_partial_then_full_release_completes_case_with_immutable_history(): void
+    public function test_partial_then_full_release_stays_open_for_liquidation_and_reintegration(): void
     {
         Storage::fake('local');
         [$case, $committee] = $this->transferredCase();
@@ -27,7 +27,7 @@ class EclipAssistanceReleaseTest extends TestCase
         $this->assertSame(EclipCaseStatus::ReleasePending, $case->fresh()->status);
 
         $this->release($case, $committee, '600.00', 'RELEASE-002');
-        $this->assertSame(EclipCaseStatus::Completed, $case->fresh()->status);
+        $this->assertSame(EclipCaseStatus::AssistanceReleased, $case->fresh()->status);
         $this->assertDatabaseCount('eclip_assistance_releases', 2);
         $this->assertDatabaseCount('fr_government_assistances', 2);
         $this->assertDatabaseHas('fr_government_assistances', [
@@ -36,11 +36,11 @@ class EclipAssistanceReleaseTest extends TestCase
             'status' => 'Completed',
         ]);
         $this->assertDatabaseHas('eclip_status_histories', ['eclip_case_id' => $case->id, 'to_status' => EclipCaseStatus::AssistanceReleased->value]);
-        $this->assertDatabaseHas('eclip_status_histories', ['eclip_case_id' => $case->id, 'to_status' => EclipCaseStatus::Completed->value]);
+        $this->assertDatabaseMissing('eclip_status_histories', ['eclip_case_id' => $case->id, 'to_status' => EclipCaseStatus::Completed->value]);
         $case->assistanceReleases->each(fn ($release) => Storage::disk('local')->assertExists($release->acknowledgment_path));
 
         $this->actingAs($committee)->post(route('local_eclip.releases.store', $case), [
-            'amount' => '1.00', 'release_reference' => 'AFTER-COMPLETE',
+            'amount' => '1.00', 'release_reference' => 'AFTER-RELEASE', 'recipient' => 'FR/FVE recipient',
             'released_at' => now()->toDateString(),
             'acknowledgment' => UploadedFile::fake()->create('ack.pdf', 10, 'application/pdf'),
         ])->assertForbidden();
@@ -53,7 +53,7 @@ class EclipAssistanceReleaseTest extends TestCase
         $this->release($case, $committee, '900.00', 'RELEASE-001');
 
         $this->actingAs($committee)->post(route('local_eclip.releases.store', $case), [
-            'amount' => '100.01', 'release_reference' => 'RELEASE-OVER',
+            'amount' => '100.01', 'release_reference' => 'RELEASE-OVER', 'recipient' => 'FR/FVE recipient',
             'released_at' => now()->toDateString(),
             'acknowledgment' => UploadedFile::fake()->create('ack.pdf', 10, 'application/pdf'),
         ])->assertSessionHasErrors('amount');
@@ -67,12 +67,12 @@ class EclipAssistanceReleaseTest extends TestCase
         [$case, $committee] = $this->transferredCase();
 
         $this->actingAs($committee)->post(route('local_eclip.releases.store', $case), [
-            'amount' => '100.00', 'release_reference' => 'NO-ACK',
+            'amount' => '100.00', 'release_reference' => 'NO-ACK', 'recipient' => 'FR/FVE recipient',
             'released_at' => now()->toDateString(),
         ])->assertSessionHasErrors('acknowledgment');
 
         $this->actingAs($committee)->post(route('local_eclip.releases.store', $case), [
-            'amount' => '100.00', 'release_reference' => 'BAD-ACK',
+            'amount' => '100.00', 'release_reference' => 'BAD-ACK', 'recipient' => 'FR/FVE recipient',
             'released_at' => now()->toDateString(),
             'acknowledgment' => UploadedFile::fake()->create('ack.exe', 10, 'application/x-msdownload'),
         ])->assertSessionHasErrors('acknowledgment');
@@ -142,7 +142,7 @@ class EclipAssistanceReleaseTest extends TestCase
     {
         $this->actingAs($committee)->post(route('local_eclip.releases.store', $case), [
             'amount' => $amount, 'release_reference' => $reference,
-            'released_at' => now()->toDateString(),
+            'released_at' => now()->toDateString(), 'recipient' => 'FR/FVE recipient',
             'acknowledgment' => UploadedFile::fake()->create("{$reference}.pdf", 20, 'application/pdf'),
         ])->assertRedirect();
     }

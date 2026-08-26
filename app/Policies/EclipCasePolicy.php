@@ -47,13 +47,18 @@ class EclipCasePolicy
         }
 
         if ($user->hasRole('dilg_regional', 'nboo_eclip_pmo')) {
-            return in_array($case->status, [
+            $statuses = [
                 EclipCaseStatus::ProvincialEndorsed,
                 EclipCaseStatus::RegionalEndorsed,
                 EclipCaseStatus::Approved,
                 EclipCaseStatus::Rejected,
                 EclipCaseStatus::ReturnedForAssessmentRevision,
-            ], true);
+            ];
+            if ($user->hasRole('dilg_regional')) {
+                $statuses = [...$statuses, EclipCaseStatus::FundsAllocated, EclipCaseStatus::FundsTransferred];
+            }
+
+            return in_array($case->status, $statuses, true);
         }
 
         if ($user->hasRole('dilg_reviewer')) {
@@ -99,7 +104,12 @@ class EclipCasePolicy
             return $case->hasActiveParticipant($user);
         }
 
-        if ($user->hasRole('dilg_provincial_focal', 'local_eclip_committee', 'dilg_reviewer', 'eclip_funding_officer')) {
+        if ($user->hasRole('local_eclip_committee')) {
+            return $user->municipality_id !== null
+                && $user->municipality_id === $case->municipality_id;
+        }
+
+        if ($user->hasRole('dilg_provincial_focal', 'dilg_reviewer', 'eclip_funding_officer')) {
             return $user->municipality_id !== null
                 && $user->municipality_id === $case->municipality_id
                 && $this->hasVisibleRoleActivity($user, $case);
@@ -133,12 +143,16 @@ class EclipCasePolicy
 
     public function downloadReleaseAcknowledgment(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('local_eclip_committee')
-            && $user->municipality_id === $case->municipality_id;
+        return ($user->hasRole('local_eclip_committee') && $user->municipality_id === $case->municipality_id)
+            || ($user->hasRole('lswdo') && $case->hasActiveParticipant($user, 'case_processor'));
     }
 
     public function manageFunding(User $user, EclipCase $case): bool
     {
+        if ($user->hasRole('dilg_regional')) {
+            return $case->status === EclipCaseStatus::FundsAllocated;
+        }
+
         return ($user->hasRole('dilg_fms') || ($user->hasRole('eclip_funding_officer') && $user->municipality_id === $case->municipality_id))
             && in_array($case->status, [
                 EclipCaseStatus::Approved,
@@ -149,7 +163,7 @@ class EclipCasePolicy
 
     public function downloadFundingProof(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('dilg_fms')
+        return $user->hasRole('dilg_fms', 'dilg_regional')
             || ($user->hasRole('eclip_funding_officer') && $user->municipality_id === $case->municipality_id);
     }
 
@@ -203,7 +217,18 @@ class EclipCasePolicy
 
     public function manageFea(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('pnp', 'afp') && $case->hasActiveParticipant($user);
+        return $user->hasRole('pnp', 'afp')
+            && $case->hasActiveParticipant($user, 'fea_processor')
+            && $case->workflowActivities()->where('step_code', '4B')->exists();
+    }
+
+    public function uploadFeaDocument(User $user, EclipCase $case): bool
+    {
+        return $this->manageFea($user, $case)
+            && $case->workflowActivities()
+                ->where('step_code', '4B')
+                ->whereIn('status', ['pending', 'ongoing', 'late', 'returned_for_correction'])
+                ->exists();
     }
 
     public function assignFeaProcessor(User $user, EclipCase $case): bool
@@ -215,7 +240,11 @@ class EclipCasePolicy
 
     public function viewFeaDocuments(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('pnp', 'afp', 'lswdo') && $case->hasActiveParticipant($user);
+        return match ($user->role) {
+            'pnp', 'afp' => $case->hasActiveParticipant($user, 'fea_processor'),
+            'lswdo' => $case->hasActiveParticipant($user, 'case_processor'),
+            default => false,
+        };
     }
 
     public function create(User $user): bool

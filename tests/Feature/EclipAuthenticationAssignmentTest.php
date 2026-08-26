@@ -10,7 +10,10 @@ use App\Models\User;
 use App\Services\EclipAuthenticationService;
 use App\Services\EclipCaseWorkflowService;
 use App\Services\EclipOfficialWorkflowService;
+use App\Services\EclipWorkflowDocumentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -20,6 +23,7 @@ class EclipAuthenticationAssignmentTest extends TestCase
 
     public function test_only_assigned_japic_reviewer_can_authenticate_by_explicit_decision(): void
     {
+        Storage::fake('local');
         [$case, $lswdo] = $this->eligibleAssignedCase();
         $assignedJapic = User::factory()->role('japic')->create();
         $otherJapic = User::factory()->role('japic')->create();
@@ -44,6 +48,15 @@ class EclipAuthenticationAssignmentTest extends TestCase
         }
 
         $service->start($authentication, $assignedJapic, '127.0.0.1');
+        $activity = $case->workflowActivities()->where('step_code', '4A')->firstOrFail();
+        app(EclipWorkflowDocumentService::class)->store(
+            $activity,
+            'JAPIC Certification',
+            UploadedFile::fake()->create('japic-certification.pdf', 32, 'application/pdf'),
+            'Signed JAPIC certification.',
+            $assignedJapic,
+            '127.0.0.1',
+        );
         $service->decide($authentication->fresh(), $assignedJapic, 'authenticated', 'JAPIC-CERT-001', null, '127.0.0.1');
 
         $this->assertSame(EclipCaseStatus::Authenticated, $case->fresh()->status);
@@ -117,8 +130,14 @@ class EclipAuthenticationAssignmentTest extends TestCase
         ]);
         app(EclipOfficialWorkflowService::class)->initialize($case, $lswdo, null, [
             'intention_to_surface' => ['source' => 'Enrollment', 'source_record' => 'INT-1'],
-            'receiving_unit_coordination' => ['source' => 'Coordination', 'source_record' => 'COORD-1'],
         ]);
+        $step2 = $case->workflowActivities()->where('step_code', '2')->firstOrFail();
+        app(EclipOfficialWorkflowService::class)->update($step2, $lswdo, 'completed', null, [
+            'receiving_committee' => 'Local E-CLIP Committee',
+            'submission_date' => now()->toDateString(),
+            'confirmation_timestamp' => now()->format('Y-m-d\TH:i'),
+            'notification_reference' => 'LEC-AUTH-001',
+        ], null);
         app(EclipCaseWorkflowService::class)->decideEligibility($case, $lswdo, 'eligible', null, null);
 
         return [$case->fresh(), $lswdo];

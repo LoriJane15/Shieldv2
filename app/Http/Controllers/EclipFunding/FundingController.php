@@ -18,9 +18,12 @@ class FundingController extends Controller
 {
     public function index(Request $request): View
     {
+        $statuses = $request->user()->hasRole('dilg_regional')
+            ? [EclipCaseStatus::FundsAllocated->value, EclipCaseStatus::FundsTransferred->value]
+            : [EclipCaseStatus::Approved->value, EclipCaseStatus::FundAllocationPending->value, EclipCaseStatus::FundsAllocated->value];
         $cases = EclipCase::query()
             ->when($request->user()->hasRole('eclip_funding_officer'), fn ($query) => $query->where('municipality_id', $request->user()->municipality_id))
-            ->whereIn('status', [EclipCaseStatus::Approved->value, EclipCaseStatus::FundAllocationPending->value, EclipCaseStatus::FundsAllocated->value, EclipCaseStatus::FundsTransferred->value])
+            ->whereIn('status', $statuses)
             ->with(['formerRebel', 'dilgReviews' => fn ($query) => $query->where('decision', 'approved')->with('revision')])
             ->latest('updated_at')->paginate(15);
 
@@ -30,7 +33,7 @@ class FundingController extends Controller
     public function show(EclipCase $eclipCase): View
     {
         $this->authorize('view', $eclipCase);
-        $eclipCase->load(['formerRebel.municipality', 'dilgReviews.revision.category', 'fundTransactions.creator']);
+        $eclipCase->load(['formerRebel.municipality', 'dilgReviews.revision.category', 'fundTransactions.creator', 'workflowActivities']);
 
         return view('eclip_funding.cases.show', ['case' => $eclipCase]);
     }

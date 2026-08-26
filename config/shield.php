@@ -81,6 +81,7 @@ return [
         'lswdo' => [
             'label' => 'LSWDO',
             'nav' => [
+                ['label' => 'Dashboard', 'route' => 'lswdo.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
                 ['label' => 'MBLRC Referrals', 'route' => 'lswdo.referrals.index', 'icon' => 'inbox-arrow-down', 'skyicon' => 'icon-envelope', 'section' => 'Case Intake'],
                 ['label' => 'E-CLIP Cases', 'route' => 'lswdo.eclip.index', 'icon' => 'folder', 'skyicon' => 'icon-folder', 'section' => 'Case Management'],
             ],
@@ -88,6 +89,7 @@ return [
         'japic' => [
             'label' => 'JAPIC',
             'nav' => [
+                ['label' => 'Dashboard', 'route' => 'japic.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
                 ['label' => 'Authentication Queue', 'route' => 'japic.authentication.index', 'icon' => 'shield-check', 'skyicon' => 'icon-shield', 'section' => 'Authentication'],
                 ['label' => 'E-CLIP Documents', 'route' => 'japic.eclip.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs', 'section' => 'Document Review'],
             ],
@@ -123,6 +125,7 @@ return [
         'local_eclip_committee' => [
             'label' => 'Local E-CLIP Committee',
             'nav' => [
+                ['label' => 'Surfaced FR/FVE', 'route' => 'local_eclip.surfaced.index', 'icon' => 'account-group', 'skyicon' => 'icon-people', 'section' => 'Case Monitoring'],
                 ['label' => 'Assistance Release', 'route' => 'local_eclip.cases.index', 'icon' => 'hand-raised', 'skyicon' => 'icon-present', 'section' => 'Case Management'],
                 ['label' => 'Analytics', 'route' => 'eclip.analytics.index', 'icon' => 'chart-bar', 'skyicon' => 'icon-graph', 'section' => 'Monitoring'],
             ],
@@ -146,7 +149,7 @@ return [
             'label' => 'PNP',
             'nav' => [
                 ['label' => 'Dashboard', 'route' => 'pnp.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
-                ['label' => 'FEA Processing', 'route' => 'pnp.eclip-fea.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs', 'section' => 'Case Processing'],
+                ['label' => 'FEA Queue', 'route' => 'pnp.eclip-fea.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs', 'section' => 'Case Processing'],
             ],
         ],
     ],

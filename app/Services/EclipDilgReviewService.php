@@ -12,17 +12,26 @@ use Illuminate\Validation\ValidationException;
 
 class EclipDilgReviewService
 {
-    public function __construct(private readonly EclipCaseWorkflowService $workflow) {}
+    public function __construct(
+        private readonly EclipCaseWorkflowService $workflow,
+        private readonly EclipOfficialWorkflowService $officialWorkflow,
+    ) {}
 
-    public function decide(EclipCase $case, User $actor, string $decision, ?string $feedback, ?string $ipAddress): void
-    {
+    public function decide(
+        EclipCase $case,
+        User $actor,
+        string $decision,
+        ?string $feedback,
+        ?string $ipAddress,
+        array $workflowData = [],
+    ): void {
         $level = $this->reviewLevel($actor);
 
         if (in_array($decision, ['returned', 'rejected'], true) && blank($feedback)) {
             throw ValidationException::withMessages(['feedback' => 'Feedback is required for this decision.']);
         }
 
-        $reviewedCase = DB::transaction(function () use ($case, $actor, $level, $decision, $feedback, $ipAddress) {
+        $reviewedCase = DB::transaction(function () use ($case, $actor, $level, $decision, $feedback, $ipAddress, $workflowData) {
             $request = EclipAssistanceRequest::query()->where('eclip_case_id', $case->id)->lockForUpdate()->firstOrFail();
             $revision = $request->revisions()->latest('revision_number')->firstOrFail();
 
@@ -44,6 +53,51 @@ class EclipDilgReviewService
                 'reviewed_at' => now(),
             ]);
             $request->update(['status' => in_array($decision, ['returned', 'rejected', 'approved'], true) ? $decision : 'submitted']);
+
+            $officialStep = match ($level) {
+                'provincial' => '6D',
+                'regional' => '6E',
+                default => '6F',
+            };
+            $remarks = $feedback ?: match ($officialStep) {
+                '6D' => 'Submission endorsed to the DILG Regional Office.',
+                '6E' => 'Submission endorsed to NBOO.',
+                default => 'Request endorsed to DILG FMS for funding.',
+            };
+
+            if (in_array($decision, ['endorsed', 'approved'], true)) {
+                $this->officialWorkflow->transitionDomainActivity(
+                    $case,
+                    $officialStep,
+                    $actor,
+                    'completed',
+                    'review_endorsed',
+                    $remarks,
+                    $workflowData,
+                    $ipAddress,
+                );
+            } elseif ($decision === 'returned') {
+                $this->officialWorkflow->transitionDomainActivity(
+                    $case,
+                    $officialStep,
+                    $actor,
+                    'returned_for_correction',
+                    'review_returned',
+                    $feedback,
+                    $workflowData,
+                    $ipAddress,
+                );
+            } else {
+                $this->officialWorkflow->recordDomainEvent(
+                    $case,
+                    $officialStep,
+                    $actor,
+                    'review_rejected',
+                    $feedback,
+                    $workflowData,
+                    $ipAddress,
+                );
+            }
 
             return $this->workflow->decideDilgReview($case, $actor, $level, $decision, $feedback, $ipAddress);
         });

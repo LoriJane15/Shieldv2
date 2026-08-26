@@ -60,6 +60,10 @@ class EclipReviewController extends Controller
         $reviews->decide(
             $eclipCase, $request->user(), $request->validated('decision'),
             $request->validated('feedback'), $request->ip(),
+            collect($request->validated())->only([
+                'form_8_reference', 'form_9_reference', 'form_10_reference',
+                'endorsement_date', 'eclip_is_reference',
+            ])->filter(fn ($value) => filled($value))->all(),
         );
 
         return back()->with('success', 'DILG review decision recorded.');

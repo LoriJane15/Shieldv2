@@ -23,9 +23,7 @@ class EclipCaseWorkflowService
 
     public function completeAssistanceRelease(EclipCase $case, User $actor, ?string $ipAddress): EclipCase
     {
-        $released = $this->transition($case, $actor, [EclipCaseStatus::ReleasePending], EclipCaseStatus::AssistanceReleased, null, $ipAddress);
-
-        return $this->transition($released, $actor, [EclipCaseStatus::AssistanceReleased], EclipCaseStatus::Completed, null, $ipAddress);
+        return $this->transition($case, $actor, [EclipCaseStatus::ReleasePending], EclipCaseStatus::AssistanceReleased, null, $ipAddress);
     }
 
     public function beginFundAllocation(EclipCase $case, User $actor, ?string $ipAddress): EclipCase
@@ -166,11 +164,13 @@ class EclipCaseWorkflowService
         string $decision,
         ?string $remarks,
         ?string $ipAddress,
+        ?string $referralStatus = null,
+        ?string $referredProgram = null,
     ): EclipCase {
         $target = match ($decision) {
             'eligible' => EclipCaseStatus::Eligible,
             'previously_assisted' => EclipCaseStatus::PreviouslyAssisted,
-            'for_clarification' => EclipCaseStatus::ForClarification,
+            'for_clarification' => EclipCaseStatus::ReturnedForCorrection,
             'not_eligible', 'ineligible' => EclipCaseStatus::Ineligible,
             'returned' => EclipCaseStatus::ForClarification,
             default => throw ValidationException::withMessages(['decision' => 'The eligibility decision is invalid.']),
@@ -180,7 +180,7 @@ class EclipCaseWorkflowService
             throw ValidationException::withMessages(['remarks' => 'Remarks are required for this decision.']);
         }
 
-        return DB::transaction(function () use ($case, $actor, $decision, $remarks, $ipAddress, $target) {
+        return DB::transaction(function () use ($case, $actor, $decision, $remarks, $referralStatus, $referredProgram, $ipAddress, $target) {
             $lockedCase = EclipCase::query()->lockForUpdate()->findOrFail($case->id);
 
             if (! in_array($lockedCase->status, [
@@ -193,6 +193,8 @@ class EclipCaseWorkflowService
             $lockedCase->eligibilityReviews()->create([
                 'reviewed_by' => $actor->id,
                 'decision' => $decision,
+                'referral_status' => $decision === 'not_eligible' ? $referralStatus : null,
+                'referred_program' => $decision === 'not_eligible' && $referralStatus === 'referred' ? $referredProgram : null,
                 'remarks' => $remarks,
                 'reviewed_at' => now(),
             ]);
@@ -203,7 +205,10 @@ class EclipCaseWorkflowService
             ]);
 
             if (in_array($decision, ['eligible', 'ineligible', 'not_eligible', 'previously_assisted'], true)) {
-                $this->officialWorkflow->recordEligibility($result, $actor, $decision, $remarks, $ipAddress);
+                $this->officialWorkflow->recordEligibility($result, $actor, $decision, $remarks, $ipAddress, [
+                    'referral_status' => $decision === 'not_eligible' ? $referralStatus : null,
+                    'referred_program' => $decision === 'not_eligible' && $referralStatus === 'referred' ? $referredProgram : null,
+                ]);
             }
 
             return $result;

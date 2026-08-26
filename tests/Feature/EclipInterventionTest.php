@@ -31,9 +31,20 @@ class EclipInterventionTest extends TestCase
     public function test_reintegration_intervention_requires_a_final_outcome_before_case_closure(): void
     {
         [$case, $lswdo] = $this->caseWithProcessor();
+        $planItem = $case->reintegrationPlanItems()->create([
+            'identified_need' => 'Livelihood stabilization',
+            'proposed_assistance' => 'Livelihood starter support',
+            'responsible_agency' => 'Partner Agency',
+            'form_of_assistance' => 'Starter kit',
+            'target_date' => now()->addMonth()->toDateString(),
+            'status' => 'planned',
+            'created_by' => $lswdo->id,
+            'updated_by' => $lswdo->id,
+        ]);
         $this->actingAs($lswdo)->post(route('lswdo.eclip.interventions.store', $case), [
             'stage' => 'reintegration', 'title' => 'Livelihood starter support',
-            'provider' => 'Partner Agency', 'status' => 'in_progress',
+            'reintegration_plan_item_id' => $planItem->id,
+            'provider' => 'Partner Agency', 'referral_date' => now()->toDateString(), 'status' => 'in_progress',
         ])->assertRedirect();
         $intervention = $case->interventions()->firstOrFail();
         $closure = $case->workflowActivities()->create([
@@ -47,9 +58,11 @@ class EclipInterventionTest extends TestCase
 
         $this->actingAs($lswdo)->put(route('lswdo.eclip.interventions.update', $intervention), [
             'stage' => 'reintegration', 'title' => 'Livelihood starter support',
-            'provider' => 'Partner Agency', 'status' => 'completed',
+            'reintegration_plan_item_id' => $planItem->id,
+            'provider' => 'Partner Agency', 'referral_date' => now()->toDateString(), 'status' => 'completed',
             'outcome' => 'Assistance delivered and acknowledged.',
         ])->assertRedirect();
+        $planItem->update(['status' => 'completed']);
 
         $this->actingAs($lswdo)
             ->patch(route('eclip.workflow-activities.update', $closure), ['status' => 'completed'])

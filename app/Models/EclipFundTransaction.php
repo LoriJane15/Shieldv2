@@ -32,4 +32,10 @@ class EclipFundTransaction extends Model
     {
         return $this->belongsTo(EclipAssistanceRevision::class, 'assistance_revision_id');
     }
+
+    protected static function booted(): void
+    {
+        static::updating(fn () => throw new \LogicException('Funding transactions are immutable.'));
+        static::deleting(fn () => throw new \LogicException('Funding transactions are immutable.'));
+    }
 }

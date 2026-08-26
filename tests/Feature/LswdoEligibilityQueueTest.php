@@ -8,6 +8,7 @@ use App\Models\EclipCase;
 use App\Models\FormerRebel;
 use App\Models\Municipality;
 use App\Models\User;
+use App\Services\EclipOfficialWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -79,6 +80,22 @@ class LswdoEligibilityQueueTest extends TestCase
             ->get(route('lswdo.eclip.index', ['status' => EclipCaseStatus::Approved->value]))
             ->assertOk()
             ->assertSee($approved->case_number);
+    }
+
+    public function test_case_workspace_uses_official_step_evidence_without_the_legacy_supporting_documents_card(): void
+    {
+        $municipality = Municipality::query()->create(['name' => 'Workspace Municipality']);
+        $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
+        $case = $this->createCase($municipality, 'ECLIP-WORKSPACE-001', 'FR-#WORK', 'Workspace', 'Beneficiary', EclipCaseStatus::SubmittedForEligibility, now(), $lswdo);
+        app(EclipOfficialWorkflowService::class)->initialize($case, $lswdo, '127.0.0.1');
+
+        $this->actingAs($lswdo)
+            ->get(route('lswdo.eclip.show', $case))
+            ->assertOk()
+            ->assertDontSeeText('Supporting Documents')
+            ->assertSeeText('Agency Service Referrals')
+            ->assertSeeText('Intervention Outcomes')
+            ->assertSeeText('Required documents');
     }
 
     private function createCase(

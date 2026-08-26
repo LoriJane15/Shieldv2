@@ -290,8 +290,6 @@
 
 @section('content')
 @php
-    $documentsByRequirement = $case->documents->keyBy('requirement_id');
-    $submittedDocuments = $requirements->filter(fn ($requirement) => $documentsByRequirement->has($requirement->id))->count();
     $workflowActivities = $workflow['activities'];
     $activePhase = $workflow['current_phase'];
     $currentPhaseData = $workflow['phases']->get($activePhase);
@@ -509,7 +507,7 @@
                                             <span class="step-status-choice"><i class="mdi mdi-minus-circle-outline"></i><span><strong>Not applicable</strong><small>This activity does not apply to the case</small></span></span>
                                         </label>
                                     @endif
-                                    @if(in_array($activity->step_code, ['6D', '6E', '6F'], true))
+                                    @if(in_array($activity->step_code, ['6D', '6E', '6F', '7A'], true))
                                         <label class="step-status-option choice-return">
                                             <input type="radio" name="status" value="returned_for_correction" required data-requires-remarks>
                                             <span class="step-status-choice"><i class="mdi mdi-undo-variant"></i><span><strong>Return for correction</strong><small>Send the activity back to the previous office</small></span></span>
@@ -534,9 +532,11 @@
                                                         <label class="custom-control-label" for="activity-field-{{ $activity->id }}-{{ $field['key'] }}">{{ $field['label'] }}</label>
                                                     </div>
                                                 @else
-                                                    <label class="step-input-label" for="activity-field-{{ $activity->id }}-{{ $field['key'] }}">{{ $field['label'] }}</label>
+                                                    <label class="step-input-label" for="activity-field-{{ $activity->id }}-{{ $field['key'] }}">{{ $field['label'] }}@if($field['required_on_complete'] ?? false) <span aria-hidden="true">*</span>@endif</label>
                                                     @if(($field['type'] ?? null) === 'textarea')
                                                         <textarea class="form-control" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]" rows="3" maxlength="5000">{{ $fieldValue }}</textarea>
+                                                    @elseif(($field['type'] ?? null) === 'select')
+                                                        <select class="form-control" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]"><option value="">Select status</option>@foreach(($field['options'] ?? []) as $value => $label)<option value="{{ $value }}" @selected($fieldValue === $value)>{{ $label }}</option>@endforeach</select>
                                                     @else
                                                         <input class="form-control" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]" type="{{ $field['type'] ?? 'text' }}" value="{{ $fieldValue }}" maxlength="5000">
                                                     @endif
@@ -616,6 +616,19 @@
                                 @error('remarks')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
+                            <div class="row" data-ineligible-referral-fields>
+                                <div class="form-group col-md-5">
+                                    <label for="referral-status" class="remarks-label">Other-program referral</label>
+                                    <select id="referral-status" name="referral_status" class="form-control"><option value="">Select when not eligible</option><option value="not_referred" @selected(old('referral_status') === 'not_referred')>Not referred</option><option value="referred" @selected(old('referral_status') === 'referred')>Referred to another program</option></select>
+                                    @error('referral_status')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                                </div>
+                                <div class="form-group col-md-7">
+                                    <label for="referred-program" class="remarks-label">Program referred to</label>
+                                    <input id="referred-program" name="referred_program" value="{{ old('referred_program') }}" maxlength="255" class="form-control @error('referred_program') is-invalid @enderror" placeholder="Authorized program name">
+                                    @error('referred_program')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mt-3">
                                 <small class="text-muted mb-2 mb-sm-0"><i class="mdi mdi-information-outline mr-1"></i>This decision will be recorded in the case history.</small>
                                 <button class="btn btn-primary review-submit" data-submit-button><i class="mdi mdi-content-save-outline mr-1" aria-hidden="true"></i>Save Decision</button>
@@ -646,69 +659,33 @@
             @elseif($case->authenticationRequest)
                 <section class="card review-card mb-4">
                     <div class="card-body d-flex justify-content-between align-items-center">
-                        <div><h3 class="section-title">JAPIC Authentication</h3><p class="section-subtitle">Assigned to {{ $case->authenticationRequest->assignee->name }}</p></div>
+                        <div><h3 class="section-title">JAPIC Authentication</h3><p class="section-subtitle">Assigned to {{ $case->authenticationRequest->assignee->name }}@if($case->authenticationRequest->certification_reference) · Certification {{ $case->authenticationRequest->certification_reference }}@endif</p>@php($japicCertificate = $case->workflowActivities->firstWhere('step_code', '4A')?->documents?->where('document_type', 'JAPIC Certification')->sortByDesc('version_number')->first())@if($japicCertificate)<a class="btn btn-sm btn-outline-primary mt-2" target="_blank" rel="noopener" href="{{ route('eclip.workflow-documents.download', $japicCertificate) }}"><i class="mdi mdi-download-outline mr-1"></i>View JAPIC Certification</a>@endif</div>
                         <x-eclip.workflow-status-badge :status="$case->authenticationRequest->status" />
                     </div>
                 </section>
             @endif
 
-        </main>
-        <aside class="case-sidebar" aria-label="Case documents, services, and history">
-            <section class="card review-card mb-4" aria-labelledby="documents-title">
-                <div class="card-body">
-                    <div class="sidebar-card-header">
-                        <div class="section-icon"><i class="mdi mdi-folder-multiple-outline" aria-hidden="true"></i></div>
-                        <div><h3 id="documents-title" class="section-title">Supporting Documents</h3><p class="section-subtitle">Official case requirements and files.</p></div>
-                        @if($requirements->isNotEmpty())<span class="sidebar-count">{{ $submittedDocuments }} / {{ $requirements->count() }}</span>@endif
+            @if($case->assistanceReleases->isNotEmpty())
+                <section class="card review-card mb-4" aria-labelledby="assistance-receipt-title">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3"><div class="section-icon mr-3"><i class="mdi mdi-hand-coin-outline"></i></div><div><h3 id="assistance-receipt-title" class="section-title">Confirm Assistance Receipt</h3><p class="section-subtitle">Review the acknowledgment and confirm when the FR/FVE received each release.</p></div></div>
+                        @foreach($case->assistanceReleases->sortByDesc('released_at') as $release)
+                            <div class="border rounded p-3 mb-2"><div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center"><div><strong>{{ $release->release_reference }}</strong><small class="d-block text-muted">{{ $release->recipient }} · ₱{{ number_format((float) $release->amount, 2) }} · {{ $release->released_at->format('M d, Y') }}</small></div><a class="btn btn-sm btn-outline-primary mt-2 mt-md-0" target="_blank" rel="noopener" href="{{ route('eclip.releases.acknowledgment', $release) }}">View acknowledgment</a></div>@if($release->received_confirmed_at)<div class="text-success small mt-2"><i class="mdi mdi-check-circle-outline mr-1"></i>Receipt confirmed {{ $release->received_confirmed_at->format('M d, Y · h:i A') }} by {{ $release->receivedConfirmer?->name }}</div>@else<form method="POST" action="{{ route('lswdo.eclip.releases.confirm-received', $release) }}" class="mt-2">@csrf<label class="step-input-label" for="receipt-remarks-{{ $release->id }}">Confirmation remarks</label><textarea id="receipt-remarks-{{ $release->id }}" name="remarks" rows="2" maxlength="5000" class="form-control mb-2"></textarea><button class="btn btn-sm btn-success">Confirm Received by FR/FVE</button></form>@endif</div>
+                        @endforeach
                     </div>
-                    @if($requirements->isEmpty())
-                        <div class="sidebar-alert"><i class="mdi mdi-alert-outline" aria-hidden="true"></i><span><strong>Document checklist unavailable</strong><br>The official checklist has not yet been configured by Katuparan Center.</span></div>
-                    @else
-                        <div class="checklist-progress"><strong>{{ $submittedDocuments }}</strong> of <strong>{{ $requirements->count() }}</strong> requirements have an uploaded document.</div>
-                        <details class="sidebar-disclosure" @if($errors->has('document')) open @endif>
-                            <summary>View document checklist <i class="mdi mdi-chevron-down" aria-hidden="true"></i></summary>
-                            <div class="sidebar-document-list">
-                                @foreach($requirements as $requirement)
-                                    @php
-                                        $document = $documentsByRequirement->get($requirement->id);
-                                        $documentStatus = $document?->status ?? 'missing';
-                                    @endphp
-                                    <article class="sidebar-document-item">
-                                        <div class="sidebar-document-heading"><strong>{{ $requirement->name }} @if($requirement->is_required)<span class="required-mark" title="Required">*</span>@endif</strong><span class="document-status status-{{ str($documentStatus)->slug() }}">{{ str($documentStatus)->replace('_', ' ')->title() }}</span></div>
-                                        <div class="version-grid mt-2">
-                                            @forelse($document?->versions?->sortByDesc('version_number') ?? [] as $version)
-                                                <a class="document-preview-link" href="{{ route('lswdo.eclip.documents.preview', $version) }}" title="Preview {{ $version->original_name }}"><i class="mdi mdi-eye-outline"></i><span><strong>Version {{ $version->version_number }} @if($loop->first)<span class="latest-badge">Latest</span>@endif</strong><small>{{ $version->original_name }}</small></span></a>
-                                            @empty
-                                                <div class="no-document"><i class="mdi mdi-file-hidden"></i>No document uploaded</div>
-                                            @endforelse
-                                        </div>
-                                        @can('uploadDocument', $case)
-                                            <form method="POST" action="{{ route('lswdo.eclip.documents.store', $case) }}" enctype="multipart/form-data" class="supporting-upload sidebar-upload" data-document-upload>
-                                                @csrf
-                                                <input type="hidden" name="requirement_id" value="{{ $requirement->id }}">
-                                                <input id="requirement-file-{{ $requirement->id }}" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" required data-document-input>
-                                                <label for="requirement-file-{{ $requirement->id }}" class="supporting-upload-picker"><span class="supporting-upload-icon"><i class="mdi mdi-cloud-upload-outline"></i></span><span><span class="supporting-upload-title">Choose a file</span><span class="supporting-upload-help text-muted">PDF, JPG, or PNG · Maximum 10 MB</span></span></label>
-                                                <span class="supporting-upload-name" data-document-name>No file selected</span>
-                                                @error('document')<div class="text-danger small mb-2" role="alert">{{ $message }}</div>@enderror
-                                                <button class="btn btn-sm btn-outline-primary btn-block" data-upload-button><i class="mdi mdi-upload mr-1"></i>{{ $document ? 'Upload New Version' : 'Upload Document' }}</button>
-                                            </form>
-                                        @endcan
-                                    </article>
-                                @endforeach
-                            </div>
-                            @can('uploadDocument', $case)<p class="section-subtitle mt-2 mb-0"><i class="mdi mdi-history mr-1"></i>Replacement uploads retain earlier versions and reset JAPIC review.</p>@endcan
-                        </details>
-                    @endif
-                </div>
-            </section>
+                </section>
+            @endif
+
+        </main>
+        <aside class="case-sidebar" aria-label="Case services, interventions, and history">
 
             <section class="card review-card mb-4" aria-labelledby="actions-title">
                 <div class="card-body">
                     <div class="sidebar-card-header">
                         <div class="section-icon"><i class="mdi mdi-heart-pulse"></i></div>
-                        <div><h3 id="actions-title" class="section-title">Case Services</h3><p class="section-subtitle">Related reintegration monitoring.</p></div>
+                        <div><h3 id="actions-title" class="section-title">Agency Service Referrals</h3><p class="section-subtitle">Refer basic services to an authorized government agency and monitor delivery.</p></div>
                     </div>
-                    <a href="{{ route('lswdo.eclip.basic-services.index', $case) }}" class="service-link"><i class="mdi mdi-clipboard-pulse-outline"></i><span>Monitor Basic Services</span><i class="mdi mdi-chevron-right"></i></a>
+                    <a href="{{ route('lswdo.eclip.basic-services.index', $case) }}" class="service-link"><i class="mdi mdi-clipboard-pulse-outline"></i><span>Open Agency Service Referrals</span><i class="mdi mdi-chevron-right"></i></a>
                 </div>
             </section>
 
@@ -729,27 +706,33 @@
                 </div>
             </section>
 
+            @include('lswdo.eclip._reintegration_records', ['case' => $case])
+
             <section class="card review-card mb-4" aria-labelledby="interventions-title">
                 <div class="card-body">
-                    <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-account-heart-outline" aria-hidden="true"></i></div><div><h3 id="interventions-title" class="section-title">Services and Reintegration</h3><p class="section-subtitle">Repeatable social-protection and reintegration entries.</p></div></div>
+                    <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-account-heart-outline" aria-hidden="true"></i></div><div><h3 id="interventions-title" class="section-title">Intervention Outcomes</h3><p class="section-subtitle">Record repeatable social-protection and reintegration delivery with final outcomes.</p></div></div>
                     @can('reviewEligibility', $case)
                         <p class="section-subtitle mt-3">Record eligibility before adding interventions.</p>
                     @else
                         @if($case->hasActiveParticipant(auth()->user(), 'case_processor'))
                             <form method="POST" action="{{ route('lswdo.eclip.interventions.store', $case) }}" class="mt-3">@csrf
                                 <div class="form-group"><label class="step-input-label" for="intervention-stage">Stage</label><select id="intervention-stage" name="stage" class="form-control"><option value="social_protection">Social protection</option><option value="reintegration">Reintegration</option></select></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-plan-item">Approved reintegration plan item</label><select id="intervention-plan-item" name="reintegration_plan_item_id" class="form-control"><option value="">Not applicable to social protection</option>@foreach($case->reintegrationPlanItems as $planItem)<option value="{{ $planItem->id }}">{{ $planItem->proposed_assistance }}</option>@endforeach</select></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-title">Service or intervention</label><input id="intervention-title" name="title" class="form-control" maxlength="255" required></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-provider">Provider</label><input id="intervention-provider" name="provider" class="form-control" maxlength="255"></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-referral-date">Referral date</label><input id="intervention-referral-date" name="referral_date" class="form-control" type="date"></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-amount">Amount or value</label><input id="intervention-amount" name="amount_or_value" class="form-control" type="number" min="0" step="0.01"></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-target">Target date</label><input id="intervention-target" name="target_date" class="form-control" type="date"></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-status">Status</label><select id="intervention-status" name="status" class="form-control"><option value="pending">Pending</option><option value="referred">Referred</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="returned">Returned</option><option value="not_applicable">Not applicable</option></select></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-outcome">Outcome <span>Required when completed</span></label><textarea id="intervention-outcome" name="outcome" class="form-control" rows="2" maxlength="5000"></textarea></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-evidence">Evidence or acknowledgment reference</label><input id="intervention-evidence" name="evidence_reference" class="form-control" maxlength="255"></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-receiving-agency">Receiving agency <span>Required when transferred</span></label><input id="intervention-receiving-agency" name="receiving_agency" class="form-control" maxlength="255"></div>
                                 <div class="form-group"><label class="step-input-label" for="intervention-remarks">Remarks / delay, return, or not-applicable reason</label><textarea id="intervention-remarks" name="remarks" class="form-control" rows="2" maxlength="5000"></textarea></div>
                                 <button class="btn btn-sm btn-outline-primary btn-block">Add entry</button>
                             </form>
                         @endif
                     @endcan
-                    <div class="sidebar-document-list mt-3">@forelse($case->interventions->sortByDesc('created_at') as $intervention)<details class="sidebar-document-item"><summary class="sidebar-document-heading"><strong>{{ $intervention->title }}</strong><span class="document-status status-pending">{{ str($intervention->status)->replace('_', ' ')->title() }}</span></summary><small class="text-muted d-block mt-1">{{ str($intervention->stage)->replace('_', ' ')->title() }}@if($intervention->provider) · {{ $intervention->provider }}@endif @if($intervention->target_date) · Target {{ $intervention->target_date->format('M d, Y') }}@endif</small>@if($intervention->outcome)<p class="history-remarks mt-2 mb-0"><strong>Outcome:</strong> {{ $intervention->outcome }}</p>@endif @if($case->hasActiveParticipant(auth()->user(), 'case_processor'))<form method="POST" action="{{ route('lswdo.eclip.interventions.update', $intervention) }}" class="mt-2">@csrf @method('PUT')<input type="hidden" name="stage" value="{{ $intervention->stage }}"><input type="hidden" name="title" value="{{ $intervention->title }}"><input type="hidden" name="provider" value="{{ $intervention->provider }}"><input type="hidden" name="amount_or_value" value="{{ $intervention->amount_or_value }}"><input type="hidden" name="target_date" value="{{ $intervention->target_date?->toDateString() }}"><label class="step-input-label" for="intervention-edit-status-{{ $intervention->id }}">Update status</label><select id="intervention-edit-status-{{ $intervention->id }}" name="status" class="form-control mb-2">@foreach(\App\Models\EclipIntervention::STATUSES as $status)<option value="{{ $status }}" @selected($intervention->status === $status)>{{ str($status)->replace('_',' ')->title() }}</option>@endforeach</select><label class="step-input-label" for="intervention-edit-outcome-{{ $intervention->id }}">Outcome</label><textarea id="intervention-edit-outcome-{{ $intervention->id }}" name="outcome" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->outcome }}</textarea><label class="step-input-label" for="intervention-edit-remarks-{{ $intervention->id }}">Reason / next required action</label><textarea id="intervention-edit-remarks-{{ $intervention->id }}" name="remarks" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->remarks }}</textarea><button class="btn btn-sm btn-outline-primary btn-block">Save intervention update</button></form>@endif</details>@empty<div class="no-document"><i class="mdi mdi-clipboard-text-outline"></i>No services or interventions recorded.</div>@endforelse</div>
+                    <div class="sidebar-document-list mt-3">@forelse($case->interventions->sortByDesc('created_at') as $intervention)<details class="sidebar-document-item"><summary class="sidebar-document-heading"><strong>{{ $intervention->title }}</strong><span class="document-status status-pending">{{ str($intervention->status)->replace('_', ' ')->title() }}</span></summary><small class="text-muted d-block mt-1">{{ str($intervention->stage)->replace('_', ' ')->title() }}@if($intervention->provider) · {{ $intervention->provider }}@endif @if($intervention->target_date) · Target {{ $intervention->target_date->format('M d, Y') }}@endif</small>@if($intervention->reintegrationPlanItem)<small class="text-muted d-block">Plan: {{ $intervention->reintegrationPlanItem->proposed_assistance }}</small>@endif @if($intervention->outcome)<p class="history-remarks mt-2 mb-0"><strong>Outcome:</strong> {{ $intervention->outcome }}</p>@endif @if($case->hasActiveParticipant(auth()->user(), 'case_processor'))<form method="POST" action="{{ route('lswdo.eclip.interventions.update', $intervention) }}" class="mt-2">@csrf @method('PUT')<input type="hidden" name="stage" value="{{ $intervention->stage }}"><input type="hidden" name="reintegration_plan_item_id" value="{{ $intervention->reintegration_plan_item_id }}"><input type="hidden" name="title" value="{{ $intervention->title }}"><input type="hidden" name="provider" value="{{ $intervention->provider }}"><input type="hidden" name="referral_date" value="{{ $intervention->referral_date?->toDateString() }}"><input type="hidden" name="amount_or_value" value="{{ $intervention->amount_or_value }}"><input type="hidden" name="target_date" value="{{ $intervention->target_date?->toDateString() }}"><input type="hidden" name="evidence_reference" value="{{ $intervention->evidence_reference }}"><label class="step-input-label" for="intervention-edit-status-{{ $intervention->id }}">Update status</label><select id="intervention-edit-status-{{ $intervention->id }}" name="status" class="form-control mb-2">@foreach(\App\Models\EclipIntervention::STATUSES as $status)<option value="{{ $status }}" @selected($intervention->status === $status)>{{ str($status)->replace('_',' ')->title() }}</option>@endforeach</select><label class="step-input-label" for="intervention-edit-receiving-agency-{{ $intervention->id }}">Receiving agency (if transferred)</label><input id="intervention-edit-receiving-agency-{{ $intervention->id }}" name="receiving_agency" value="{{ $intervention->receiving_agency }}" class="form-control mb-2" maxlength="255"><label class="step-input-label" for="intervention-edit-outcome-{{ $intervention->id }}">Outcome</label><textarea id="intervention-edit-outcome-{{ $intervention->id }}" name="outcome" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->outcome }}</textarea><label class="step-input-label" for="intervention-edit-remarks-{{ $intervention->id }}">Reason / next required action</label><textarea id="intervention-edit-remarks-{{ $intervention->id }}" name="remarks" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->remarks }}</textarea><button class="btn btn-sm btn-outline-primary btn-block">Save intervention update</button></form>@endif</details>@empty<div class="no-document"><i class="mdi mdi-clipboard-text-outline"></i>No services or interventions recorded.</div>@endforelse</div>
                 </div>
             </section>
 
@@ -901,20 +884,6 @@ document.querySelectorAll('[data-step-update-form]').forEach(function (form) {
         saveButton.innerHTML = '<i class="mdi mdi-loading mdi-spin mr-1"></i>Saving update...';
     });
     syncStepRemarks();
-});
-
-document.querySelectorAll('[data-document-upload]').forEach(function (form) {
-    var input = form.querySelector('[data-document-input]');
-    var name = form.querySelector('[data-document-name]');
-    var button = form.querySelector('[data-upload-button]');
-
-    input.addEventListener('change', function () {
-        name.textContent = input.files.length ? input.files[0].name : 'No file selected';
-    });
-    form.addEventListener('submit', function () {
-        button.disabled = true;
-        button.innerHTML = '<i class="mdi mdi-loading mdi-spin mr-1"></i>Uploading...';
-    });
 });
 
 var decisionForm = document.querySelector('[data-decision-form]');

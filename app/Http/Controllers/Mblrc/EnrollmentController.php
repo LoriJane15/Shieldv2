@@ -126,7 +126,13 @@ class EnrollmentController extends Controller
         MblrcEnrollment $enrollment,
         MblrcReferralService $referrals,
     ): RedirectResponse {
-        $referral = $referrals->completeIntegration($enrollment, $request->validated(), $request->user());
+        $referral = $referrals->completeIntegration(
+            $enrollment,
+            $request->validated(),
+            $request->user(),
+            $request->ip(),
+            $request->userAgent(),
+        );
 
         return back()->with('success', $referral->assigned_to
             ? 'Integration completed and assigned LSWDO referral created.'
