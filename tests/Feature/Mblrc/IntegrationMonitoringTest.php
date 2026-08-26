@@ -177,6 +177,78 @@ class IntegrationMonitoringTest extends TestCase
         $this->assertTrue($enrollment->needsAttention(CarbonImmutable::parse('2026-04-30')));
     }
 
+    public function test_assigned_mblrc_user_can_fast_forward_monitoring_in_testing_only(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-26 08:00:00');
+        $mblrc = User::factory()->role('mblrc')->create();
+        $enrollment = $this->enrollment($mblrc, 'FR-#BYPASS', '2026-08-01');
+
+        $this->actingAs($mblrc)->get(route('mblrc.enrollments.index'))
+            ->assertOk()
+            ->assertSee('Bypass Three-Month Period (Testing Only)');
+
+        $this->actingAs($mblrc)
+            ->post(route('mblrc.enrollments.bypass-monitoring', $enrollment))
+            ->assertRedirect(route('mblrc.enrollments.index').'#enrollment-'.$enrollment->id)
+            ->assertSessionHas('success');
+
+        $this->assertSame('2026-05-26', $enrollment->fresh()->integration_started_at?->toDateString());
+        $this->assertTrue($enrollment->fresh()->needsAttention());
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $mblrc->id,
+            'action' => 'integration_monitoring_period_bypassed_for_testing',
+            'entity_type' => MblrcEnrollment::class,
+            'entity_id' => $enrollment->id,
+        ]);
+
+        CarbonImmutable::setTestNow();
+    }
+
+    public function test_monitoring_bypass_is_assignment_scoped(): void
+    {
+        $owner = User::factory()->role('mblrc')->create();
+        $otherMblrc = User::factory()->role('mblrc')->create();
+        $enrollment = $this->enrollment($owner, 'FR-#BYPASS-PRIVATE', now()->toDateString());
+
+        $this->actingAs($otherMblrc)
+            ->post(route('mblrc.enrollments.bypass-monitoring', $enrollment))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'integration_monitoring_period_bypassed_for_testing',
+            'entity_id' => $enrollment->id,
+        ]);
+    }
+
+    public function test_monitoring_bypass_is_hidden_and_forbidden_outside_local_or_testing(): void
+    {
+        $mblrc = User::factory()->role('mblrc')->create();
+        $enrollment = $this->enrollment($mblrc, 'FR-#NO-PRODUCTION-BYPASS', now()->toDateString());
+        $originalEnvironment = $this->app->environment();
+
+        $this->app->detectEnvironment(fn () => 'production');
+
+        try {
+            $this->actingAs($mblrc)->get(route('mblrc.enrollments.index'))
+                ->assertOk()
+                ->assertDontSee('Bypass Three-Month Period (Testing Only)');
+
+            $csrfToken = 'production-environment-test-token';
+            $this->actingAs($mblrc)
+                ->withSession(['_token' => $csrfToken])
+                ->post(route('mblrc.enrollments.bypass-monitoring', $enrollment), ['_token' => $csrfToken])
+                ->assertForbidden();
+        } finally {
+            $this->app->detectEnvironment(fn () => $originalEnvironment);
+        }
+
+        $this->assertSame(now()->toDateString(), $enrollment->fresh()->integration_started_at?->toDateString());
+        $this->assertDatabaseMissing('audit_logs', [
+            'action' => 'integration_monitoring_period_bypassed_for_testing',
+            'entity_id' => $enrollment->id,
+        ]);
+    }
+
     private function enrollment(
         User $mblrc,
         string $classifiedId,

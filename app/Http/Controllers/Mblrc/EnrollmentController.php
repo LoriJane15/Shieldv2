@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Mblrc;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Mblrc\BypassEnrollmentMonitoringRequest;
 use App\Http\Requests\Mblrc\CompleteEnrollmentRequest;
 use App\Http\Requests\Mblrc\IndexEnrollmentsRequest;
 use App\Http\Requests\Mblrc\SearchEnrollmentBeneficiariesRequest;
@@ -137,5 +138,21 @@ class EnrollmentController extends Controller
         return back()->with('success', $referral->assigned_to
             ? 'Integration completed and assigned LSWDO referral created.'
             : 'Integration completed. The referral is pending LSWDO assignment.');
+    }
+
+    public function bypassMonitoringPeriod(
+        BypassEnrollmentMonitoringRequest $request,
+        MblrcEnrollment $enrollment,
+        MblrcEnrollmentService $enrollments,
+    ): RedirectResponse {
+        $enrollments->bypassMonitoringPeriodForTesting(
+            $enrollment,
+            $request->user(),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return redirect()->to(route('mblrc.enrollments.index')."#enrollment-{$enrollment->id}")
+            ->with('success', 'Testing shortcut applied. The three-month monitoring period is now ready for completion verification.');
     }
 }

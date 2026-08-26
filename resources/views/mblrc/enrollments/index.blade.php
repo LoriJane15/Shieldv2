@@ -309,6 +309,15 @@
                                     </form>
                                 @elseif($enrollment->status === 'in_progress')
                                     <div class="monitoring-notice"><i class="mdi mdi-progress-clock" aria-hidden="true"></i><span>Monitoring is active. Completion verification becomes available on {{ $expected?->format('M d, Y') }} after the official three-calendar-month period.</span></div>
+                                    @env(['local', 'testing'])
+                                        <form method="POST" action="{{ route('mblrc.enrollments.bypass-monitoring', $enrollment) }}" class="mt-3 text-right" data-prevent-double-submit onsubmit="return confirm('Fast-forward this test enrollment to the end of its three-month monitoring period?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="mdi mdi-fast-forward-outline" aria-hidden="true"></i>
+                                                Bypass Three-Month Period (Testing Only)
+                                            </button>
+                                        </form>
+                                    @endenv
                                 @else
                                     <div class="monitoring-notice"><i class="mdi mdi-check-circle-outline" aria-hidden="true"></i><span>Monitoring was verified complete on {{ $enrollment->integration_completed_at?->format('M d, Y') ?? 'an unrecorded date' }}. {{ $enrollment->referral ? 'The LSWDO referral is '.str($enrollment->referral->status)->lower().'.' : 'No referral is recorded.' }}</span></div>
                                 @endif

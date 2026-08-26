@@ -183,6 +183,9 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
     Route::get('/enrollments', [Mblrc\EnrollmentController::class, 'index'])->name('enrollments.index');
     Route::get('/enrollments/beneficiaries', [Mblrc\EnrollmentController::class, 'beneficiaries'])->name('enrollments.beneficiaries');
     Route::post('/enrollments', [Mblrc\EnrollmentController::class, 'store'])->name('enrollments.store');
+    if (app()->environment(['local', 'testing'])) {
+        Route::post('/enrollments/{enrollment}/bypass-monitoring', [Mblrc\EnrollmentController::class, 'bypassMonitoringPeriod'])->name('enrollments.bypass-monitoring');
+    }
     Route::post('/enrollments/{enrollment}/complete', [Mblrc\EnrollmentController::class, 'complete'])->name('enrollments.complete');
     Route::get('/eclip/{eclipCase}', [Mblrc\EclipCaseController::class, 'show'])->name('eclip.show');
     Route::post('/eclip/{eclipCase}/documents', [Mblrc\EclipDocumentController::class, 'store'])->name('eclip.documents.store');
