@@ -126,6 +126,15 @@ class EclipAuthenticationService
     private function transitionCase(EclipCase $case, User $actor, EclipCaseStatus $to, ?string $remarks, ?string $ipAddress): void
     {
         $from = $case->status;
+        if (! in_array($from, [
+            EclipCaseStatus::Eligible,
+            EclipCaseStatus::AuthenticationPending,
+            EclipCaseStatus::AuthenticationUnderReview,
+            EclipCaseStatus::AuthenticationReturned,
+        ], true)) {
+            return;
+        }
+
         $case->update(['status' => $to]);
         $case->statusHistories()->create([
             'user_id' => $actor->id, 'from_status' => $from?->value, 'to_status' => $to->value,

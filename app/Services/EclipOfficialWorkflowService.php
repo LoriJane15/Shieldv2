@@ -204,6 +204,10 @@ class EclipOfficialWorkflowService
                 $this->notifyLocalCommittee($locked->eclipCase);
             }
 
+            if ($locked->step_code === '3B' && $status === 'completed') {
+                $this->ensureAuthenticationRequestForAssignedReviewer($locked->eclipCase, $actor, $ipAddress);
+            }
+
             if ($locked->step_code === '14' && $status === 'completed') {
                 $this->completeCase($locked->eclipCase, $actor, $remarks, $ipAddress);
             }
@@ -546,6 +550,58 @@ class EclipOfficialWorkflowService
             User::query()->where('role', 'local_eclip_committee')->where('municipality_id', $case->municipality_id)->where('is_active', true)->get(),
             new EclipCaseActionNotification($case, 'LSWDO recorded a surfaced FR/FVE notification for your municipality.', 'local_eclip.surfaced.index'),
         );
+    }
+
+    private function ensureAuthenticationRequestForAssignedReviewer(EclipCase $case, User $actor, ?string $ipAddress): void
+    {
+        if ($case->authenticationRequest()->exists()) {
+            return;
+        }
+
+        $assignment = $case->participantAssignments()
+            ->where('participant_role', 'authentication_reviewer')
+            ->where('is_active', true)
+            ->latest('id')
+            ->first();
+        $activity = $case->workflowActivities()->where('step_code', '4A')->first();
+
+        if (! $assignment || ! $activity || ! in_array($activity->status, ['pending', 'ongoing', 'late', 'returned_for_correction'], true)) {
+            return;
+        }
+
+        $request = $case->authenticationRequest()->create([
+            'requested_by' => $actor->id,
+            'assigned_to' => $assignment->user_id,
+            'status' => $activity->status === 'ongoing' ? 'under_review' : 'pending',
+            'requested_at' => $activity->available_at ?? now(),
+            'started_at' => $activity->status === 'ongoing' ? ($activity->started_at ?? now()) : null,
+            'due_at' => $activity->due_at,
+            'remarks' => 'Created from the existing official Step 4A JAPIC assignment.',
+        ]);
+        $request->histories()->create([
+            'user_id' => $actor->id,
+            'to_status' => $request->status,
+            'remarks' => 'Authentication request synchronized from the official Step 4A assignment.',
+            'data' => ['source' => 'official_step_4a_assignment'],
+            'ip_address' => $ipAddress,
+        ]);
+
+        if ($case->status === EclipCaseStatus::Eligible) {
+            $case->update(['status' => EclipCaseStatus::AuthenticationPending]);
+            $case->statusHistories()->create([
+                'user_id' => $actor->id,
+                'from_status' => EclipCaseStatus::Eligible->value,
+                'to_status' => EclipCaseStatus::AuthenticationPending->value,
+                'remarks' => 'JAPIC authentication request synchronized from the official Step 4A assignment.',
+                'ip_address' => $ipAddress,
+            ]);
+        }
+
+        $assignment->user?->notify(new EclipCaseActionNotification(
+            $case,
+            'An E-CLIP case requires your JAPIC authentication and certification.',
+            'japic.authentication.index',
+        ));
     }
 
     private function completeCase(EclipCase $case, User $actor, ?string $remarks, ?string $ipAddress): void

@@ -48,10 +48,11 @@ class NotificationController extends Controller
             'pnp.eclip-fea.show',
             'afp.eclip-fea.show',
             'local_eclip.surfaced.index',
+            'japic.authentication.index',
         ];
         $routeName = $notification->data['route'] ?? null;
 
-        if ($routeName === 'local_eclip.surfaced.index') {
+        if (in_array($routeName, ['local_eclip.surfaced.index', 'japic.authentication.index'], true)) {
             return redirect()->route($routeName);
         }
 

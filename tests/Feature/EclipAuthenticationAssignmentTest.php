@@ -110,6 +110,53 @@ class EclipAuthenticationAssignmentTest extends TestCase
         ]);
     }
 
+    public function test_completing_step_3b_synchronizes_an_existing_japic_assignment_into_the_queue(): void
+    {
+        [$case, $lswdo] = $this->eligibleAssignedCase();
+        $japic = User::factory()->role('japic')->create();
+        $case->participantAssignments()->create([
+            'user_id' => $japic->id,
+            'participant_role' => 'authentication_reviewer',
+            'assigned_by' => $lswdo->id,
+            'assigned_at' => now(),
+            'is_active' => true,
+        ]);
+        $endorsement = $case->workflowActivities()->where('step_code', '3B')->firstOrFail();
+
+        app(EclipOfficialWorkflowService::class)->update(
+            $endorsement,
+            $lswdo,
+            'completed',
+            'Endorsed for JAPIC authentication.',
+            [],
+            '127.0.0.1',
+        );
+
+        $this->assertDatabaseHas('eclip_authentication_requests', [
+            'eclip_case_id' => $case->id,
+            'assigned_to' => $japic->id,
+            'status' => 'pending',
+        ]);
+        $this->assertSame(EclipCaseStatus::AuthenticationPending, $case->fresh()->status);
+        $this->actingAs($japic)
+            ->get(route('japic.authentication.index'))
+            ->assertOk()
+            ->assertSeeText($case->formerRebel->classified_id);
+    }
+
+    public function test_legacy_late_stage_case_is_not_moved_backward_when_japic_starts_review(): void
+    {
+        [$case, $lswdo] = $this->eligibleAssignedCase();
+        $japic = User::factory()->role('japic')->create();
+        $authentication = app(EclipAuthenticationService::class)->request($case, $japic, $lswdo, null);
+        $case->update(['status' => EclipCaseStatus::RegionalEndorsed]);
+
+        app(EclipAuthenticationService::class)->start($authentication, $japic, '127.0.0.1');
+
+        $this->assertSame(EclipCaseStatus::RegionalEndorsed, $case->fresh()->status);
+        $this->assertSame('ongoing', $case->workflowActivities()->where('step_code', '4A')->value('status'));
+    }
+
     private function eligibleAssignedCase(): array
     {
         $municipality = Municipality::query()->create(['name' => 'Authentication Municipality']);
