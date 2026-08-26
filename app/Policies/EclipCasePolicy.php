@@ -19,7 +19,12 @@ class EclipCasePolicy
         }
 
         if ($user->hasRole('japic')) {
-            return in_array($case->status, [
+            return $case->hasActiveParticipant($user, 'authentication_reviewer') && in_array($case->status, [
+                EclipCaseStatus::AuthenticationPending,
+                EclipCaseStatus::AuthenticationUnderReview,
+                EclipCaseStatus::AuthenticationReturned,
+                EclipCaseStatus::Authenticated,
+                EclipCaseStatus::NotAuthenticated,
                 EclipCaseStatus::DocumentProcessing,
                 EclipCaseStatus::DocumentsIncomplete,
                 EclipCaseStatus::DocumentsCertified,
@@ -27,24 +32,7 @@ class EclipCasePolicy
         }
 
         if ($user->hasRole('lswdo', 'eclip_assessor')) {
-            return $case->hasActiveParticipant($user)
-                && in_array($case->status, [
-                    EclipCaseStatus::SubmittedForEligibility,
-                    EclipCaseStatus::EligibilityReviewInProgress,
-                    EclipCaseStatus::ReturnedForCorrection,
-                    EclipCaseStatus::Eligible,
-                    EclipCaseStatus::Ineligible,
-                    EclipCaseStatus::DocumentProcessing,
-                    EclipCaseStatus::DocumentsIncomplete,
-                    EclipCaseStatus::DocumentsCertified,
-                    EclipCaseStatus::AssistanceAssessment,
-                    EclipCaseStatus::SubmittedForDilgReview,
-                    EclipCaseStatus::ProvincialEndorsed,
-                    EclipCaseStatus::RegionalEndorsed,
-                    EclipCaseStatus::ReturnedForAssessmentRevision,
-                    EclipCaseStatus::Approved,
-                    EclipCaseStatus::Rejected,
-                ], true);
+            return $case->hasActiveParticipant($user);
         }
 
         if ($user->hasRole('dilg_provincial_focal')) {
@@ -99,6 +87,40 @@ class EclipCasePolicy
         }
 
         return false;
+    }
+
+    public function viewWorkflow(User $user, EclipCase $case): bool
+    {
+        if ($user->hasRole('mblrc')) {
+            return $case->created_by === $user->id || $case->hasActiveParticipant($user);
+        }
+
+        if ($user->hasRole('lswdo', 'eclip_assessor', 'japic', 'pnp', 'afp', 'gov_agency')) {
+            return $case->hasActiveParticipant($user);
+        }
+
+        if ($user->hasRole('dilg_provincial_focal', 'local_eclip_committee', 'dilg_reviewer', 'eclip_funding_officer')) {
+            return $user->municipality_id !== null
+                && $user->municipality_id === $case->municipality_id
+                && $this->hasVisibleRoleActivity($user, $case);
+        }
+
+        return $user->hasRole('dilg_regional', 'nboo_eclip_pmo', 'dilg_fms')
+            && $this->hasVisibleRoleActivity($user, $case);
+    }
+
+    private function hasVisibleRoleActivity(User $user, EclipCase $case): bool
+    {
+        $role = match ($user->role) {
+            'dilg_reviewer' => 'dilg_provincial_focal',
+            'eclip_funding_officer' => 'dilg_fms',
+            default => $user->role,
+        };
+
+        return $case->workflowActivities()
+            ->where('status', '!=', 'locked')
+            ->whereJsonContains('responsible_roles', $role)
+            ->exists();
     }
 
     public function releaseAssistance(User $user, EclipCase $case): bool
@@ -166,15 +188,34 @@ class EclipCasePolicy
 
     public function reviewDocument(User $user, EclipCase $case): bool
     {
-        return $user->hasRole('japic') && in_array($case->status, [
-            EclipCaseStatus::DocumentProcessing,
-            EclipCaseStatus::DocumentsIncomplete,
-        ], true);
+        return $user->hasRole('japic')
+            && $case->hasActiveParticipant($user, 'authentication_reviewer')
+            && in_array($case->status, [
+                EclipCaseStatus::DocumentProcessing,
+                EclipCaseStatus::DocumentsIncomplete,
+            ], true);
     }
 
     public function downloadDocument(User $user, EclipCase $case): bool
     {
         return $user->hasRole('lswdo', 'japic') && $case->hasActiveParticipant($user);
+    }
+
+    public function manageFea(User $user, EclipCase $case): bool
+    {
+        return $user->hasRole('pnp', 'afp') && $case->hasActiveParticipant($user);
+    }
+
+    public function assignFeaProcessor(User $user, EclipCase $case): bool
+    {
+        return $user->hasRole('lswdo')
+            && $case->hasActiveParticipant($user, 'case_processor')
+            && $case->workflowActivities()->where('step_code', '4B')->whereIn('status', ['pending', 'ongoing', 'late', 'returned_for_correction'])->exists();
+    }
+
+    public function viewFeaDocuments(User $user, EclipCase $case): bool
+    {
+        return $user->hasRole('pnp', 'afp', 'lswdo') && $case->hasActiveParticipant($user);
     }
 
     public function create(User $user): bool
@@ -184,7 +225,16 @@ class EclipCasePolicy
 
     public function submit(User $user, EclipCase $case): bool
     {
-        return false;
+        return $user->hasRole('mblrc')
+            && $case->created_by === $user->id
+            && $case->participantAssignments()
+                ->where('is_active', true)
+                ->whereHas('user', fn ($query) => $query->where('role', 'lswdo'))
+                ->exists()
+            && in_array($case->status, [
+                EclipCaseStatus::Draft,
+                EclipCaseStatus::ReturnedForCorrection,
+            ], true);
     }
 
     public function reviewEligibility(User $user, EclipCase $case): bool

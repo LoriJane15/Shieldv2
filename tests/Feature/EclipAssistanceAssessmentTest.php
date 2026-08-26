@@ -94,7 +94,7 @@ class EclipAssistanceAssessmentTest extends TestCase
         $municipality = $readyCase->municipality;
         $category = $this->category();
 
-        $draftCase = $this->queueCase($municipality, 'ECLIP-ASM-DRAFT', 'FR-#ASMD', EclipCaseStatus::AssistanceAssessment);
+        $draftCase = $this->queueCase($municipality, 'ECLIP-ASM-DRAFT', 'FR-#ASMD', EclipCaseStatus::AssistanceAssessment, $assessor);
         $draftRequest = $draftCase->assistanceRequest()->create([
             'created_by' => $assessor->id,
             'status' => 'draft',
@@ -108,8 +108,8 @@ class EclipAssistanceAssessmentTest extends TestCase
             'created_by' => $assessor->id,
         ]);
 
-        $reviewCase = $this->queueCase($municipality, 'ECLIP-ASM-REVIEW', 'FR-#ASMR', EclipCaseStatus::SubmittedForDilgReview);
-        $this->queueCase($municipality, 'ECLIP-ASM-APPROVED', 'FR-#ASMA', EclipCaseStatus::Approved);
+        $reviewCase = $this->queueCase($municipality, 'ECLIP-ASM-REVIEW', 'FR-#ASMR', EclipCaseStatus::SubmittedForDilgReview, $assessor);
+        $this->queueCase($municipality, 'ECLIP-ASM-APPROVED', 'FR-#ASMA', EclipCaseStatus::Approved, $assessor);
 
         $otherMunicipality = Municipality::query()->create(['name' => 'Outside Queue Municipality']);
         $this->queueCase($otherMunicipality, 'ECLIP-ASM-OUTSIDE', 'FR-#ASMO', EclipCaseStatus::DocumentsCertified);
@@ -195,6 +195,13 @@ class EclipAssistanceAssessmentTest extends TestCase
             'municipality_id' => $municipality->id, 'created_by' => $creator->id,
             'status' => EclipCaseStatus::DocumentsCertified,
         ]);
+        $case->participantAssignments()->create([
+            'user_id' => $assessor->id,
+            'participant_role' => 'case_processor',
+            'assigned_by' => $creator->id,
+            'assigned_at' => now(),
+            'is_active' => true,
+        ]);
 
         return [$case, $assessor];
     }
@@ -206,8 +213,13 @@ class EclipAssistanceAssessmentTest extends TestCase
         ]);
     }
 
-    private function queueCase(Municipality $municipality, string $caseNumber, string $classifiedId, EclipCaseStatus $status): EclipCase
-    {
+    private function queueCase(
+        Municipality $municipality,
+        string $caseNumber,
+        string $classifiedId,
+        EclipCaseStatus $status,
+        ?User $assessor = null,
+    ): EclipCase {
         $formerRebel = FormerRebel::query()->create([
             'classified_id' => $classifiedId,
             'firstname' => 'Synthetic',
@@ -215,13 +227,25 @@ class EclipAssistanceAssessmentTest extends TestCase
             'municipality_id' => $municipality->id,
         ]);
 
-        return EclipCase::query()->create([
+        $case = EclipCase::query()->create([
             'case_number' => $caseNumber,
             'former_rebel_id' => $formerRebel->id,
             'municipality_id' => $municipality->id,
             'created_by' => User::factory()->role('mblrc')->create()->id,
             'status' => $status,
         ]);
+
+        if ($assessor) {
+            $case->participantAssignments()->create([
+                'user_id' => $assessor->id,
+                'participant_role' => 'case_processor',
+                'assigned_by' => $case->created_by,
+                'assigned_at' => now(),
+                'is_active' => true,
+            ]);
+        }
+
+        return $case;
     }
 
     private function saveRevision(EclipCase $case, User $assessor, EclipAssistanceCategory $category, ?string $assessed): void

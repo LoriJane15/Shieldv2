@@ -12,18 +12,23 @@
 
 @section('content')
 <div class="pnp-page">
-    <section class="pnp-hero mb-4" aria-labelledby="pnp-workspace-title">
-        <div class="row align-items-center position-relative" style="z-index:1">
-            <div class="col-md-8"><div class="pnp-eyebrow mb-2">Secure agency workspace</div><h2 id="pnp-workspace-title" class="mb-2">PNP E-CLIP Coordination</h2><p class="mb-0">A protected workspace reserved for authorized PNP participation in E-CLIP document processing and surrendered-firearm valuation.</p></div>
-            <div class="col-md-4 text-md-right"><span class="workspace-badge"><span></span>Workflow configuration pending</span></div>
-        </div>
-    </section>
+    <x-shield.module-header
+        eyebrow="Secure agency workspace"
+        title="PNP E-CLIP Coordination"
+        description="Process assigned firearms, explosives, and ammunition records within the authorized E-CLIP workflow."
+        icon="mdi-shield-key-outline"
+        role="PNP"
+    >
+        <x-slot:actions>
+            <a class="btn btn-light btn-sm" href="{{ route('pnp.eclip-fea.index') }}"><i class="mdi mdi-folder-lock-open mr-1" aria-hidden="true"></i>Open FEA Queue</a>
+        </x-slot:actions>
+    </x-shield.module-header>
 
     <div class="row">
         <div class="col-xl-8">
             <section class="card pnp-card mb-4" aria-labelledby="workspace-status-title"><div class="card-body">
                 <div class="d-flex align-items-center mb-4"><div class="section-icon mr-3"><i class="fa fa-shield"></i></div><div><h3 id="workspace-status-title" class="section-title">Workspace Status</h3><p class="section-subtitle">Current implementation state of the PNP module.</p></div></div>
-                <div class="status-panel mb-4"><i class="fa fa-exclamation-triangle"></i><div><strong>No operational PNP workflow is enabled yet</strong><span>Official document requirements, valuation rules, responsible offices, and the approval sequence must be confirmed before case actions can be implemented.</span></div></div>
+                <div class="status-panel mb-4"><i class="fa fa-shield"></i><div><strong>FEA processing is available for assigned cases</strong><span>Use the FEA queue to upload authorized PTIS, TIR, CVIF, and related records. Other workflow actions remain restricted to their responsible offices.</span></div></div>
                 <ul class="capability-list">
                     <li class="capability-item"><span class="capability-icon"><i class="fa fa-file-text"></i></span><div><strong>Secure Document Processing</strong><small>Private submission, authorized review, and controlled access to PNP-related E-CLIP documents.</small></div><span class="pending-label">Pending</span></li>
                     <li class="capability-item"><span class="capability-icon"><i class="fa fa-balance-scale"></i></span><div><strong>Surrendered-Firearm Valuation</strong><small>Structured valuation records based only on officially approved requirements and procedures.</small></div><span class="pending-label">Pending</span></li>

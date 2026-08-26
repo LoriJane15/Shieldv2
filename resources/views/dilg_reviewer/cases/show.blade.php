@@ -18,6 +18,7 @@
 @endphp
 <div class="dilg-page">
     <a href="{{ route('dilg_reviewer.cases.index') }}" class="review-back"><i class="mdi mdi-arrow-left"></i> Back to {{ strtolower($reviewLevel) }} review queue</a>
+    @can('viewWorkflow', $case)<a href="{{ route('eclip.workflow.show', $case) }}" class="btn btn-outline-primary btn-sm float-right"><i class="mdi mdi-timeline-check-outline"></i> Open Full Workflow</a>@endcan
     <section class="case-hero mb-4" aria-labelledby="dilg-case-number"><div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start position-relative" style="z-index:1"><div><div class="case-eyebrow mb-1">DILG {{ $reviewLevel }} Review</div><h2 id="dilg-case-number" class="mb-3">{{ $case->case_number }}</h2><div class="case-meta"><span><i class="mdi mdi-account-key-outline"></i>{{ $case->formerRebel->classified_id }}</span><span><i class="mdi mdi-map-marker-outline"></i>{{ $case->formerRebel->municipality?->name ?? 'Not assigned' }}</span>@if($latest)<span><i class="mdi mdi-file-document-edit-outline"></i>Assessment revision {{ $latest->revision_number }}</span>@endif</div></div><span class="case-status"><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span></div></section>
 
     <div class="row"><div class="col-xl-8">

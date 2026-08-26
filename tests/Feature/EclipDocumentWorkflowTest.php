@@ -57,6 +57,7 @@ class EclipDocumentWorkflowTest extends TestCase
         Storage::fake('local');
         [$case, $mblrc, $lswdo] = $this->caseAndMblrc();
         $japic = User::factory()->role('japic')->create();
+        $this->assignJapic($case, $japic, $lswdo);
         $requirement = $this->requirement();
         $this->upload($case, $lswdo, $requirement);
         $document = EclipDocument::query()->firstOrFail();
@@ -85,6 +86,7 @@ class EclipDocumentWorkflowTest extends TestCase
         Storage::fake('local');
         [$case, $mblrc, $lswdo] = $this->caseAndMblrc();
         $japic = User::factory()->role('japic')->create();
+        $this->assignJapic($case, $japic, $lswdo);
         $this->upload($case, $lswdo, $this->requirement());
         $document = EclipDocument::query()->firstOrFail();
 
@@ -125,6 +127,39 @@ class EclipDocumentWorkflowTest extends TestCase
 
         $this->actingAs(User::factory()->role('japic')->create())
             ->get(route('japic.eclip.show', $case))->assertForbidden();
+    }
+
+    public function test_only_assigned_japic_reviewer_can_see_open_and_review_a_document_case(): void
+    {
+        Storage::fake('local');
+        [$case, $mblrc, $lswdo] = $this->caseAndMblrc();
+        $assignedJapic = User::factory()->role('japic')->create();
+        $otherJapic = User::factory()->role('japic')->create();
+        $this->assignJapic($case, $assignedJapic, $lswdo);
+        $this->upload($case, $lswdo, $this->requirement());
+        $document = EclipDocument::query()->firstOrFail();
+
+        $this->actingAs($assignedJapic)
+            ->get(route('japic.eclip.index'))
+            ->assertOk()
+            ->assertSee($case->case_number);
+        $this->actingAs($assignedJapic)
+            ->get(route('japic.eclip.show', $case))
+            ->assertOk();
+
+        $this->actingAs($otherJapic)
+            ->get(route('japic.eclip.index'))
+            ->assertOk()
+            ->assertDontSee($case->case_number);
+        $this->actingAs($otherJapic)
+            ->get(route('japic.eclip.show', $case))
+            ->assertForbidden();
+        $this->actingAs($otherJapic)
+            ->post(route('japic.eclip.documents.review', $document), [
+                'decision' => 'authenticated',
+            ])->assertForbidden();
+
+        $this->assertSame('pending', $document->fresh()->status);
     }
 
     public function test_katuparan_admin_can_configure_requirements_with_audit_history(): void
@@ -181,6 +216,17 @@ class EclipDocumentWorkflowTest extends TestCase
         return EclipDocumentRequirement::query()->create([
             'code' => 'SYNTHETIC_TEST_DOCUMENT', 'name' => 'Synthetic Test Document',
             'is_required' => true, 'is_active' => true,
+        ]);
+    }
+
+    private function assignJapic(EclipCase $case, User $japic, User $assignedBy): void
+    {
+        $case->participantAssignments()->create([
+            'user_id' => $japic->id,
+            'participant_role' => 'authentication_reviewer',
+            'assigned_by' => $assignedBy->id,
+            'assigned_at' => now(),
+            'is_active' => true,
         ]);
     }
 

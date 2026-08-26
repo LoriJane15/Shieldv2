@@ -8,49 +8,32 @@ use App\Models\EclipCase;
 use App\Models\FormerRebel;
 use App\Models\Municipality;
 use App\Models\User;
+use App\Services\EclipOfficialWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class EclipWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_mblrc_can_create_and_submit_a_case_for_eligibility_review(): void
+    public function test_mblrc_cannot_bypass_the_verified_referral_intake(): void
+    {
+        $mblrc = User::factory()->role('mblrc')->create();
+
+        $this->assertFalse(Route::has('mblrc.eclip.store'));
+        $this->assertFalse($mblrc->can('create', EclipCase::class));
+    }
+
+    public function test_unassigned_mblrc_user_cannot_submit_an_existing_draft(): void
     {
         [$formerRebel] = $this->beneficiary();
         $mblrc = User::factory()->role('mblrc')->create();
-
-        $this->actingAs($mblrc)->post(route('mblrc.eclip.store'), [
-            'former_rebel_id' => $formerRebel->id,
-        ])->assertRedirect();
-
-        $case = EclipCase::query()->firstOrFail();
-        $this->assertSame(EclipCaseStatus::Draft, $case->status);
-        $this->assertNotNull($case->case_number);
+        $case = $this->caseFor($formerRebel, EclipCaseStatus::Draft);
 
         $this->actingAs($mblrc)
             ->post(route('mblrc.eclip.submit', $case))
-            ->assertRedirect(route('mblrc.eclip.show', $case));
-
-        $this->assertSame(EclipCaseStatus::SubmittedForEligibility, $case->fresh()->status);
-        $this->assertDatabaseHas('eclip_status_histories', [
-            'eclip_case_id' => $case->id,
-            'from_status' => EclipCaseStatus::Draft->value,
-            'to_status' => EclipCaseStatus::SubmittedForEligibility->value,
-            'user_id' => $mblrc->id,
-        ]);
-    }
-
-    public function test_duplicate_active_case_is_rejected(): void
-    {
-        [$formerRebel] = $this->beneficiary();
-        $mblrc = User::factory()->role('mblrc')->create();
-
-        $payload = ['former_rebel_id' => $formerRebel->id];
-        $this->actingAs($mblrc)->post(route('mblrc.eclip.store'), $payload)->assertRedirect();
-        $this->actingAs($mblrc)->post(route('mblrc.eclip.store'), $payload)->assertSessionHasErrors('former_rebel_id');
-
-        $this->assertDatabaseCount('eclip_cases', 1);
+            ->assertForbidden();
     }
 
     public function test_lswdo_can_only_view_cases_in_their_municipality(): void
@@ -60,6 +43,7 @@ class EclipWorkflowTest extends TestCase
         $otherMunicipality = Municipality::query()->create(['name' => 'Other Municipality']);
         $outsideLswdo = User::factory()->role('lswdo')->create(['municipality_id' => $otherMunicipality->id]);
         $localLswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
+        $this->assignProcessor($case, $localLswdo);
 
         $this->actingAs($outsideLswdo)->get(route('lswdo.eclip.show', $case))->assertForbidden();
         $this->actingAs($localLswdo)->get(route('lswdo.eclip.show', $case))->assertOk();
@@ -70,6 +54,7 @@ class EclipWorkflowTest extends TestCase
         [$formerRebel, $municipality] = $this->beneficiary();
         $case = $this->caseFor($formerRebel, EclipCaseStatus::SubmittedForEligibility);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
+        $this->assignProcessor($case, $lswdo);
 
         $this->actingAs($lswdo)->post(route('lswdo.eclip.eligibility.decide', $case), [
             'decision' => 'eligible',
@@ -94,6 +79,7 @@ class EclipWorkflowTest extends TestCase
         [$formerRebel, $municipality] = $this->beneficiary();
         $case = $this->caseFor($formerRebel, EclipCaseStatus::SubmittedForEligibility);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
+        $this->assignProcessor($case, $lswdo);
 
         foreach (['returned', 'ineligible'] as $decision) {
             $this->actingAs($lswdo)->post(route('lswdo.eclip.eligibility.decide', $case), [
@@ -137,13 +123,33 @@ class EclipWorkflowTest extends TestCase
     {
         $creator = User::factory()->role('mblrc')->create();
 
-        return EclipCase::query()->create([
+        $case = EclipCase::query()->create([
             'case_number' => 'ECLIP-TEST-000001',
             'former_rebel_id' => $formerRebel->id,
             'municipality_id' => $formerRebel->municipality_id,
             'created_by' => $creator->id,
             'status' => $status,
             'submitted_at' => now(),
+        ]);
+
+        if ($status === EclipCaseStatus::SubmittedForEligibility) {
+            app(EclipOfficialWorkflowService::class)->initialize($case, null, null, [
+                'intention_to_surface' => ['source' => 'Test intake', 'source_record' => 'INT-001'],
+                'receiving_unit_coordination' => ['source' => 'Test intake', 'source_record' => 'COORD-001'],
+            ]);
+        }
+
+        return $case;
+    }
+
+    private function assignProcessor(EclipCase $case, User $user): void
+    {
+        $case->participantAssignments()->create([
+            'user_id' => $user->id,
+            'participant_role' => 'case_processor',
+            'assigned_by' => $case->created_by,
+            'assigned_at' => now(),
+            'is_active' => true,
         ]);
     }
 }

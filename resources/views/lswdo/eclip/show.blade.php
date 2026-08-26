@@ -205,7 +205,7 @@
     .review-page { margin: 0 auto; max-width: 1560px; }
     .case-status-label { display: block; font-size: .58rem; font-weight: 700; margin-right: .4rem; opacity: .72; text-transform: uppercase; }
     .case-last-updated { align-items: center; display: flex; font-size: .68rem; gap: .35rem; margin-top: .65rem; opacity: .76; }
-    .case-context { align-items: center; background: #fff; border: 1px solid #dfe5ee; border-radius: 10px; box-shadow: 0 4px 14px rgba(23,43,77,.08); display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1rem; min-height: 48px; padding: .55rem .8rem; position: sticky; top: 70px; z-index: 17; }
+    .case-context { align-items: center; background: #fff; border: 1px solid #dfe5ee; border-radius: 10px; box-shadow: 0 4px 14px rgba(23,43,77,.08); display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1rem; min-height: 48px; padding: .55rem .8rem; position: static; }
     .context-case { color: #263b5e; font-size: .78rem; font-weight: 800; white-space: nowrap; }
     .context-phase { color: #64748b; flex: 1; font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .context-progress { color: #52657f; font-size: .68rem; font-weight: 700; white-space: nowrap; }
@@ -302,15 +302,18 @@
 
     <section class="case-hero mb-4" aria-labelledby="case-number">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start position-relative" style="z-index: 1;">
-            <div>
-                <div class="case-eyebrow mb-1">E-CLIP Case</div>
-                <h2 id="case-number" class="case-number mb-3">{{ $case->case_number }}</h2>
-                <div class="case-details">
-                    <div class="case-detail"><i class="mdi mdi-account-key-outline"></i><div><small>Beneficiary</small><strong>{{ $case->formerRebel->classified_id }}</strong></div></div>
-                    <div class="case-detail"><i class="mdi mdi-map-marker-outline"></i><div><small>Municipality</small><strong>{{ $case->formerRebel->municipality?->name ?? 'Not assigned' }}</strong></div></div>
-                    <div class="case-detail"><i class="mdi mdi-calendar-check-outline"></i><div><small>Submitted</small><strong>{{ $case->submitted_at?->format('M d, Y') ?? 'Not recorded' }}</strong></div></div>
+            <div class="shield-hero-primary">
+                <span class="shield-title-icon"><i class="mdi mdi-folder-account-outline" aria-hidden="true"></i></span>
+                <div>
+                    <div class="case-eyebrow mb-1">E-CLIP Case</div>
+                    <h2 id="case-number" class="case-number mb-3">{{ $case->case_number }}</h2>
+                    <div class="case-details">
+                        <div class="case-detail"><i class="mdi mdi-account-key-outline"></i><div><small>Beneficiary</small><strong>{{ $case->formerRebel->classified_id }}</strong></div></div>
+                        <div class="case-detail"><i class="mdi mdi-map-marker-outline"></i><div><small>Municipality</small><strong>{{ $case->formerRebel->municipality?->name ?? 'Not assigned' }}</strong></div></div>
+                        <div class="case-detail"><i class="mdi mdi-calendar-check-outline"></i><div><small>Submitted</small><strong>{{ $case->submitted_at?->format('M d, Y') ?? 'Not recorded' }}</strong></div></div>
+                    </div>
+                    @if($workflow['last_updated'])<div class="case-last-updated"><i class="mdi mdi-update" aria-hidden="true"></i>Last updated <time datetime="{{ $workflow['last_updated']->toIso8601String() }}">{{ $workflow['last_updated']->format('M d, Y · h:i A') }}</time></div>@endif
                 </div>
-                @if($workflow['last_updated'])<div class="case-last-updated"><i class="mdi mdi-update" aria-hidden="true"></i>Last updated <time datetime="{{ $workflow['last_updated']->toIso8601String() }}">{{ $workflow['last_updated']->format('M d, Y · h:i A') }}</time></div>@endif
             </div>
             <span class="case-status"><span class="case-status-label">Eligibility status</span><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span>
         </div>
@@ -330,7 +333,7 @@
         <section class="card review-card mb-4" aria-labelledby="official-workflow-title">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
-                    <div class="section-icon mr-3"><i class="mdi mdi-timeline-check-outline"></i></div>
+                    <div class="section-icon mr-3"><i class="mdi mdi-timeline-text-outline" aria-hidden="true"></i></div>
                     <div><h3 id="official-workflow-title" class="section-title">Official E-CLIP and Amnesty Workflow</h3><p class="section-subtitle">Phases and activities prescribed by the approved program flow.</p></div>
                 </div>
                 <div class="workflow-overview" aria-label="Overall E-CLIP workflow progress: {{ $workflow['percent'] }} percent">
@@ -416,13 +419,48 @@
                                     </summary>
                                     <div class="step-expanded">
                                         <div class="step-detail-grid">
-                                            <div class="step-detail"><span class="step-detail-label">Responsible</span><x-eclip.responsible-agency :labels="$meta['responsible']" /></div>
-                                            <div class="step-detail"><span class="step-detail-label">Due date</span><span class="step-detail-value">{{ $activity->due_at?->format('M d, Y') ?? 'No due date recorded' }}</span></div>
+                                            <div class="step-detail"><span class="step-detail-label">Responsible</span><x-eclip.responsible-agency :labels="$meta['responsible']" />@if($meta['responsible_people'] !== [])<span class="step-detail-value mt-1">Assigned: {{ implode(', ', $meta['responsible_people']) }}</span>@endif</div>
+                                            <div class="step-detail"><span class="step-detail-label">Processing time</span><span class="step-detail-value {{ $meta['deadline']['state'] === 'overdue' ? 'text-danger font-weight-bold' : '' }}">{{ $activity->due_at?->format('M d, Y') ?? 'No due date recorded' }} · {{ $meta['deadline']['label'] }}</span></div>
                                             @if(! empty($activity->required_documents))<div class="step-detail"><span class="step-detail-label">Required documents</span><span class="step-detail-value">{{ implode(' · ', $activity->required_documents) }}</span></div>@endif
                                             @if($activity->remarks)<div class="step-detail"><span class="step-detail-label">Remarks</span><span class="step-detail-value">{{ $activity->remarks }}</span></div>@endif
+                                            @if(! empty($activity->data))
+                                                @php
+                                                    $stepDefinition = collect(config('eclip_workflow.steps'))->firstWhere('code', $activity->step_code) ?? [];
+                                                    $stepFields = $stepDefinition['fields'] ?? [];
+                                                @endphp
+                                                @foreach($stepFields as $field)
+                                                    @if(array_key_exists($field['key'], $activity->data) && filled($activity->data[$field['key']]))
+                                                        <div class="step-detail"><span class="step-detail-label">{{ $field['label'] }}</span><span class="step-detail-value">{{ ($field['type'] ?? null) === 'checkbox' ? 'Yes' : $activity->data[$field['key']] }}</span></div>
+                                                    @endif
+                                                @endforeach
+                                            @endif
                                             @if($activity->status === 'locked' && $meta['dependencies']->isNotEmpty())<div class="step-detail"><span class="step-detail-label">Unlock requirements</span><ul class="step-dependencies">@foreach($meta['dependencies'] as $dependency)<li><i class="mdi {{ $dependency['complete'] ? 'mdi-check-circle-outline text-success' : 'mdi-lock-outline' }}" aria-hidden="true"></i><span>Step {{ $dependency['code'] }} — {{ $dependency['title'] }}</span></li>@endforeach</ul></div>@endif
                                             <div class="step-detail"><span class="step-detail-label">Activity</span><span class="step-detail-value">Last updated {{ $activity->updated_at->format('M d, Y · h:i A') }}</span></div>
                                         </div>
+                                        @if(! empty($activity->required_documents))
+                                            <div class="step-required-docs mt-3">
+                                                <span class="step-required-docs-title"><i class="mdi mdi-folder-lock" aria-hidden="true"></i> Secure step evidence and version history</span>
+                                                @foreach($activity->required_documents as $requiredDocument)
+                                                    @php
+                                                        $versions = $activity->documents->where('document_type', $requiredDocument)->sortByDesc('version_number');
+                                                    @endphp
+                                                    <div class="step-required-doc align-items-center justify-content-between">
+                                                        <span><i class="mdi {{ $versions->isNotEmpty() ? 'mdi-check-circle-outline text-success' : 'mdi-alert-circle-outline text-warning' }}"></i>{{ $requiredDocument }} · {{ $versions->isNotEmpty() ? 'Uploaded' : 'Missing' }}</span>
+                                                        @if($versions->isNotEmpty())<span>@foreach($versions as $version)<a class="version-link" href="{{ route('eclip.workflow-documents.download', $version) }}">v{{ $version->version_number }}</a>@endforeach</span>@endif
+                                                    </div>
+                                                @endforeach
+                                                @can('uploadWorkflowDocument', $activity)
+                                                    <form method="POST" action="{{ route('eclip.workflow-documents.store', $activity) }}" enctype="multipart/form-data" class="supporting-upload mt-3">
+                                                        @csrf
+                                                        <label class="sr-only" for="workflow-document-type-{{ $activity->id }}">Evidence type</label>
+                                                        <select id="workflow-document-type-{{ $activity->id }}" name="document_type" class="form-control mb-2" required><option value="">Select evidence type</option>@foreach($activity->required_documents as $requiredDocument)<option value="{{ $requiredDocument }}">{{ $requiredDocument }}</option>@endforeach</select>
+                                                        <label class="sr-only" for="workflow-document-{{ $activity->id }}">Evidence file</label>
+                                                        <input id="workflow-document-{{ $activity->id }}" type="file" name="document" accept=".pdf,.jpg,.jpeg,.png" class="form-control-file mb-2" required>
+                                                        <button class="btn btn-sm btn-outline-primary"><i class="mdi mdi-upload mr-1"></i>Upload evidence</button>
+                                                    </form>
+                                                @endcan
+                                            </div>
+                                        @endif
                                         @if(! $activity->remarks && empty($activity->required_documents) && $activity->status !== 'locked')<p class="step-empty-detail mt-2">No additional requirements or remarks are recorded.</p>@endif
                                         @if($meta['can_update'])<button type="button" class="step-action-button" data-bs-toggle="modal" data-bs-target="#step-modal-{{ $activity->id }}"><i class="mdi mdi-pencil-outline"></i> Update step</button>@elseif($meta['is_actionable'])<p class="step-empty-detail mt-2">You can view this step, but only {{ implode(' / ', $meta['responsible']) }} can update it.</p>@endif
                                     </div>
@@ -480,11 +518,41 @@
                                 </div>
                                 <label for="activity-remarks-{{ $activity->id }}" class="step-input-label">Remarks <span data-step-remarks-help>Optional</span></label>
                                 <textarea id="activity-remarks-{{ $activity->id }}" name="remarks" class="form-control step-remarks-input" rows="3" maxlength="5000" placeholder="Add relevant observations, notes, or instructions..." data-step-remarks></textarea>
+                                @if(! empty($stepDefinition['fields']))
+                                    <div class="mt-3">
+                                        <h6 class="step-form-heading">Program monitoring details</h6>
+                                        <p class="step-form-help">Only record information authorized for this case. Each saved value is included in the step history.</p>
+                                        @foreach($stepDefinition['fields'] as $field)
+                                            @php
+                                                $fieldValue = old("data.{$field['key']}", data_get($activity->data, $field['key']));
+                                            @endphp
+                                            <div class="form-group mb-3">
+                                                @if(($field['type'] ?? null) === 'checkbox')
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="hidden" name="data[{{ $field['key'] }}]" value="0">
+                                                        <input type="checkbox" class="custom-control-input" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]" value="1" @checked($fieldValue)>
+                                                        <label class="custom-control-label" for="activity-field-{{ $activity->id }}-{{ $field['key'] }}">{{ $field['label'] }}</label>
+                                                    </div>
+                                                @else
+                                                    <label class="step-input-label" for="activity-field-{{ $activity->id }}-{{ $field['key'] }}">{{ $field['label'] }}</label>
+                                                    @if(($field['type'] ?? null) === 'textarea')
+                                                        <textarea class="form-control" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]" rows="3" maxlength="5000">{{ $fieldValue }}</textarea>
+                                                    @else
+                                                        <input class="form-control" id="activity-field-{{ $activity->id }}-{{ $field['key'] }}" name="data[{{ $field['key'] }}]" type="{{ $field['type'] ?? 'text' }}" value="{{ $fieldValue }}" maxlength="5000">
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                                 @if(! empty($activity->required_documents))
                                     <div class="step-required-docs">
-                                        <span class="step-required-docs-title"><i class="mdi mdi-file-document-check-outline"></i> Required documents</span>
+                                        <span class="step-required-docs-title"><i class="mdi mdi-file-check-outline" aria-hidden="true"></i> Required documents</span>
                                         @foreach($activity->required_documents as $requiredDocument)
-                                            <span class="step-required-doc"><i class="mdi mdi-file-outline"></i><span>{{ $requiredDocument }}</span></span>
+                                            @php
+                                                $hasEvidence = $activity->documents->contains('document_type', $requiredDocument);
+                                            @endphp
+                                            <span class="step-required-doc"><i class="mdi {{ $hasEvidence ? 'mdi-check-circle-outline text-success' : 'mdi-alert-circle-outline text-warning' }}"></i><span>{{ $requiredDocument }} — {{ $hasEvidence ? 'Uploaded' : 'Missing' }}</span></span>
                                         @endforeach
                                     </div>
                                 @endif
@@ -492,7 +560,7 @@
                             <div class="modal-footer">
                                 <span class="step-form-note"><i class="mdi mdi-history"></i> This update will be recorded in the audit history.</span>
                                 <button type="button" class="btn btn-light step-save" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary step-save" data-step-save><i class="mdi mdi-content-save-check-outline mr-1"></i>Save update</button>
+                                <button type="submit" class="btn btn-primary step-save" data-step-save><i class="mdi mdi-content-save-outline mr-1" aria-hidden="true"></i>Save update</button>
                             </div>
                         </form>
                     </div>
@@ -550,7 +618,7 @@
 
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mt-3">
                                 <small class="text-muted mb-2 mb-sm-0"><i class="mdi mdi-information-outline mr-1"></i>This decision will be recorded in the case history.</small>
-                                <button class="btn btn-primary review-submit" data-submit-button><i class="mdi mdi-content-save-check-outline mr-1"></i>Save Decision</button>
+                                <button class="btn btn-primary review-submit" data-submit-button><i class="mdi mdi-content-save-outline mr-1" aria-hidden="true"></i>Save Decision</button>
                             </div>
                         </form>
                     </div>
@@ -644,6 +712,47 @@
                 </div>
             </section>
 
+            <section class="card review-card mb-4" aria-labelledby="fea-title">
+                <div class="card-body">
+                    <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-shield-key-outline"></i></div><div><h3 id="fea-title" class="section-title">FEA Processing Records</h3><p class="section-subtitle">PNP/AFP uploads related to firearms, explosives, and ammunition.</p></div></div>
+                    @php($assignedFeaProcessor = $case->participantAssignments->first(fn ($assignment) => $assignment->participant_role === 'fea_processor' && $assignment->is_active))
+                    @can('assignFeaProcessor', $case)
+                        <form method="POST" action="{{ route('lswdo.eclip.fea-processor.store', $case) }}" class="mt-3">@csrf
+                            <label class="step-input-label" for="fea-processor">Assigned PNP/AFP processor</label>
+                            <div class="d-flex"><select id="fea-processor" name="processor_id" class="form-control mr-2" required><option value="">Select processor</option>@foreach($feaProcessors as $processor)<option value="{{ $processor->id }}" @selected($assignedFeaProcessor?->user_id === $processor->id)>{{ $processor->name }} · {{ str($processor->role)->upper() }}</option>@endforeach</select><button class="btn btn-outline-primary text-nowrap">Assign</button></div>
+                            @error('processor_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        </form>
+                    @else
+                        @if($assignedFeaProcessor)<p class="section-subtitle mt-3"><i class="mdi mdi-account-check-outline mr-1"></i>Assigned to {{ $assignedFeaProcessor->user->name }} · {{ str($assignedFeaProcessor->user->role)->upper() }}</p>@endif
+                    @endcan
+                    <div class="sidebar-document-list mt-3">@forelse($case->feaDocuments->sortByDesc('created_at') as $feaDocument)<a class="document-preview-link" href="{{ route('eclip-fea.documents.download', $feaDocument) }}"><i class="mdi mdi-file-eye-outline"></i><span><strong>{{ str($feaDocument->document_type)->upper() }}</strong><small>{{ $feaDocument->original_name }} · {{ $feaDocument->created_at->format('M d, Y') }}</small></span></a>@empty<div class="no-document"><i class="mdi mdi-file-hidden"></i>No FEA records uploaded.</div>@endforelse</div>
+                </div>
+            </section>
+
+            <section class="card review-card mb-4" aria-labelledby="interventions-title">
+                <div class="card-body">
+                    <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-account-heart-outline" aria-hidden="true"></i></div><div><h3 id="interventions-title" class="section-title">Services and Reintegration</h3><p class="section-subtitle">Repeatable social-protection and reintegration entries.</p></div></div>
+                    @can('reviewEligibility', $case)
+                        <p class="section-subtitle mt-3">Record eligibility before adding interventions.</p>
+                    @else
+                        @if($case->hasActiveParticipant(auth()->user(), 'case_processor'))
+                            <form method="POST" action="{{ route('lswdo.eclip.interventions.store', $case) }}" class="mt-3">@csrf
+                                <div class="form-group"><label class="step-input-label" for="intervention-stage">Stage</label><select id="intervention-stage" name="stage" class="form-control"><option value="social_protection">Social protection</option><option value="reintegration">Reintegration</option></select></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-title">Service or intervention</label><input id="intervention-title" name="title" class="form-control" maxlength="255" required></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-provider">Provider</label><input id="intervention-provider" name="provider" class="form-control" maxlength="255"></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-amount">Amount or value</label><input id="intervention-amount" name="amount_or_value" class="form-control" type="number" min="0" step="0.01"></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-target">Target date</label><input id="intervention-target" name="target_date" class="form-control" type="date"></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-status">Status</label><select id="intervention-status" name="status" class="form-control"><option value="pending">Pending</option><option value="referred">Referred</option><option value="in_progress">In progress</option><option value="completed">Completed</option><option value="returned">Returned</option><option value="not_applicable">Not applicable</option></select></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-outcome">Outcome <span>Required when completed</span></label><textarea id="intervention-outcome" name="outcome" class="form-control" rows="2" maxlength="5000"></textarea></div>
+                                <div class="form-group"><label class="step-input-label" for="intervention-remarks">Remarks / delay, return, or not-applicable reason</label><textarea id="intervention-remarks" name="remarks" class="form-control" rows="2" maxlength="5000"></textarea></div>
+                                <button class="btn btn-sm btn-outline-primary btn-block">Add entry</button>
+                            </form>
+                        @endif
+                    @endcan
+                    <div class="sidebar-document-list mt-3">@forelse($case->interventions->sortByDesc('created_at') as $intervention)<details class="sidebar-document-item"><summary class="sidebar-document-heading"><strong>{{ $intervention->title }}</strong><span class="document-status status-pending">{{ str($intervention->status)->replace('_', ' ')->title() }}</span></summary><small class="text-muted d-block mt-1">{{ str($intervention->stage)->replace('_', ' ')->title() }}@if($intervention->provider) · {{ $intervention->provider }}@endif @if($intervention->target_date) · Target {{ $intervention->target_date->format('M d, Y') }}@endif</small>@if($intervention->outcome)<p class="history-remarks mt-2 mb-0"><strong>Outcome:</strong> {{ $intervention->outcome }}</p>@endif @if($case->hasActiveParticipant(auth()->user(), 'case_processor'))<form method="POST" action="{{ route('lswdo.eclip.interventions.update', $intervention) }}" class="mt-2">@csrf @method('PUT')<input type="hidden" name="stage" value="{{ $intervention->stage }}"><input type="hidden" name="title" value="{{ $intervention->title }}"><input type="hidden" name="provider" value="{{ $intervention->provider }}"><input type="hidden" name="amount_or_value" value="{{ $intervention->amount_or_value }}"><input type="hidden" name="target_date" value="{{ $intervention->target_date?->toDateString() }}"><label class="step-input-label" for="intervention-edit-status-{{ $intervention->id }}">Update status</label><select id="intervention-edit-status-{{ $intervention->id }}" name="status" class="form-control mb-2">@foreach(\App\Models\EclipIntervention::STATUSES as $status)<option value="{{ $status }}" @selected($intervention->status === $status)>{{ str($status)->replace('_',' ')->title() }}</option>@endforeach</select><label class="step-input-label" for="intervention-edit-outcome-{{ $intervention->id }}">Outcome</label><textarea id="intervention-edit-outcome-{{ $intervention->id }}" name="outcome" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->outcome }}</textarea><label class="step-input-label" for="intervention-edit-remarks-{{ $intervention->id }}">Reason / next required action</label><textarea id="intervention-edit-remarks-{{ $intervention->id }}" name="remarks" class="form-control mb-2" rows="2" maxlength="5000">{{ $intervention->remarks }}</textarea><button class="btn btn-sm btn-outline-primary btn-block">Save intervention update</button></form>@endif</details>@empty<div class="no-document"><i class="mdi mdi-clipboard-text-outline"></i>No services or interventions recorded.</div>@endforelse</div>
+                </div>
+            </section>
+
             <section class="card review-card mb-4" aria-labelledby="history-title">
                 <div class="card-body">
                     <div class="sidebar-card-header">
@@ -664,6 +773,10 @@
                     </ol>
                     @if($case->statusHistories->count() > 5)
                         <details class="sidebar-history-more"><summary>View full history ({{ $case->statusHistories->count() }})</summary><ol class="history-timeline mt-3">@foreach($case->statusHistories->sortByDesc('created_at')->skip(5) as $history)<li class="history-item"><span class="history-dot" aria-hidden="true"></span><div class="history-status">{{ $history->to_status->label() }}</div><div class="history-meta"><i class="mdi mdi-account-outline"></i> {{ $history->user?->name ?? 'System' }} · <time datetime="{{ $history->created_at->toIso8601String() }}">{{ $history->created_at->format('M d, Y · h:i A') }}</time></div>@if($history->remarks)<div class="history-remarks">{{ $history->remarks }}</div>@endif</li>@endforeach</ol></details>
+                    @endif
+                    @php($stepHistories = $case->workflowActivities->flatMap(fn ($activity) => $activity->histories->map(fn ($history) => ['activity' => $activity, 'history' => $history]))->sortByDesc(fn ($entry) => $entry['history']->created_at))
+                    @if($stepHistories->isNotEmpty())
+                        <details class="sidebar-history-more"><summary>View step history ({{ $stepHistories->count() }})</summary><ol class="history-timeline mt-3">@foreach($stepHistories as $entry)<li class="history-item"><span class="history-dot" aria-hidden="true"></span><div class="history-status">Step {{ $entry['activity']->step_code }} · {{ str($entry['history']->event ?? 'status_changed')->replace('_', ' ')->title() }} · {{ str($entry['history']->to_status)->replace('_', ' ')->title() }}</div><div class="history-meta"><i class="mdi mdi-account-outline"></i> {{ $entry['history']->user?->name ?? 'System' }} · {{ $entry['history']->actor_office ?: config('shield.roles.'.$entry['history']->actor_role.'.label') }} · <time datetime="{{ $entry['history']->created_at->toIso8601String() }}">{{ $entry['history']->created_at->format('M d, Y · h:i A') }}</time></div>@if($entry['history']->remarks)<div class="history-remarks">{{ $entry['history']->remarks }}</div>@endif</li>@endforeach</ol></details>
                     @endif
                 </div>
             </section>

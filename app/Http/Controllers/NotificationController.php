@@ -38,7 +38,16 @@ class NotificationController extends Controller
     {
         abort_unless((int) $notification->notifiable_id === $request->user()->id && $notification->notifiable_type === get_class($request->user()), 403);
         $notification->markAsRead();
-        $allowedRoutes = ['dilg_reviewer.cases.show', 'eclip_assessor.cases.show', 'eclip_funding.cases.show', 'local_eclip.cases.show'];
+        $allowedRoutes = [
+            'dilg_reviewer.cases.show',
+            'eclip_assessor.cases.show',
+            'eclip_funding.cases.show',
+            'local_eclip.cases.show',
+            'lswdo.eclip.show',
+            'japic.eclip.show',
+            'pnp.eclip-fea.show',
+            'afp.eclip-fea.show',
+        ];
         $routeName = $notification->data['route'] ?? null;
 
         return in_array($routeName, $allowedRoutes, true) && isset($notification->data['case_id'])

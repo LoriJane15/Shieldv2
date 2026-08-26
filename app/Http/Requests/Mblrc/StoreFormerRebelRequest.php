@@ -21,10 +21,9 @@ class StoreFormerRebelRequest extends FormRequest
             'nickname' => ['nullable', 'string', 'max:255'],
             'suffix' => ['nullable', Rule::in(['Jr.', 'Sr.', 'II', 'III'])],
             'gender' => ['nullable', Rule::in(['Male', 'Female'])],
-            'age' => ['nullable', 'integer', 'min:0', 'max:120'],
             'civil_status' => ['nullable', Rule::in(['Single', 'Married', 'Widowed', 'Separated'])],
-            'birthdate' => ['nullable', 'date'],
-            'contact_num' => ['nullable', 'string', 'max:15', 'regex:/^\+?[0-9]+$/'],
+            'birthdate' => ['required', 'date', 'before_or_equal:today'],
+            'contact_num' => ['required', 'string', 'max:15', 'regex:/^\+?[0-9]+$/'],
             'municipality_id' => ['required', 'exists:municipalities,id'],
             'barangay_id' => [
                 'required',
@@ -33,15 +32,31 @@ class StoreFormerRebelRequest extends FormRequest
             ],
             'province' => ['nullable', 'string', 'max:50'],
             'zipcode' => ['nullable', 'string', 'max:10'],
-            'residential_address' => ['nullable', 'string', 'max:255'],
-            'surrender_date' => ['nullable', 'date'],
-            'surrender_reason' => ['nullable', 'string'],
+            'residential_address' => ['required', 'string', 'max:255'],
+            'surrender_date' => ['required', 'date', 'before_or_equal:today'],
+            'surrender_reason' => ['nullable', 'string', 'max:5000'],
             'batch_year' => ['nullable', 'string', 'max:50'],
             'batch_section' => ['nullable', Rule::in(['1', '2'])],
             'status' => ['nullable', Rule::in([
                 'Active', 'On hold', 'Reintegrated', 'Inactive', 'Under Review',
                 'Disengaged', 'Pending', 'Suspended', 'Completed', 'Deceased', 'Relocated',
             ])],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'birthdate.required' => 'Birthday is required so age can be calculated accurately.',
+            'birthdate.before_or_equal' => 'Birthday cannot be in the future.',
+            'contact_num.required' => 'Contact number is required.',
+            'contact_num.regex' => 'Enter a valid contact number using digits only.',
+            'municipality_id.required' => 'Select a municipality or city.',
+            'barangay_id.required' => 'Select a barangay.',
+            'barangay_id.exists' => 'The selected barangay does not belong to this municipality or city.',
+            'residential_address.required' => 'Residential address is required.',
+            'surrender_date.required' => 'Date of surrender is required.',
+            'surrender_date.before_or_equal' => 'Date of surrender cannot be in the future.',
         ];
     }
 

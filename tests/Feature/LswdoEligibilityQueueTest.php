@@ -21,9 +21,9 @@ class LswdoEligibilityQueueTest extends TestCase
         $outsideMunicipality = Municipality::query()->create(['name' => 'Outside Queue Municipality']);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $localMunicipality->id]);
 
-        $submitted = $this->createCase($localMunicipality, 'ECLIP-LOCAL-001', 'FR-#L001', 'Local', 'Submitted', EclipCaseStatus::SubmittedForEligibility, now()->subDays(3));
-        $this->createCase($localMunicipality, 'ECLIP-LOCAL-002', 'FR-#L002', 'Local', 'Eligible', EclipCaseStatus::Eligible, now()->subDays(2));
-        $this->createCase($localMunicipality, 'ECLIP-LOCAL-003', 'FR-#L003', 'Local', 'Certified', EclipCaseStatus::DocumentsCertified, now()->subDay());
+        $submitted = $this->createCase($localMunicipality, 'ECLIP-LOCAL-001', 'FR-#L001', 'Local', 'Submitted', EclipCaseStatus::SubmittedForEligibility, now()->subDays(3), $lswdo);
+        $this->createCase($localMunicipality, 'ECLIP-LOCAL-002', 'FR-#L002', 'Local', 'Eligible', EclipCaseStatus::Eligible, now()->subDays(2), $lswdo);
+        $this->createCase($localMunicipality, 'ECLIP-LOCAL-003', 'FR-#L003', 'Local', 'Certified', EclipCaseStatus::DocumentsCertified, now()->subDay(), $lswdo);
         $outside = $this->createCase($outsideMunicipality, 'ECLIP-OUTSIDE-001', 'FR-#OUT1', 'Outside', 'Beneficiary', EclipCaseStatus::SubmittedForEligibility, now());
 
         $response = $this->actingAs($lswdo)->get(route('lswdo.eclip.index'));
@@ -47,8 +47,8 @@ class LswdoEligibilityQueueTest extends TestCase
         $municipality = Municipality::query()->create(['name' => 'Filtered Queue Municipality']);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
 
-        $oldest = $this->createCase($municipality, 'ECLIP-FILTER-OLD', 'FR-#SEARCH', 'Maria', 'Searchable', EclipCaseStatus::Eligible, now()->subMonth());
-        $this->createCase($municipality, 'ECLIP-FILTER-NEW', 'FR-#OTHER', 'Another', 'Person', EclipCaseStatus::SubmittedForEligibility, now());
+        $oldest = $this->createCase($municipality, 'ECLIP-FILTER-OLD', 'FR-#SEARCH', 'Maria', 'Searchable', EclipCaseStatus::Eligible, now()->subMonth(), $lswdo);
+        $this->createCase($municipality, 'ECLIP-FILTER-NEW', 'FR-#OTHER', 'Another', 'Person', EclipCaseStatus::SubmittedForEligibility, now(), $lswdo);
 
         $response = $this->actingAs($lswdo)->get(route('lswdo.eclip.index', [
             'search' => 'Maria',
@@ -69,15 +69,16 @@ class LswdoEligibilityQueueTest extends TestCase
             ->assertDontSee('Another Person');
     }
 
-    public function test_queue_rejects_statuses_that_are_not_part_of_the_lswdo_queue(): void
+    public function test_queue_supports_full_lifecycle_status_filters_for_assigned_cases(): void
     {
         $municipality = Municipality::query()->create(['name' => 'Validation Municipality']);
         $lswdo = User::factory()->role('lswdo')->create(['municipality_id' => $municipality->id]);
+        $approved = $this->createCase($municipality, 'ECLIP-LIFECYCLE-001', 'FR-#LIFE', 'Lifecycle', 'Case', EclipCaseStatus::Approved, now(), $lswdo);
 
         $this->actingAs($lswdo)
             ->get(route('lswdo.eclip.index', ['status' => EclipCaseStatus::Approved->value]))
-            ->assertRedirect()
-            ->assertSessionHasErrors('status');
+            ->assertOk()
+            ->assertSee($approved->case_number);
     }
 
     private function createCase(
@@ -88,6 +89,7 @@ class LswdoEligibilityQueueTest extends TestCase
         string $lastname,
         EclipCaseStatus $status,
         $submittedAt,
+        ?User $assignee = null,
     ): EclipCase {
         $barangay = Barangay::query()->firstOrCreate([
             'municipality_id' => $municipality->id,
@@ -101,7 +103,7 @@ class LswdoEligibilityQueueTest extends TestCase
             'barangay_id' => $barangay->id,
         ]);
 
-        return EclipCase::query()->create([
+        $case = EclipCase::query()->create([
             'case_number' => $caseNumber,
             'former_rebel_id' => $formerRebel->id,
             'municipality_id' => $municipality->id,
@@ -109,5 +111,17 @@ class LswdoEligibilityQueueTest extends TestCase
             'status' => $status,
             'submitted_at' => $submittedAt,
         ]);
+
+        if ($assignee) {
+            $case->participantAssignments()->create([
+                'user_id' => $assignee->id,
+                'participant_role' => 'case_processor',
+                'assigned_by' => $case->created_by,
+                'assigned_at' => now(),
+                'is_active' => true,
+            ]);
+        }
+
+        return $case;
     }
 }

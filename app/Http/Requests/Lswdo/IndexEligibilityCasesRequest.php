@@ -35,14 +35,9 @@ class IndexEligibilityCasesRequest extends FormRequest
 
     private function allowedStatuses(): array
     {
-        return [
-            EclipCaseStatus::SubmittedForEligibility->value,
-            EclipCaseStatus::EligibilityReviewInProgress->value,
-            EclipCaseStatus::Eligible->value,
-            EclipCaseStatus::Ineligible->value,
-            EclipCaseStatus::DocumentProcessing->value,
-            EclipCaseStatus::DocumentsIncomplete->value,
-            EclipCaseStatus::DocumentsCertified->value,
-        ];
+        return collect(EclipCaseStatus::cases())
+            ->reject(fn (EclipCaseStatus $status) => $status === EclipCaseStatus::Draft)
+            ->map(fn (EclipCaseStatus $status) => $status->value)
+            ->all();
     }
 }

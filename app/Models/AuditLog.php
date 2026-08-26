@@ -21,4 +21,58 @@ class AuditLog extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function eventReference(): string
+    {
+        return 'AUD-'.str_pad((string) $this->getKey(), 8, '0', STR_PAD_LEFT);
+    }
+
+    public function entityLabel(): string
+    {
+        return str(class_basename($this->entity_type))->headline()->toString();
+    }
+
+    public function moduleLabel(): string
+    {
+        $entity = class_basename($this->entity_type);
+
+        return match (true) {
+            $entity === 'User' => 'User Management',
+            $entity === 'GovAgency' => 'Government Agencies',
+            str_starts_with($entity, 'Eclip') => 'E-CLIP',
+            str_starts_with($entity, 'Rcsp') => 'RCSP',
+            str_starts_with($entity, 'Implementation'), $entity === 'AgencyImplanResponse' => 'IMPLAN',
+            str_starts_with($entity, 'FormerRebel'), str_starts_with($entity, 'Fr') => 'Former Rebel Registry',
+            default => $this->entityLabel(),
+        };
+    }
+
+    public function actorRoleLabel(): string
+    {
+        if (! $this->user) {
+            return 'Actor unavailable';
+        }
+
+        return (string) config(
+            "shield.roles.{$this->user->role}.label",
+            str($this->user->role)->replace('_', ' ')->title()->toString()
+        );
+    }
+
+    public function actorContext(): ?string
+    {
+        if (! $this->user) {
+            return null;
+        }
+
+        if ($this->user->municipality) {
+            return $this->user->municipality->name;
+        }
+
+        if ($this->user->govAgency) {
+            return $this->user->govAgency->acronym ?: $this->user->govAgency->name;
+        }
+
+        return null;
+    }
 }

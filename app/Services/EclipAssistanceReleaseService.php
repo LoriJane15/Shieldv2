@@ -54,6 +54,19 @@ class EclipAssistanceReleaseService
                     'released_by' => $actor->id,
                 ]);
 
+                $revision = $approvedReview->revision()->with('category')->firstOrFail();
+                $lockedCase->formerRebel->assistances()->updateOrCreate(
+                    ['source_type' => 'eclip_release', 'source_id' => $release->id],
+                    [
+                        'assistance_type' => $revision->category?->name ?? 'E-CLIP Assistance',
+                        'amount_or_value' => $release->amount,
+                        'provider' => 'Local E-CLIP Committee / LSWDO',
+                        'date_received' => $release->released_at,
+                        'status' => 'Completed',
+                        'remarks' => $release->remarks,
+                    ],
+                );
+
                 $lockedCase = $this->workflow->beginAssistanceRelease($lockedCase, $actor, $ipAddress);
                 if ($newTotalCents === $transferredCents) {
                     $this->workflow->completeAssistanceRelease($lockedCase, $actor, $ipAddress);

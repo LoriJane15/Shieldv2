@@ -15,9 +15,10 @@
 @endphp
 <div class="japic-case">
     <a href="{{ route('japic.eclip.index') }}" class="case-back"><i class="mdi mdi-arrow-left"></i>Back to document review queue</a>
+    @can('viewWorkflow', $case)<a href="{{ route('eclip.workflow.show', $case) }}" class="btn btn-outline-primary btn-sm float-right"><i class="mdi mdi-timeline-check-outline"></i> Open Full Workflow</a>@endcan
     <section class="case-hero mb-4" aria-labelledby="japic-case-number">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start position-relative" style="z-index:1">
-            <div><div class="case-eyebrow mb-1">JAPIC document review</div><h2 id="japic-case-number" class="mb-3">{{ $case->case_number }}</h2><div class="case-meta"><span><i class="mdi mdi-account-key-outline"></i>{{ $case->formerRebel->classified_id }}</span><span><i class="mdi mdi-map-marker-outline"></i>{{ $case->formerRebel->municipality?->name ?? 'Municipality not assigned' }}</span><span><i class="mdi mdi-file-document-outline"></i>{{ $case->documents->count() }} {{ Str::plural('document', $case->documents->count()) }} submitted</span></div></div>
+            <div class="shield-hero-primary"><span class="shield-title-icon"><i class="mdi mdi-shield-check-outline" aria-hidden="true"></i></span><div><div class="case-eyebrow mb-1">JAPIC document review</div><h2 id="japic-case-number" class="mb-3">{{ $case->case_number }}</h2><div class="case-meta"><span><i class="mdi mdi-account-key-outline"></i>{{ $case->formerRebel->classified_id }}</span><span><i class="mdi mdi-map-marker-outline"></i>{{ $case->formerRebel->municipality?->name ?? 'Municipality not assigned' }}</span><span><i class="mdi mdi-file-document-outline"></i>{{ $case->documents->count() }} {{ Str::plural('document', $case->documents->count()) }} submitted</span></div></div></div>
             <span class="case-status"><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span>
         </div>
     </section>

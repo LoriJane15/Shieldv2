@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Mblrc;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Mblrc\SaveFormerRebelDraftRequest;
 use App\Http\Requests\Mblrc\StoreFormerRebelRequest;
 use App\Http\Requests\Mblrc\UpdateFormerRebelRequest;
 use App\Models\Barangay;
 use App\Models\FormerRebel;
+use App\Models\FormerRebelRegistrationDraft;
 use App\Models\Municipality;
+use App\Services\FormerRebelRegistrationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class FormerRebelController extends Controller
@@ -38,26 +42,56 @@ class FormerRebelController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): Response
     {
-        return view('mblrc.fr.create', [
+        $draft = FormerRebelRegistrationDraft::query()
+            ->where('user_id', $request->user()->id)
+            ->first();
+        $draftPayload = $draft?->payload ?? [];
+        $municipalityId = old('municipality_id', $draftPayload['municipality_id'] ?? null);
+
+        return response()->view('mblrc.fr.create', [
             'municipalities' => Municipality::orderBy('name')->get(),
+            'barangays' => $municipalityId
+                ? Barangay::query()->where('municipality_id', $municipalityId)->orderBy('name')->get()
+                : collect(),
             'statuses' => $this->statuses(),
-        ]);
+            'draft' => $draft,
+        ])->withHeaders($this->privateResponseHeaders());
     }
 
-    public function store(StoreFormerRebelRequest $request): RedirectResponse
-    {
-        $data = $request->validated();
-        $data['classified_id'] = FormerRebel::nextClassifiedId();
-        $data['province'] ??= 'Davao del Sur';
-        $data['status'] ??= 'Active';
-        $data['registered_at'] = now();
-
-        $fr = FormerRebel::create($data);
+    public function store(
+        StoreFormerRebelRequest $request,
+        FormerRebelRegistrationService $registrations,
+    ): RedirectResponse {
+        $fr = $registrations->register(
+            $request->validated(),
+            $request->user(),
+            $request->ip(),
+            $request->userAgent(),
+        );
 
         return redirect()->route('mblrc.fr.show', $fr)
             ->with('success', "Former Rebel {$fr->classified_id} registered.");
+    }
+
+    public function saveDraft(
+        SaveFormerRebelDraftRequest $request,
+        FormerRebelRegistrationService $registrations,
+    ): JsonResponse {
+        $data = $request->safe()->except('autosave');
+        $draft = $registrations->saveDraft(
+            $data,
+            $request->user(),
+            ! $request->boolean('autosave'),
+            $request->ip(),
+            $request->userAgent(),
+        );
+
+        return response()->json([
+            'message' => 'Draft saved securely.',
+            'saved_at' => $draft->saved_at?->toIso8601String(),
+        ])->withHeaders($this->privateResponseHeaders());
     }
 
     public function show(FormerRebel $formerRebel): View
@@ -109,17 +143,24 @@ class FormerRebelController extends Controller
     public function locations(): JsonResponse
     {
         $rows = FormerRebel::query()
+            ->with(['municipality:id,name', 'programStatus:id,former_rebel_id,reintegration_status'])
             ->whereNotNull('latitude')->whereNotNull('longitude')
-            ->get(['id', 'firstname', 'lastname', 'placement_address', 'latitude', 'longitude', 'status', 'batch_year', 'gender', 'occupation'])
+            ->get([
+                'id', 'classified_id', 'municipality_id', 'placement_address', 'latitude', 'longitude',
+                'status', 'batch_year', 'occupation', 'updated_at',
+            ])
             ->map(fn ($fr) => [
                 'id' => $fr->id,
-                'name' => trim("{$fr->firstname} {$fr->lastname}"),
+                'classified_id' => $fr->classified_id,
                 'address' => $fr->placement_address,
                 'lat' => (float) $fr->latitude,
                 'lng' => (float) $fr->longitude,
                 'status' => $fr->status,
+                'program_status' => $fr->programStatus?->reintegration_status ?? 'Not-Started',
+                'municipality' => $fr->municipality?->name ?? 'Not assigned',
                 'batch' => $fr->batch_year,
                 'occupation' => $fr->occupation,
+                'last_updated' => $fr->updated_at?->timezone(config('app.display_timezone'))->format('M d, Y'),
                 'url' => route('mblrc.fr.show', $fr->id),
             ]);
 

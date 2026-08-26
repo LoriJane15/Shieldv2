@@ -28,6 +28,7 @@ class EclipAuthenticationAssignmentTest extends TestCase
         $authentication = $service->request($case, $assignedJapic, $lswdo, '127.0.0.1');
 
         $this->assertSame(EclipCaseStatus::AuthenticationPending, $case->fresh()->status);
+        $this->actingAs($lswdo)->get(route('lswdo.eclip.show', $case))->assertOk();
         $this->assertDatabaseHas('eclip_case_participants', [
             'eclip_case_id' => $case->id,
             'user_id' => $assignedJapic->id,
@@ -68,6 +69,32 @@ class EclipAuthenticationAssignmentTest extends TestCase
 
         $this->assertSame(EclipCaseStatus::AuthenticationPending, $case->fresh()->status);
         $this->assertSame('pending', $authentication->fresh()->status);
+    }
+
+    public function test_eligible_legacy_case_without_workflow_rows_can_request_authentication(): void
+    {
+        [$case, $lswdo] = $this->eligibleAssignedCase();
+        $case->workflowActivities()->delete();
+        $japic = User::factory()->role('japic')->create();
+
+        $this->actingAs($lswdo)->post(route('lswdo.eclip.authentication.store', $case), [
+            'assigned_to' => $japic->id,
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('eclip_authentication_requests', [
+            'eclip_case_id' => $case->id,
+            'assigned_to' => $japic->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('eclip_workflow_activities', [
+            'eclip_case_id' => $case->id,
+            'step_code' => '3B',
+            'status' => 'completed',
+        ]);
+        $this->assertDatabaseHas('eclip_workflow_activity_histories', [
+            'event' => 'compatibility_imported',
+            'to_status' => 'completed',
+        ]);
     }
 
     private function eligibleAssignedCase(): array

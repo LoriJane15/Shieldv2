@@ -9,6 +9,14 @@
         'not_eligible' => 'rejected',
         default => 'locked',
     };
+    $label = match ($status) {
+        'pending' => 'Not Started',
+        'ongoing' => 'In Progress',
+        'returned_for_correction' => 'Returned',
+        'late' => 'Overdue',
+        'not_applicable' => 'Not Applicable',
+        default => str($status)->replace('_', ' ')->title()->toString(),
+    };
 @endphp
 
-<span {{ $attributes->class(['workflow-status-badge', 'workflow-status-'.$tone]) }}>{{ str($status)->replace('_', ' ')->title() }}</span>
+<span {{ $attributes->class(['workflow-status-badge', 'workflow-status-'.$tone]) }}>{{ $label }}</span>

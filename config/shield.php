@@ -72,23 +72,24 @@ return [
         'mblrc' => [
             'label' => 'MBLRC',
             'nav' => [
-                ['label' => 'Dashboard',     'route' => 'mblrc.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid'],
-                ['label' => 'FR/FVE Registry', 'route' => 'mblrc.fr.index', 'icon' => 'user-group', 'skyicon' => 'icon-people'],
-                ['label' => 'Integration Monitoring', 'route' => 'mblrc.enrollments.index', 'icon' => 'clipboard-document-check', 'skyicon' => 'icon-note'],
+                ['label' => 'Dashboard', 'route' => 'mblrc.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
+                ['label' => 'FR/FVE Registry', 'route' => 'mblrc.fr.index', 'icon' => 'user-group', 'skyicon' => 'icon-people', 'section' => 'Reintegration'],
+                ['label' => 'Integration Monitoring', 'route' => 'mblrc.enrollments.index', 'icon' => 'clipboard-document-check', 'skyicon' => 'icon-note', 'section' => 'Reintegration'],
+                ['label' => 'E-CLIP Cases', 'route' => 'mblrc.eclip.index', 'icon' => 'folder', 'skyicon' => 'icon-folder', 'section' => 'Case Management'],
             ],
         ],
         'lswdo' => [
             'label' => 'LSWDO',
             'nav' => [
-                ['label' => 'MBLRC Referrals', 'route' => 'lswdo.referrals.index', 'icon' => 'inbox-arrow-down', 'skyicon' => 'icon-envelope'],
-                ['label' => 'E-CLIP Cases', 'route' => 'lswdo.eclip.index', 'icon' => 'folder', 'skyicon' => 'icon-folder'],
+                ['label' => 'MBLRC Referrals', 'route' => 'lswdo.referrals.index', 'icon' => 'inbox-arrow-down', 'skyicon' => 'icon-envelope', 'section' => 'Case Intake'],
+                ['label' => 'E-CLIP Cases', 'route' => 'lswdo.eclip.index', 'icon' => 'folder', 'skyicon' => 'icon-folder', 'section' => 'Case Management'],
             ],
         ],
         'japic' => [
             'label' => 'JAPIC',
             'nav' => [
-                ['label' => 'Authentication Queue', 'route' => 'japic.authentication.index', 'icon' => 'shield-check', 'skyicon' => 'icon-shield'],
-                ['label' => 'E-CLIP Documents', 'route' => 'japic.eclip.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs'],
+                ['label' => 'Authentication Queue', 'route' => 'japic.authentication.index', 'icon' => 'shield-check', 'skyicon' => 'icon-shield', 'section' => 'Authentication'],
+                ['label' => 'E-CLIP Documents', 'route' => 'japic.eclip.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs', 'section' => 'Document Review'],
             ],
         ],
         'dilg_provincial_focal' => [
@@ -122,8 +123,8 @@ return [
         'local_eclip_committee' => [
             'label' => 'Local E-CLIP Committee',
             'nav' => [
-                ['label' => 'Assistance Release', 'route' => 'local_eclip.cases.index', 'icon' => 'hand-raised', 'skyicon' => 'icon-present'],
-                ['label' => 'Analytics', 'route' => 'eclip.analytics.index', 'icon' => 'chart-bar', 'skyicon' => 'icon-graph'],
+                ['label' => 'Assistance Release', 'route' => 'local_eclip.cases.index', 'icon' => 'hand-raised', 'skyicon' => 'icon-present', 'section' => 'Case Management'],
+                ['label' => 'Analytics', 'route' => 'eclip.analytics.index', 'icon' => 'chart-bar', 'skyicon' => 'icon-graph', 'section' => 'Monitoring'],
             ],
         ],
         '39th_ib' => [
@@ -144,7 +145,8 @@ return [
         'pnp' => [
             'label' => 'PNP',
             'nav' => [
-                ['label' => 'Dashboard', 'route' => 'pnp.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid'],
+                ['label' => 'Dashboard', 'route' => 'pnp.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
+                ['label' => 'FEA Processing', 'route' => 'pnp.eclip-fea.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs', 'section' => 'Case Processing'],
             ],
         ],
     ],

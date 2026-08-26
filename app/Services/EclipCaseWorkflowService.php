@@ -150,7 +150,12 @@ class EclipCaseWorkflowService
             ['submitted_at' => now(), 'assigned_to' => null, 'eligibility_decided_at' => null],
         );
 
-        $this->officialWorkflow->initialize($submitted, $actor, $ipAddress);
+        $this->officialWorkflow->initialize($submitted, $actor, $ipAddress, [
+            'intention_to_surface' => [
+                'source' => 'MBLRC submission',
+                'source_record' => $submitted->case_number,
+            ],
+        ]);
 
         return $submitted;
     }

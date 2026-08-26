@@ -3,9 +3,16 @@
 @section('heading', 'Authentication Queue')
 
 @section('content')
+<div class="japic-authentication-page">
+    <x-shield.module-header
+        eyebrow="Authentication"
+        title="Assigned Authentication Requests"
+        description="Review only requests explicitly assigned to your account and record an auditable decision."
+        icon="mdi-shield-check-outline"
+        role="JAPIC"
+    />
 <div class="card"><div class="card-body">
-    <h4 class="card-title">Assigned authentication requests</h4>
-    <p class="text-muted">Only requests explicitly assigned to your account are displayed.</p>
+    <div class="shield-card-heading"><span class="shield-card-heading-icon"><i class="mdi mdi-format-list-checks" aria-hidden="true"></i></span><div><h4>Authentication Queue</h4><p>Only requests explicitly assigned to your account are displayed.</p></div></div>
     <div class="table-responsive"><table class="table align-middle">
         <thead><tr><th>Case</th><th>Beneficiary ID</th><th>Requested</th><th>Due</th><th>Status</th><th>Action</th></tr></thead>
         <tbody>
@@ -44,4 +51,5 @@
     </table></div>
     {{ $requests->links() }}
 </div></div>
+</div>
 @endsection

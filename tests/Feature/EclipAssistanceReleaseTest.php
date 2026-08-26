@@ -29,6 +29,12 @@ class EclipAssistanceReleaseTest extends TestCase
         $this->release($case, $committee, '600.00', 'RELEASE-002');
         $this->assertSame(EclipCaseStatus::Completed, $case->fresh()->status);
         $this->assertDatabaseCount('eclip_assistance_releases', 2);
+        $this->assertDatabaseCount('fr_government_assistances', 2);
+        $this->assertDatabaseHas('fr_government_assistances', [
+            'former_rebel_id' => $case->former_rebel_id,
+            'source_type' => 'eclip_release',
+            'status' => 'Completed',
+        ]);
         $this->assertDatabaseHas('eclip_status_histories', ['eclip_case_id' => $case->id, 'to_status' => EclipCaseStatus::AssistanceReleased->value]);
         $this->assertDatabaseHas('eclip_status_histories', ['eclip_case_id' => $case->id, 'to_status' => EclipCaseStatus::Completed->value]);
         $case->assistanceReleases->each(fn ($release) => Storage::disk('local')->assertExists($release->acknowledgment_path));
@@ -79,6 +85,23 @@ class EclipAssistanceReleaseTest extends TestCase
         $outsideCommittee = User::factory()->role('local_eclip_committee')->create(['municipality_id' => $otherMunicipality->id]);
 
         $this->actingAs($outsideCommittee)->get(route('local_eclip.cases.show', $case))->assertForbidden();
+    }
+
+    public function test_committee_release_workspace_uses_the_shared_operational_interface(): void
+    {
+        [$case, $committee] = $this->transferredCase();
+
+        $this->actingAs($committee)->get(route('local_eclip.cases.index'))
+            ->assertOk()
+            ->assertSee('shield-role-local_eclip_committee', false)
+            ->assertSee('shield-module-header', false)
+            ->assertSee('Assigned municipality only');
+
+        $this->actingAs($committee)->get(route('local_eclip.cases.show', $case))
+            ->assertOk()
+            ->assertSee('shield-title-icon', false)
+            ->assertSee('Record Assistance Release')
+            ->assertSee('Release History');
     }
 
     public function test_acknowledgment_download_is_private_and_authorized(): void

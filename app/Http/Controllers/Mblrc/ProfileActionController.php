@@ -39,7 +39,10 @@ class ProfileActionController extends Controller
             ]
         );
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'The FR/FVE program status was updated successfully.',
+        ]);
     }
 
     public function saveLocation(Request $request, FormerRebel $formerRebel): JsonResponse

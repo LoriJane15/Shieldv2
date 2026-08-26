@@ -13,6 +13,19 @@
     .analytics-scope span { align-items: center; display: inline-flex; gap: .4rem; }
     .analytics-export { background: #fff; border: 0; border-radius: 10px; color: #245cc4; font-weight: 600; padding: .7rem 1rem; position: relative; z-index: 1; }
     .analytics-export:hover { background: #f4f7ff; color: #173b74; }
+    .local-committee-analytics .analytics-hero { align-items: center; background: linear-gradient(115deg, #152a4d 0%, #172f57 58%, #123c4d 100%); border: 0; border-radius: 15px; box-shadow: none; display: flex; gap: 1.25rem; justify-content: space-between; min-height: 118px; padding: 1.25rem 1.5rem; }
+    .local-committee-analytics .analytics-hero::after { display: none; }
+    .analytics-title-main { align-items: center; display: flex; gap: 1rem; min-width: 0; position: relative; z-index: 1; }
+    .analytics-title-icon { align-items: center; background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 255, 255, .08); border-radius: 13px; color: #45e0ba; display: flex; flex: 0 0 54px; font-size: 1.45rem; height: 54px; justify-content: center; width: 54px; }
+    .local-committee-analytics .analytics-eyebrow { color: #ff9a62; font-size: .62rem; font-weight: 800; letter-spacing: .14em; opacity: 1; }
+    .local-committee-analytics .analytics-hero h2 { font-size: 1.48rem; font-weight: 800; letter-spacing: -.025em; margin: .18rem 0 .25rem; }
+    .analytics-header-copy { color: #bac7e5; font-size: .78rem; line-height: 1.45; margin: 0; }
+    .analytics-header-actions { align-items: flex-end; display: flex; flex: 0 0 auto; flex-direction: column; gap: .55rem; position: relative; z-index: 1; }
+    .analytics-header-badges { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+    .analytics-header-badge { align-items: center; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .13); border-radius: 999px; color: #d9e2f1; display: inline-flex; font-size: .63rem; font-weight: 700; gap: .35rem; min-height: 30px; padding: .35rem .65rem; }
+    .analytics-header-badge i { color: #75e4c8; }
+    .local-committee-analytics .analytics-export { align-items: center; border: 1px solid rgba(255, 255, 255, .8); border-radius: 7px; color: #280274; display: inline-flex; font-size: .68rem; font-weight: 750; gap: .35rem; min-height: 36px; padding: .45rem .7rem; }
+    .local-committee-analytics .analytics-export:hover, .local-committee-analytics .analytics-export:focus { background: #f4effa; color: #280274; }
     .metric-card, .analytics-card { border: 1px solid var(--analytics-border); border-radius: 14px; box-shadow: 0 4px 16px rgba(23, 43, 77, .045); }
     .metric-card { overflow: hidden; position: relative; }
     .metric-card::before { background: var(--metric-color); content: ''; height: 4px; left: 0; position: absolute; right: 0; top: 0; }
@@ -52,41 +65,71 @@
     .service-tile span { color: #718096; font-size: .75rem; }
     .empty-state { color: #8492a6; padding: 2rem 1rem; text-align: center; }
     @media (max-width: 1199px) { .financial-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-    @media (max-width: 767px) { .analytics-hero { padding: 1.25rem; } .analytics-hero h2 { font-size: 1.35rem; } .analytics-export { margin-top: 1rem; width: 100%; } .financial-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 767px) { .analytics-hero { padding: 1.25rem; } .analytics-hero h2 { font-size: 1.35rem; } .analytics-export { margin-top: 1rem; width: 100%; } .local-committee-analytics .analytics-hero { align-items: flex-start; flex-direction: column; min-height: 0; padding: 1.1rem; } .analytics-title-main { align-items: flex-start; } .analytics-title-icon { flex-basis: 44px; font-size: 1.18rem; height: 44px; width: 44px; } .analytics-header-actions, .analytics-header-badges { align-items: stretch; justify-content: flex-start; width: 100%; } .analytics-header-badge { justify-content: center; } .local-committee-analytics .analytics-export { justify-content: center; margin-top: 0; width: 100%; } .financial-grid { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 480px) { .financial-grid { grid-template-columns: 1fr; } }
 </style>
 @endpush
 
 @section('content')
 @php
-    $summaryMeta = [
-        'total' => ['icon' => 'mdi-folder-multiple-outline', 'tone' => 'blue'],
-        'completed' => ['icon' => 'mdi-check-circle-outline', 'tone' => 'green'],
-        'delayed' => ['icon' => 'mdi-clock-alert-outline', 'tone' => 'amber'],
-        'returned' => ['icon' => 'mdi-undo-variant', 'tone' => 'purple'],
-    ];
+    $isLocalCommittee = auth()->user()->hasRole('local_eclip_committee');
+    $summaryMeta = $isLocalCommittee
+        ? [
+            'total' => ['icon' => 'mdi-clipboard-text-outline', 'tone' => 'blue'],
+            'completed' => ['icon' => 'mdi-clipboard-check-outline', 'tone' => 'green'],
+            'delayed' => ['icon' => 'mdi-progress-clock', 'tone' => 'amber'],
+            'returned' => ['icon' => 'mdi-reply-outline', 'tone' => 'purple'],
+        ]
+        : [
+            'total' => ['icon' => 'mdi-folder-multiple-outline', 'tone' => 'blue'],
+            'completed' => ['icon' => 'mdi-check-circle-outline', 'tone' => 'green'],
+            'delayed' => ['icon' => 'mdi-clock-alert-outline', 'tone' => 'amber'],
+            'returned' => ['icon' => 'mdi-undo-variant', 'tone' => 'purple'],
+        ];
     $statusColors = ['#2f6fed', '#20a779', '#f2b134', '#805ad5', '#e65b65', '#36a2ae', '#7d8da8', '#e8893c'];
     $activeStatuses = collect($statusCounts)->filter(fn ($count) => $count > 0);
 @endphp
 
-<div class="analytics-page">
-    <section class="analytics-hero mb-4" aria-labelledby="analytics-title">
-        <div class="row align-items-center">
-            <div class="col-md-8 position-relative" style="z-index: 1;">
-                <div class="analytics-eyebrow mb-2">Monitoring dashboard</div>
-                <h2 id="analytics-title" class="font-weight-bold mb-2">E-CLIP Program Overview</h2>
-                <div class="analytics-scope">
-                    <span><i class="mdi mdi-map-marker-outline"></i> {{ $scopeLabel }}</span>
-                    <span><i class="mdi mdi-clock-outline"></i> Delayed after {{ $delayDays }} days without an update</span>
+<div class="analytics-page {{ $isLocalCommittee ? 'local-committee-analytics' : '' }}">
+    @if($isLocalCommittee)
+        <header class="analytics-hero mb-4" aria-labelledby="analytics-title">
+            <div class="analytics-title-main">
+                <span class="analytics-title-icon"><i class="mdi mdi-chart-line-variant" aria-hidden="true"></i></span>
+                <div>
+                    <div class="analytics-eyebrow">Monitoring dashboard</div>
+                    <h2 id="analytics-title">E-CLIP Program Overview</h2>
+                    <p class="analytics-header-copy">Monitor municipal case progress, financial delivery, and recorded program outcomes.</p>
                 </div>
             </div>
-            <div class="col-md-4 text-md-right">
+            <div class="analytics-header-actions">
+                <div class="analytics-header-badges" aria-label="Analytics reporting scope">
+                    <span class="analytics-header-badge"><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i>{{ $scopeLabel }}</span>
+                    <span class="analytics-header-badge"><i class="mdi mdi-clock-outline" aria-hidden="true"></i>Delayed after {{ $delayDays }} days</span>
+                </div>
                 <a href="{{ route('eclip.analytics.export') }}" class="btn analytics-export">
-                    <i class="mdi mdi-download mr-1"></i> Export Aggregate CSV
+                    <i class="mdi mdi-download" aria-hidden="true"></i>Export Aggregate CSV
                 </a>
             </div>
-        </div>
-    </section>
+        </header>
+    @else
+        <section class="analytics-hero mb-4" aria-labelledby="analytics-title">
+            <div class="row align-items-center">
+                <div class="col-md-8 position-relative" style="z-index: 1;">
+                    <div class="analytics-eyebrow mb-2">Monitoring dashboard</div>
+                    <h2 id="analytics-title" class="font-weight-bold mb-2">E-CLIP Program Overview</h2>
+                    <div class="analytics-scope">
+                        <span><i class="mdi mdi-map-marker-outline"></i> {{ $scopeLabel }}</span>
+                        <span><i class="mdi mdi-clock-outline"></i> Delayed after {{ $delayDays }} days without an update</span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-right">
+                    <a href="{{ route('eclip.analytics.export') }}" class="btn analytics-export">
+                        <i class="mdi mdi-download mr-1"></i> Export Aggregate CSV
+                    </a>
+                </div>
+            </div>
+        </section>
+    @endif
 
     <div class="row">
         @foreach($summary as $label => $value)
@@ -100,7 +143,7 @@
                             <div class="metric-label mb-2">{{ str($label)->replace('_', ' ')->title() }}</div>
                             <div class="metric-value">{{ number_format($value) }}</div>
                         </div>
-                        <div class="metric-icon"><i class="mdi {{ $meta['icon'] }}"></i></div>
+                        <div class="metric-icon"><i class="mdi {{ $meta['icon'] }}" aria-hidden="true"></i></div>
                     </div>
                 </div>
             </div>

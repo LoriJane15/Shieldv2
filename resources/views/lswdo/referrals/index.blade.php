@@ -3,9 +3,16 @@
 @section('heading', 'New Referrals')
 
 @section('content')
+<div class="lswdo-referrals-page">
+    <x-shield.module-header
+        eyebrow="Case intake"
+        title="Assigned MBLRC Referrals"
+        description="Review referrals explicitly assigned to your account and initialize authorized E-CLIP cases."
+        icon="mdi-inbox-arrow-down"
+        role="LSWDO"
+    />
 <div class="card"><div class="card-body">
-    <h4 class="card-title">Assigned MBLRC referrals</h4>
-    <p class="text-muted">Only referrals explicitly assigned to your account appear here.</p>
+    <div class="shield-card-heading"><span class="shield-card-heading-icon"><i class="mdi mdi-format-list-bulleted" aria-hidden="true"></i></span><div><h4>Referral Queue</h4><p>Only referrals explicitly assigned to your account appear here.</p></div></div>
     <div class="table-responsive">
         <table class="table align-middle">
             <thead><tr><th>Referral</th><th>Beneficiary ID</th><th>Integration completed</th><th>Status</th><th class="text-end">Action</th></tr></thead>
@@ -35,4 +42,5 @@
     </div>
     {{ $referrals->links() }}
 </div></div>
+</div>
 @endsection

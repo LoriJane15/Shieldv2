@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @php
+        $shieldWorkspaceRoles = ['mblrc', 'lswdo', 'japic', 'pnp', 'local_eclip_committee'];
+        $isShieldWorkspace = auth()->check() && in_array(auth()->user()->role, $shieldWorkspaceRoles, true);
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -17,8 +21,11 @@
     <link rel="stylesheet" href="{{ asset('assets/css/dropdown-indicators.css') }}">
     <link rel="shortcut icon" href="{{ asset('assets/img/SHEILD.png') }}">
     @stack('styles')
+    @if ($isShieldWorkspace)
+        <link rel="stylesheet" href="{{ asset('assets/css/mblrc-workspace.css') }}">
+    @endif
 </head>
-<body class="sidebar-fixed">
+<body class="sidebar-fixed {{ $isShieldWorkspace ? 'mblrc-interface shield-role-interface shield-role-'.auth()->user()->role : '' }}">
 @php
     $user = auth()->user();
     $role = $user->role;
@@ -30,17 +37,31 @@
     <nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
             <a class="navbar-brand brand-logo" href="{{ route(auth()->user()->homeRoute()) }}">
-                <img src="{{ asset('assets/img/SHIELD horizontal.png') }}" alt="logo" style="width:120px;height:auto;" />
+                <img src="{{ asset('assets/img/SHIELDlogo.png') }}" alt="SHIELD Index System">
             </a>
             <a class="navbar-brand brand-logo-mini" href="{{ route(auth()->user()->homeRoute()) }}">
                 <img src="{{ asset('assets/img/SHEILD.png') }}" alt="logo" />
             </a>
         </div>
         <div class="navbar-menu-wrapper d-flex align-items-stretch">
-            <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
-                <span class="icon-menu"></span>
-            </button>
-            <span class="ms-3 align-self-center h5 mb-0 text-dark d-none d-md-block">@yield('heading', $meta['label'] ?? '')</span>
+            @if ($isShieldWorkspace)
+                <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize" aria-label="Toggle sidebar navigation">
+                    <span class="icon-menu"></span>
+                </button>
+                @if ($role === 'mblrc')
+                    <form class="mblrc-navbar-search d-none d-md-flex" method="GET" action="{{ route('mblrc.fr.index') }}" role="search">
+                        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+                        <label class="sr-only" for="mblrc-navbar-search">Search the FR/FVE registry</label>
+                        <input id="mblrc-navbar-search" name="search" type="search" maxlength="100" placeholder="Search registry…" autocomplete="off">
+                        <button type="submit">Search</button>
+                    </form>
+                @endif
+            @else
+                <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
+                    <span class="icon-menu"></span>
+                </button>
+                <span class="ms-3 align-self-center h5 mb-0 text-dark d-none d-md-block">@yield('heading', $meta['label'] ?? '')</span>
+            @endif
             <ul class="navbar-nav navbar-nav-right ms-auto">
                 <li class="nav-item d-flex align-items-center mr-2">
                     @php
@@ -82,8 +103,12 @@
         {{-- Sidebar --}}
         <nav class="sidebar sidebar-offcanvas" id="sidebar">
             <ul class="nav">
+                @php
+                    $currentSection = null;
+                @endphp
                 @foreach ($nav as $item)
                     @php
+                        $itemSection = $item['section'] ?? null;
                         $patterns = [$item['route']];
                         // match sibling child routes (e.g. lgu.rcsp.* for lgu.rcsp.index) — only for resource routes, not role.dashboard
                         if (substr_count($item['route'], '.') >= 2) {
@@ -92,6 +117,14 @@
                         $patterns = array_merge($patterns, (array) ($item['active'] ?? []));
                         $isActive = request()->routeIs(...$patterns);
                     @endphp
+                    @if ($isShieldWorkspace && $itemSection !== $currentSection)
+                        @php
+                            $currentSection = $itemSection;
+                        @endphp
+                        @if ($currentSection)
+                            <li class="mblrc-nav-section" aria-hidden="true">{{ $currentSection }}</li>
+                        @endif
+                    @endif
                     <li class="nav-item {{ $isActive ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route($item['route']) }}">
                             <i class="{{ $item['skyicon'] ?? 'icon-grid' }} menu-icon"></i>

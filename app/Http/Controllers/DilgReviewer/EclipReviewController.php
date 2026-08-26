@@ -6,6 +6,7 @@ use App\Enums\EclipCaseStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DilgReviewer\DecideEclipReviewRequest;
 use App\Models\EclipCase;
+use App\Models\User;
 use App\Services\EclipDilgReviewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class EclipReviewController extends Controller
         return back()->with('success', 'DILG review decision recorded.');
     }
 
-    private function reviewLevel(\App\Models\User $user): string
+    private function reviewLevel(User $user): string
     {
         return match ($user->role) {
             'dilg_provincial_focal' => 'Provincial',

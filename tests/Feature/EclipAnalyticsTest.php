@@ -83,6 +83,22 @@ class EclipAnalyticsTest extends TestCase
             ->assertDontSee('assets/css/vertical-layout-light/style.css', false);
     }
 
+    public function test_local_committee_analytics_uses_dashboard_title_and_case_progress_icons(): void
+    {
+        $municipality = Municipality::query()->create(['name' => 'Local Analytics Municipality']);
+        $committee = User::factory()->role('local_eclip_committee')->create(['municipality_id' => $municipality->id]);
+
+        $this->actingAs($committee)->get(route('eclip.analytics.index'))
+            ->assertOk()
+            ->assertSee('<div class="analytics-page local-committee-analytics">', false)
+            ->assertSee('<div class="analytics-title-main">', false)
+            ->assertSee('<span class="analytics-title-icon">', false)
+            ->assertSee('mdi-clipboard-text-outline', false)
+            ->assertSee('mdi-clipboard-check-outline', false)
+            ->assertSee('mdi-progress-clock', false)
+            ->assertSee('mdi-reply-outline', false);
+    }
+
     public function test_aggregate_export_contains_no_beneficiary_identifiers_and_is_audited(): void
     {
         $this->caseIn('=Formula Municipality', 'FR-#PRIVATE-MARKER', EclipCaseStatus::Completed, '1000.00');

@@ -155,11 +155,14 @@
 <div class="eligibility-queue">
     <header class="queue-hero mb-4" aria-labelledby="queue-title">
         <div class="queue-hero-content">
-            <div>
-                <div class="queue-eyebrow mb-1">LSWDO case management</div>
-                <h2 id="queue-title" class="mb-2">Eligibility Review Queue</h2>
-                <div class="queue-description">Review and verify submitted E-CLIP beneficiary applications.</div>
-                <div class="queue-scope"><i class="mdi mdi-map-marker-outline" aria-hidden="true"></i><span>Cases shown are limited to your assigned municipality.</span></div>
+            <div class="shield-hero-primary">
+                <span class="shield-title-icon"><i class="mdi mdi-clipboard-check-outline" aria-hidden="true"></i></span>
+                <div>
+                    <div class="queue-eyebrow mb-1">LSWDO case management</div>
+                    <h2 id="queue-title" class="mb-2">Eligibility Review Queue</h2>
+                    <div class="queue-description">Review assigned cases and monitor their complete E-CLIP lifecycle.</div>
+                    <div class="queue-scope"><i class="mdi mdi-account-lock-outline" aria-hidden="true"></i><span>Only cases explicitly assigned to your account are shown.</span></div>
+                </div>
             </div>
             <div class="queue-summary" aria-label="Eligibility queue summary">
                 <div class="summary-chip"><strong>{{ number_format($summary['total']) }}</strong><span>Total cases</span></div>
@@ -209,7 +212,7 @@
 
         <div class="table-responsive">
             <table class="table queue-table">
-                <caption id="cases-table-title" class="sr-only">Eligibility cases in your assigned municipality</caption>
+                <caption id="cases-table-title" class="sr-only">E-CLIP cases explicitly assigned to your account</caption>
                 <thead><tr><th>Case / Beneficiary</th><th>Status</th><th>Submitted</th><th class="text-right">Action</th></tr></thead>
                 <tbody>
                     @forelse($cases as $case)

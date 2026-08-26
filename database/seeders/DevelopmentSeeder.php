@@ -20,6 +20,7 @@ use App\Models\RcspForm;
 use App\Models\RcspPhase;
 use App\Models\RcspPhaseStatus;
 use App\Models\User;
+use App\Services\EclipOfficialWorkflowService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -429,6 +430,31 @@ class DevelopmentSeeder extends Seeder
                     'eligibility_decided_at' => $index >= 2 ? now()->subDays(13 - min($index, 9)) : null,
                 ]
             );
+            $case->participantAssignments()->updateOrCreate(
+                ['user_id' => $users['lswdo']->id, 'participant_role' => 'case_processor'],
+                [
+                    'assigned_by' => $users['mblrc']->id,
+                    'assigned_at' => now(),
+                    'ended_at' => null,
+                    'is_active' => true,
+                ]
+            );
+            if ($index >= 3) {
+                $case->participantAssignments()->updateOrCreate(
+                    ['user_id' => $users['japic']->id, 'participant_role' => 'authentication_reviewer'],
+                    [
+                        'assigned_by' => $users['lswdo']->id,
+                        'assigned_at' => now(),
+                        'ended_at' => null,
+                        'is_active' => true,
+                    ]
+                );
+            }
+            $officialWorkflow = app(EclipOfficialWorkflowService::class);
+            $officialWorkflow->initialize($case, $users['lswdo'], '127.0.0.1', [
+                'intention_to_surface' => ['source' => 'Synthetic MBLRC enrollment', 'source_record' => $case->case_number],
+                'receiving_unit_coordination' => ['source' => 'Synthetic coordination record', 'source_record' => $case->case_number],
+            ]);
 
             $case->statusHistories()->updateOrCreate(
                 ['to_status' => $status->value],
@@ -445,6 +471,7 @@ class DevelopmentSeeder extends Seeder
                     ['reviewed_by' => $users['lswdo']->id, 'decision' => 'eligible'],
                     ['remarks' => 'Synthetic eligibility review.', 'reviewed_at' => now()->subDays(12)]
                 );
+                $officialWorkflow->synchronizeEligibleIntake($case, $users['lswdo'], '127.0.0.1');
             }
 
             if ($index < 4) {

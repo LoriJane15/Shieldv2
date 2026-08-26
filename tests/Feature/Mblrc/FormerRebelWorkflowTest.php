@@ -4,12 +4,15 @@ namespace Tests\Feature\Mblrc;
 
 use App\Models\Barangay;
 use App\Models\FormerRebel;
+use App\Models\FormerRebelRegistrationDraft;
 use App\Models\FrGovernmentAssistance;
 use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -42,10 +45,16 @@ class FormerRebelWorkflowTest extends TestCase
         $this->actingAs($admin)
             ->get(route('mblrc.fr.index'))
             ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->postJson(route('mblrc.fr.draft.store'), ['firstname' => 'Unauthorized'])
+            ->assertForbidden();
     }
 
     public function test_mblrc_can_register_a_normalized_former_rebel_record(): void
     {
+        Carbon::setTestNow('2026-08-25 09:00:00');
+
         $this->actingAs($this->mblrc)
             ->post(route('mblrc.fr.store'), $this->validProfile([
                 'firstname' => '  Juan  ',
@@ -57,9 +66,92 @@ class FormerRebelWorkflowTest extends TestCase
             'classified_id' => 'FR-#0001',
             'firstname' => 'Juan',
             'contact_num' => '09171234567',
+            'age' => 36,
             'municipality_id' => $this->municipality->id,
             'barangay_id' => $this->barangay->id,
         ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $this->mblrc->id,
+            'action' => 'former_rebel_registered',
+            'entity_type' => FormerRebel::class,
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_registration_page_is_a_guided_review_workflow(): void
+    {
+        $this->actingAs($this->mblrc)
+            ->get(route('mblrc.fr.create'))
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertSee('Register FR/FVE Beneficiary')
+            ->assertSee('Secure Registration')
+            ->assertSee('Personal Information')
+            ->assertSee('Address Information')
+            ->assertSee('Background Information')
+            ->assertSee('Review Registration')
+            ->assertSee('Save Draft')
+            ->assertSee('Review & Continue', false)
+            ->assertSee('Confirm & Register', false)
+            ->assertSee('data-calculated-age', false)
+            ->assertSee('data-review="full_name"', false);
+    }
+
+    public function test_registration_draft_is_encrypted_scoped_and_removed_after_registration(): void
+    {
+        $otherMblrc = User::factory()->role('mblrc')->create();
+        $draftPayload = [
+            'firstname' => 'Sensitive Draft Firstname',
+            'lastname' => 'Sensitive Draft Lastname',
+            'municipality_id' => $this->municipality->id,
+            'barangay_id' => $this->barangay->id,
+            'autosave' => false,
+        ];
+
+        $this->actingAs($this->mblrc)
+            ->postJson(route('mblrc.fr.draft.store'), $draftPayload)
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertJsonPath('message', 'Draft saved securely.');
+
+        $draft = FormerRebelRegistrationDraft::query()->where('user_id', $this->mblrc->id)->firstOrFail();
+        $this->assertSame('Sensitive Draft Firstname', $draft->payload['firstname']);
+        $this->assertStringNotContainsString(
+            'Sensitive Draft Firstname',
+            DB::table('former_rebel_registration_drafts')->where('id', $draft->id)->value('payload')
+        );
+        $this->actingAs($otherMblrc)
+            ->get(route('mblrc.fr.create'))
+            ->assertOk()
+            ->assertDontSee('Sensitive Draft Firstname');
+        $this->actingAs($this->mblrc)
+            ->get(route('mblrc.fr.create'))
+            ->assertOk()
+            ->assertSee('Sensitive Draft Firstname');
+
+        $this->actingAs($this->mblrc)
+            ->post(route('mblrc.fr.store'), $this->validProfile())
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('former_rebel_registration_drafts', ['user_id' => $this->mblrc->id]);
+    }
+
+    public function test_registration_requires_review_critical_fields_on_the_server(): void
+    {
+        $this->actingAs($this->mblrc)
+            ->post(route('mblrc.fr.store'), [
+                'firstname' => 'Incomplete',
+                'lastname' => 'Registration',
+                'municipality_id' => $this->municipality->id,
+                'barangay_id' => $this->barangay->id,
+            ])
+            ->assertSessionHasErrors([
+                'birthdate', 'contact_num', 'residential_address', 'surrender_date',
+            ]);
+
+        $this->assertDatabaseCount('former_rebels', 0);
     }
 
     public function test_barangay_must_belong_to_selected_municipality(): void
@@ -113,13 +205,33 @@ class FormerRebelWorkflowTest extends TestCase
                 'reintegration_status' => 'On-going',
                 'reintegration_date' => null,
             ])
-            ->assertOk();
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'The FR/FVE program status was updated successfully.',
+            ]);
 
         $this->assertDatabaseHas('fr_program_statuses', [
             'former_rebel_id' => $formerRebel->id,
             'reintegration_status' => 'On-going',
             'reintegration_date' => null,
         ]);
+    }
+
+    public function test_program_status_editor_has_confirmation_and_success_modals(): void
+    {
+        $formerRebel = $this->createFormerRebel();
+
+        $this->actingAs($this->mblrc)
+            ->get(route('mblrc.fr.show', $formerRebel))
+            ->assertOk()
+            ->assertSee('id="programStatusConfirmModal"', false)
+            ->assertSee('Confirm status update')
+            ->assertSee('id="programStatusSuccessModal"', false)
+            ->assertSee('Status updated successfully')
+            ->assertSee('data-program-confirm-save', false)
+            ->assertSee('data-program-success-close', false)
+            ->assertSee('program-status-modal-open', false);
     }
 
     public function test_readding_a_skill_updates_its_proficiency_without_duplication(): void
@@ -243,6 +355,8 @@ class FormerRebelWorkflowTest extends TestCase
         $this->actingAs($this->mblrc)
             ->get(route('mblrc.fr.index'))
             ->assertOk()
+            ->assertSee('module-title-icon', false)
+            ->assertSee('mdi-account-group-outline', false)
             ->assertSee('id="deleteConfirmationModal"', false)
             ->assertSee('data-delete-confirm', false)
             ->assertSee('data-delete-acknowledgment', false)
@@ -267,8 +381,12 @@ class FormerRebelWorkflowTest extends TestCase
         return array_merge([
             'firstname' => 'Juan',
             'lastname' => 'Test',
+            'birthdate' => '1990-01-15',
+            'contact_num' => '09171234567',
             'municipality_id' => $this->municipality->id,
             'barangay_id' => $this->barangay->id,
+            'residential_address' => 'Synthetic Residential Address',
+            'surrender_date' => '2025-01-15',
             'status' => 'Active',
         ], $overrides);
     }

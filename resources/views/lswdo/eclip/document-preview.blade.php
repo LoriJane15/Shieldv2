@@ -44,7 +44,7 @@
                 <div class="preview-heading">
                     <span class="preview-file-icon"><i class="mdi {{ str_starts_with($mimeType, 'image/') ? 'mdi-file-image-outline' : 'mdi-file-pdf-box' }}"></i></span>
                     <div>
-                        <p class="preview-kicker">Secure document · {{ $case->case_number }}</p>
+                        <p class="preview-kicker">Secure Document Preview · {{ $case->case_number }}</p>
                         <h2 id="preview-title" class="preview-title">{{ $title }}</h2>
                         <p class="preview-filename">{{ $filename }}</p>
                     </div>

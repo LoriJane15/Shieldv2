@@ -111,14 +111,16 @@
     <a href="{{ route('lswdo.eclip.show', $case) }}" class="services-back"><i class="mdi mdi-arrow-left" aria-hidden="true"></i> Back to eligibility review</a>
 
     <section class="services-hero mb-3" aria-labelledby="services-title">
-        <div class="position-relative" style="z-index: 1;">
-            <div class="services-eyebrow">E-CLIP Case {{ $case->case_number }}</div>
+        <div class="shield-hero-primary position-relative" style="z-index: 1;">
+            <span class="shield-title-icon"><i class="mdi mdi-heart-pulse" aria-hidden="true"></i></span>
+            <div><div class="services-eyebrow">E-CLIP Case {{ $case->case_number }}</div>
             <h2 id="services-title">Basic Services Monitoring</h2>
             <div class="case-meta">
                 <div class="case-meta-item"><i class="mdi mdi-account-key-outline" aria-hidden="true"></i><span><span class="case-meta-label">Beneficiary</span><span class="case-meta-value">{{ $case->formerRebel->classified_id }}</span></span></div>
                 <div class="case-meta-item"><i class="mdi mdi-folder-check-outline" aria-hidden="true"></i><span><span class="case-meta-label">Recorded Services</span><span class="case-meta-value">{{ $services->count() }}</span></span></div>
                 <div class="case-meta-item"><i class="mdi mdi-heart-pulse" aria-hidden="true"></i><span><span class="case-meta-label">Overall Service Status</span><span class="case-meta-value">{{ $services->isEmpty() ? 'Not started' : ($activeCount === 0 ? 'All services resolved' : $activeCount.' active') }}</span></span></div>
                 @if($lastUpdated)<div class="case-meta-item"><i class="mdi mdi-update" aria-hidden="true"></i><span><span class="case-meta-label">Last Updated</span><span class="case-meta-value">{{ $lastUpdated->format('M d, Y · g:i A') }}</span></span></div>@endif
+            </div>
             </div>
         </div>
     </section>

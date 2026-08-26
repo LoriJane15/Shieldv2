@@ -19,21 +19,15 @@ class EclipCaseController extends Controller
 {
     public function index(IndexEligibilityCasesRequest $request): View
     {
-        $queueStatuses = [
-            EclipCaseStatus::SubmittedForEligibility,
-            EclipCaseStatus::EligibilityReviewInProgress,
-            EclipCaseStatus::Eligible,
-            EclipCaseStatus::Ineligible,
-            EclipCaseStatus::DocumentProcessing,
-            EclipCaseStatus::DocumentsIncomplete,
-            EclipCaseStatus::DocumentsCertified,
-        ];
+        $queueStatuses = collect(EclipCaseStatus::cases())
+            ->reject(fn (EclipCaseStatus $status) => $status === EclipCaseStatus::Draft)
+            ->values();
 
         $baseQuery = EclipCase::query()
             ->whereHas('participantAssignments', fn ($query) => $query
                 ->where('user_id', $request->user()->id)
                 ->where('is_active', true))
-            ->whereIn('status', array_map(fn (EclipCaseStatus $status) => $status->value, $queueStatuses));
+            ->whereIn('status', $queueStatuses->map(fn (EclipCaseStatus $status) => $status->value));
 
         $summary = [
             'total' => (clone $baseQuery)->count(),
@@ -91,8 +85,11 @@ class EclipCaseController extends Controller
         $eclipCase->load([
             'formerRebel.municipality', 'eligibilityReviews.reviewer', 'statusHistories.user',
             'documents.requirement', 'documents.versions.uploader', 'documents.latestVersion', 'documents.reviews.reviewer',
-            'workflowActivities.histories.user',
+            'workflowActivities.histories.user', 'workflowActivities.documents.uploader',
             'authenticationRequest.assignee',
+            'feaDocuments.uploader',
+            'interventions.histories.user',
+            'participantAssignments.user',
         ]);
 
         return view('lswdo.eclip.show', [
@@ -100,6 +97,7 @@ class EclipCaseController extends Controller
             'requirements' => EclipDocumentRequirement::query()->where('is_active', true)->orderBy('sort_order')->get(),
             'workflow' => $workflowPresentation->forCase($eclipCase, $request->user()),
             'japicUsers' => User::query()->where('role', 'japic')->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'feaProcessors' => User::query()->whereIn('role', ['pnp', 'afp'])->where('is_active', true)->orderBy('name')->get(['id', 'name', 'role']),
         ]);
     }
 

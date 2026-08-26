@@ -33,10 +33,18 @@ class EclipWorkflowPresentationService
 
             return [$activity->id => [
                 'responsible' => $this->roleLabels($activity->responsible_roles ?? []),
+                'responsible_people' => $case->participantAssignments
+                    ->filter(fn ($assignment) => $assignment->is_active && in_array($this->officialRole($assignment->user?->role), $activity->responsible_roles ?? [], true))
+                    ->map(fn ($assignment) => $assignment->user->name)
+                    ->unique()
+                    ->values()
+                    ->all(),
                 'dependencies' => $dependencies,
                 'blocking_dependencies' => $dependencies->where('complete', false)->values(),
                 'is_actionable' => in_array($activity->status, $actionableStatuses, true),
                 'can_update' => $user->can('updateWorkflowActivity', $activity),
+                'deadline' => $this->deadline($activity),
+                'uploaded_document_types' => $activity->documents->pluck('document_type')->unique()->values(),
             ]];
         });
 
@@ -96,5 +104,28 @@ class EclipWorkflowPresentationService
             ->map(fn (string $role) => config("shield.roles.{$role}.label", str($role)->replace('_', ' ')->title()->toString()))
             ->values()
             ->all();
+    }
+
+    private function officialRole(?string $role): ?string
+    {
+        return match ($role) {
+            'eclip_assessor' => 'lswdo',
+            'dilg_reviewer' => 'dilg_provincial_focal',
+            'eclip_funding_officer' => 'dilg_fms',
+            default => $role,
+        };
+    }
+
+    private function deadline(EclipWorkflowActivity $activity): array
+    {
+        if (! $activity->due_at || in_array($activity->status, ['completed', 'not_applicable'], true)) {
+            return ['state' => 'none', 'label' => $activity->completed_at ? 'Completed '.$activity->completed_at->format('M d, Y') : 'No active deadline'];
+        }
+
+        if ($activity->due_at->isPast()) {
+            return ['state' => 'overdue', 'label' => $activity->due_at->diffForHumans(null, true).' overdue'];
+        }
+
+        return ['state' => 'active', 'label' => $activity->due_at->diffForHumans(['parts' => 2]).' remaining'];
     }
 }

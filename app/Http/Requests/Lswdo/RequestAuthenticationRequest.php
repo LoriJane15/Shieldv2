@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Lswdo;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RequestAuthenticationRequest extends FormRequest
 {
@@ -14,6 +15,14 @@ class RequestAuthenticationRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['assigned_to' => ['required', 'integer', 'exists:users,id']];
+        return [
+            'assigned_to' => [
+                'required',
+                'integer',
+                Rule::exists('users', 'id')->where(fn ($query) => $query
+                    ->where('role', 'japic')
+                    ->where('is_active', true)),
+            ],
+        ];
     }
 }

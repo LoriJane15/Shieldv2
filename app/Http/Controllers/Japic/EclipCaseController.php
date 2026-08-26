@@ -10,11 +10,12 @@ use App\Models\EclipDocument;
 use App\Models\EclipDocumentRequirement;
 use App\Services\EclipDocumentService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EclipCaseController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $cases = EclipCase::query()
             ->whereIn('status', [
@@ -22,6 +23,10 @@ class EclipCaseController extends Controller
                 EclipCaseStatus::DocumentsIncomplete->value,
                 EclipCaseStatus::DocumentsCertified->value,
             ])
+            ->whereHas('participantAssignments', fn ($query) => $query
+                ->where('user_id', $request->user()->id)
+                ->where('participant_role', 'authentication_reviewer')
+                ->where('is_active', true))
             ->with('formerRebel')
             ->latest('updated_at')
             ->paginate(15);

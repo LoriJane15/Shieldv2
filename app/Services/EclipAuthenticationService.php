@@ -30,6 +30,7 @@ class EclipAuthenticationService
                 return $existing;
             }
 
+            $this->officialWorkflow->synchronizeEligibleIntake($lockedCase, $actor, $ipAddress);
             $endorsement = $lockedCase->workflowActivities()->where('step_code', '3B')->firstOrFail();
             $this->officialWorkflow->update($endorsement, $actor, 'completed', 'Endorsed for JAPIC authentication.', [], $ipAddress);
 

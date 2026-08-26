@@ -13,7 +13,7 @@
 @section('content')
 <div class="eclip-cases">
     <section class="cases-hero mb-4" aria-labelledby="cases-title">
-        <div class="hero-content"><div class="hero-eyebrow mb-1">MBLRC case workspace</div><h2 id="cases-title" class="mb-1">Related E-CLIP Cases</h2><p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Cases created through your completed integration enrollments and LSWDO referrals.</p></div>
+        <div class="hero-title-main"><span class="module-title-icon"><i class="mdi mdi-folder-outline" aria-hidden="true"></i></span><div class="hero-content"><div class="hero-eyebrow mb-1">MBLRC case workspace</div><h2 id="cases-title" class="mb-1">Related E-CLIP Cases</h2><p class="mb-0">Cases created through your completed integration enrollments and LSWDO referrals.</p></div></div>
         <a href="{{ route('mblrc.enrollments.index') }}" class="create-button"><i class="mdi mdi-clipboard-account-outline"></i>Integration Enrollments</a>
     </section>
 

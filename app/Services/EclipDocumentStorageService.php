@@ -22,6 +22,16 @@ class EclipDocumentStorageService
         return $path;
     }
 
+    public function storeFea(UploadedFile $file, int $caseId): string
+    {
+        $extension = strtolower($file->extension() ?: 'bin');
+        $path = $file->storeAs("eclip/{$caseId}/fea", Str::uuid().'.'.$extension, 'local');
+
+        throw_if($path === false, \RuntimeException::class, 'The FEA document could not be stored.');
+
+        return $path;
+    }
+
     public function preview(string $path, string $displayName, string $mimeType): StreamedResponse
     {
         abort_unless($this->isManagedPath($path) && Storage::disk('local')->exists($path), 404);
@@ -34,6 +44,18 @@ class EclipDocumentStorageService
             'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff',
         ], 'inline');
+    }
+
+    public function download(string $path, string $displayName, string $mimeType = 'application/octet-stream'): StreamedResponse
+    {
+        abort_unless($this->isManagedPath($path) && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->download($path, basename($displayName), [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'no-store, private',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function delete(?string $path): void

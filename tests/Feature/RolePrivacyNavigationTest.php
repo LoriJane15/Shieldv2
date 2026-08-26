@@ -59,8 +59,11 @@ class RolePrivacyNavigationTest extends TestCase
         $expectations = [
             'super_admin' => ['System Analytics', 'General Audit Logs'],
             'admin' => ['SHIELD Monitoring', 'Cluster Analytics', 'Cluster Monitoring', 'Contribution Monitoring'],
-            'mblrc' => ['FR/FVE Registry', 'Integration Monitoring'],
+            'mblrc' => ['FR/FVE Registry', 'Integration Monitoring', 'E-CLIP Cases'],
             'lswdo' => ['MBLRC Referrals', 'E-CLIP Cases'],
+            'japic' => ['Authentication Queue', 'E-CLIP Documents'],
+            'pnp' => ['Dashboard', 'FEA Processing'],
+            'local_eclip_committee' => ['Assistance Release', 'Analytics'],
         ];
 
         foreach ($expectations as $role => $labels) {
@@ -71,6 +74,56 @@ class RolePrivacyNavigationTest extends TestCase
                 $response->assertSee($label);
             }
         }
+    }
+
+    public function test_shield_workspace_shell_is_shared_by_operational_roles(): void
+    {
+        $mblrc = User::factory()->role('mblrc')->create();
+
+        $this->actingAs($mblrc)->get(route('mblrc.dashboard'))
+            ->assertOk()
+            ->assertSee('assets/css/mblrc-workspace.css', false)
+            ->assertSee('mblrc-interface', false)
+            ->assertSee('mblrc-navbar-search', false)
+            ->assertSee('Toggle sidebar navigation')
+            ->assertSee('Integration Monitoring')
+            ->assertDontSee('icon-bell menu-icon', false)
+            ->assertDontSee('Secure workspace')
+            ->assertDontSee('MBLRC Workspace');
+
+        foreach ([
+            'lswdo' => ['route' => 'lswdo.eclip.index', 'module_route' => 'lswdo.referrals.index', 'heading' => 'Eligibility Review Queue', 'section' => 'Case Management'],
+            'japic' => ['route' => 'japic.eclip.index', 'module_route' => 'japic.authentication.index', 'heading' => 'Document Review Queue', 'section' => 'Document Review'],
+            'pnp' => ['route' => 'pnp.dashboard', 'module_route' => 'pnp.eclip-fea.index', 'heading' => 'PNP E-CLIP Coordination', 'section' => 'Case Processing'],
+            'local_eclip_committee' => ['route' => 'local_eclip.cases.index', 'module_route' => 'local_eclip.cases.index', 'heading' => 'Assistance Release Queue', 'section' => 'Case Management'],
+        ] as $role => $expectation) {
+            $user = User::factory()->role($role)->create();
+
+            $this->actingAs($user)->get(route($expectation['route']))
+                ->assertOk()
+                ->assertSee('assets/css/mblrc-workspace.css', false)
+                ->assertSee('mblrc-interface shield-role-interface shield-role-'.$role, false)
+                ->assertSee('Toggle sidebar navigation')
+                ->assertSee($expectation['heading'])
+                ->assertSee($expectation['section'])
+                ->assertDontSee('System Active')
+                ->assertDontSee('mblrc-navbar-search', false);
+
+            $this->actingAs($user)->get(route($expectation['module_route']))
+                ->assertOk()
+                ->assertSee('shield-module-header', false)
+                ->assertSee('shield-module-icon', false)
+                ->assertDontSee('System Active');
+        }
+
+        $admin = User::factory()->role('admin')->create();
+
+        $this->actingAs($admin)->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertDontSee('assets/css/mblrc-workspace.css', false)
+            ->assertDontSee('mblrc-interface', false)
+            ->assertDontSee('shield-role-interface', false)
+            ->assertDontSee('mblrc-navbar-search', false);
     }
 
     public function test_removed_operational_modules_are_not_in_role_navigation(): void

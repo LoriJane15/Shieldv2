@@ -44,7 +44,7 @@ class DevelopmentSeederTest extends TestCase
         $this->assertSame(3, RcspBarangay::query()->count());
         $this->assertSame(4, Implementation::query()->count());
         $this->assertGreaterThan(0, AgencyImplanResponse::query()->count());
-        $this->assertSame(3, FormerRebel::query()->count());
+        $this->assertSame(13, FormerRebel::query()->count());
         $this->assertSame(3, MapBarangay::query()->count());
 
         $this->assertSame(
@@ -65,7 +65,7 @@ class DevelopmentSeederTest extends TestCase
         $this->assertSame(6, RcspPhase::query()->count());
         $this->assertSame(3, RcspBarangay::query()->count());
         $this->assertSame(4, Implementation::query()->count());
-        $this->assertSame(3, FormerRebel::query()->count());
+        $this->assertSame(13, FormerRebel::query()->count());
         $this->assertSame(3, MapBarangay::query()->count());
     }
 }

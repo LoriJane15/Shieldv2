@@ -16,10 +16,11 @@
 @endphp
 <div class="mblrc-case">
     <a href="{{ route('mblrc.eclip.index') }}" class="case-back"><i class="mdi mdi-arrow-left"></i>Back to E-CLIP cases</a>
+    @can('viewWorkflow', $case)<a href="{{ route('eclip.workflow.show', $case) }}" class="btn btn-outline-primary btn-sm float-right"><i class="mdi mdi-timeline-check-outline"></i> Open Full Workflow</a>@endcan
 
     <section class="case-hero mb-4" aria-labelledby="mblrc-case-number">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start position-relative" style="z-index:1">
-            <div><div class="case-eyebrow mb-1">MBLRC case management</div><h2 id="mblrc-case-number" class="mb-3">{{ $case->case_number }}</h2><div class="case-meta"><span><i class="mdi mdi-account-key-outline"></i>{{ $case->formerRebel->classified_id }}</span><span><i class="mdi mdi-map-marker-outline"></i>{{ $case->formerRebel->municipality?->name ?? 'Municipality not assigned' }}</span><span><i class="mdi mdi-account-outline"></i>Created by {{ $case->creator->name }}</span></div></div>
+            <div class="case-title-main"><span class="module-title-icon"><i class="mdi mdi-clipboard-text-outline" aria-hidden="true"></i></span><div><div class="case-eyebrow mb-1">MBLRC case management</div><h2 id="mblrc-case-number" class="mb-3">{{ $case->case_number }}</h2><div class="case-meta"><span><i class="mdi mdi-account-key-outline"></i>{{ $case->formerRebel->classified_id }}</span><span><i class="mdi mdi-map-marker-outline"></i>{{ $case->formerRebel->municipality?->name ?? 'Municipality not assigned' }}</span><span><i class="mdi mdi-account-outline"></i>Created by {{ $case->creator->name }}</span></div></div></div>
             <span class="case-status"><i class="mdi mdi-progress-check mr-1"></i>{{ $case->status->label() }}</span>
         </div>
     </section>

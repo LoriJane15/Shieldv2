@@ -756,6 +756,7 @@
 }
 
 
+
 /* Keep the signed-in user's identity visible beside the top-bar profile image. */
 .navbar .nav-profile .nav-profile-trigger {
   gap: 0.65rem;

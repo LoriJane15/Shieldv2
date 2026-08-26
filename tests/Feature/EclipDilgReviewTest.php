@@ -165,6 +165,13 @@ class EclipDilgReviewTest extends TestCase
             'municipality_id' => $municipality->id, 'created_by' => $mblrc->id,
             'status' => EclipCaseStatus::SubmittedForDilgReview,
         ]);
+        $case->participantAssignments()->create([
+            'user_id' => $assessor->id,
+            'participant_role' => 'case_processor',
+            'assigned_by' => $mblrc->id,
+            'assigned_at' => now(),
+            'is_active' => true,
+        ]);
         $category = EclipAssistanceCategory::query()->create(['code' => 'DILG_TEST', 'name' => 'DILG Test Category', 'is_active' => true]);
         $request = EclipAssistanceRequest::query()->create([
             'eclip_case_id' => $case->id, 'created_by' => $assessor->id,

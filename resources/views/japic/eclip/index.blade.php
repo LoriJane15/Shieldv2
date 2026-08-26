@@ -12,10 +12,13 @@
 @section('content')
 <div class="japic-queue">
     <section class="queue-hero mb-4" aria-labelledby="queue-title">
-        <div class="position-relative" style="z-index:1">
-            <div class="queue-eyebrow mb-1">Secure document workspace</div>
-            <h2 id="queue-title" class="mb-1">Document Review Queue</h2>
-            <p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Authenticate, validate, and certify submitted E-CLIP documents.</p>
+        <div class="shield-hero-primary position-relative" style="z-index:1">
+            <span class="shield-title-icon"><i class="mdi mdi-file-document-box-check-outline" aria-hidden="true"></i></span>
+            <div>
+                <div class="queue-eyebrow mb-1">Secure document workspace</div>
+                <h2 id="queue-title" class="mb-1">Document Review Queue</h2>
+                <p class="mb-0"><i class="mdi mdi-shield-check mr-1"></i>Authenticate, validate, and certify submitted E-CLIP documents.</p>
+            </div>
         </div>
         <div class="queue-summary"><i class="mdi mdi-clipboard-text-outline"></i><div><small>Cases on this page</small><strong>{{ $cases->count() }}</strong></div></div>
     </section>

@@ -111,6 +111,26 @@ class EclipCase extends Model
         return $this->hasMany(EclipBasicService::class);
     }
 
+    public function feaDocuments(): HasMany
+    {
+        return $this->hasMany(EclipFeaDocument::class);
+    }
+
+    public function interventions(): HasMany
+    {
+        return $this->hasMany(EclipIntervention::class);
+    }
+
+    public function liquidationRequirements(): HasMany
+    {
+        return $this->hasMany(EclipLiquidationRequirement::class);
+    }
+
+    public function regionalDisbursementReports(): HasMany
+    {
+        return $this->hasMany(EclipRegionalDisbursementReport::class);
+    }
+
     public function workflowActivities(): HasMany
     {
         return $this->hasMany(EclipWorkflowActivity::class)->orderBy('id');

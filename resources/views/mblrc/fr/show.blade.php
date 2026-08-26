@@ -65,6 +65,27 @@
     #frProfile .g-3 > [class*="col-"] { padding-left: .5rem; padding-right: .5rem; }
     #frProfile .section-head > .d-flex > i,
     #frProfile .section-head > i { flex: 0 0 auto; margin-right: .65rem !important; }
+    body.program-status-modal-open,
+    body.program-status-modal-open .content-wrapper,
+    body.program-status-modal-open .sidebar .nav { overflow: hidden !important; }
+    .program-status-modal { overflow: hidden !important; }
+    .program-status-modal .modal-dialog.modal-dialog-centered { width: min(100%, 532px); min-height: 100%; margin: 0 auto; padding: 1rem; }
+    .program-status-modal .modal-content { border: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 70px rgba(29, 0, 62, .24); }
+    .program-status-modal .modal-body { padding: 2rem; text-align: center; }
+    .program-status-modal-icon { width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(61, 0, 117, .1); color: #3D0075; font-size: 2rem; }
+    .program-status-modal-icon.success { background: rgba(25, 135, 84, .12); color: #198754; }
+    .program-status-modal-title { margin-bottom: .5rem; color: #2d1746; font-size: 1.35rem; font-weight: 700; }
+    .program-status-modal-text { margin-bottom: 1.25rem; color: #6c6872; line-height: 1.6; }
+    .program-status-summary { margin: 0; padding: 1rem; border: 1px solid #ece7f2; border-radius: 10px; background: #faf8fc; text-align: left; }
+    .program-status-summary > div { display: flex; justify-content: space-between; gap: 1rem; }
+    .program-status-summary > div + div { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #ece7f2; }
+    .program-status-summary dt { color: #77717d; font-size: .8rem; font-weight: 500; }
+    .program-status-summary dd { margin: 0; color: #2d1746; font-weight: 700; text-align: right; }
+    .program-status-modal .modal-footer { justify-content: center; gap: .5rem; border-top: 0; padding: 0 2rem 2rem; }
+    .program-status-modal .modal-footer .btn { min-width: 120px; border-radius: 8px; font-weight: 600; }
+    .program-status-confirm-button { border-color: #3D0075; background: #3D0075; color: #fff; }
+    .program-status-confirm-button:hover,
+    .program-status-confirm-button:focus { border-color: #2d0057; background: #2d0057; color: #fff; }
 </style>
 @endpush
 
@@ -204,7 +225,7 @@
                         <form data-program-form class="row g-2 align-items-end">
                             <div class="col-md-5">
                                 <label class="form-label">Reintegration Status</label>
-                                <select name="reintegration_status" class="form-select">
+                                <select name="reintegration_status" class="form-select" required>
                                     @foreach (['Not-Started', 'On-going', 'Completed'] as $s)
                                         <option value="{{ $s }}" @selected($ps?->reintegration_status === $s)>{{ $s }}</option>
                                     @endforeach
@@ -215,7 +236,7 @@
                                 <input name="reintegration_date" type="date" value="{{ $ps?->reintegration_date?->toDateString() }}" class="form-control">
                             </div>
                             <div class="col-md-2">
-                                <button class="btn btn-primary w-100">Update</button>
+                                <button type="submit" class="btn btn-primary w-100">Update</button>
                             </div>
                         </form>
                     </div>
@@ -399,6 +420,43 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade program-status-modal" id="programStatusConfirmModal" tabindex="-1" aria-labelledby="programStatusConfirmTitle" aria-describedby="programStatusConfirmText" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="program-status-modal-icon" aria-hidden="true"><i class="mdi mdi-alert-circle-outline"></i></div>
+                <h4 class="program-status-modal-title" id="programStatusConfirmTitle">Confirm status update</h4>
+                <p class="program-status-modal-text" id="programStatusConfirmText">Review the new 3-month program status before saving this official record.</p>
+                <dl class="program-status-summary">
+                    <div><dt>Reintegration status</dt><dd data-program-confirm-status>—</dd></div>
+                    <div><dt>Date of reintegration</dt><dd data-program-confirm-date>—</dd></div>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn program-status-confirm-button" data-program-confirm-save>
+                    <span data-program-confirm-label>Confirm update</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade program-status-modal" id="programStatusSuccessModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="programStatusSuccessTitle" aria-describedby="programStatusSuccessText" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="program-status-modal-icon success" aria-hidden="true"><i class="mdi mdi-check-circle-outline"></i></div>
+                <h4 class="program-status-modal-title" id="programStatusSuccessTitle">Status updated successfully</h4>
+                <p class="program-status-modal-text mb-0" id="programStatusSuccessText" data-program-success-message>The FR/FVE program status has been saved.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-program-success-close>View updated profile</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -434,16 +492,100 @@
         return data;
     }
 
-    // Program status
-    root.querySelector('[data-program-form]')?.addEventListener('submit', async (e) => {
+    // Program status confirmation and success feedback
+    const programForm = root.querySelector('[data-program-form]');
+    const programConfirmElement = document.getElementById('programStatusConfirmModal');
+    const programSuccessElement = document.getElementById('programStatusSuccessModal');
+    const programConfirmButton = document.querySelector('[data-program-confirm-save]');
+    const programConfirmLabel = document.querySelector('[data-program-confirm-label]');
+    const programConfirmModal = programConfirmElement && window.bootstrap
+        ? new bootstrap.Modal(programConfirmElement)
+        : null;
+    const programSuccessModal = programSuccessElement && window.bootstrap
+        ? new bootstrap.Modal(programSuccessElement)
+        : null;
+    let pendingProgramStatus = null;
+
+    [programConfirmElement, programSuccessElement].filter(Boolean).forEach((modalElement) => {
+        modalElement.addEventListener('show.bs.modal', () => {
+            document.body.classList.add('program-status-modal-open');
+        });
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            requestAnimationFrame(() => {
+                const modalIsOpen = programConfirmElement?.classList.contains('show')
+                    || programSuccessElement?.classList.contains('show');
+                document.body.classList.toggle('program-status-modal-open', modalIsOpen);
+            });
+        });
+    });
+
+    function formatProgramDate(value) {
+        if (!value) return 'Not set';
+
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    }
+
+    async function saveProgramStatus() {
+        if (!pendingProgramStatus || !programConfirmButton) return;
+
+        programConfirmButton.disabled = true;
+        programConfirmLabel.textContent = 'Saving...';
+
+        try {
+            const response = await postJson(root.dataset.programStatus, pendingProgramStatus, 'PUT');
+            if (!response.success) return;
+
+            const showSuccess = () => {
+                const successMessage = document.querySelector('[data-program-success-message]');
+                if (successMessage && response.message) successMessage.textContent = response.message;
+
+                if (programSuccessModal) {
+                    programSuccessModal.show();
+                } else {
+                    alert(response.message || 'The FR/FVE program status was updated successfully.');
+                    location.reload();
+                }
+            };
+
+            if (programConfirmModal) {
+                programConfirmElement.addEventListener('hidden.bs.modal', showSuccess, { once: true });
+                programConfirmModal.hide();
+            } else {
+                showSuccess();
+            }
+        } finally {
+            programConfirmButton.disabled = false;
+            programConfirmLabel.textContent = 'Confirm update';
+        }
+    }
+
+    programForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
-        const r = await postJson(root.dataset.programStatus, {
+        if (!f.reportValidity()) return;
+
+        pendingProgramStatus = {
             reintegration_status: f.reintegration_status.value,
             reintegration_date: f.reintegration_date.value || null,
-        }, 'PUT');
-        if (r.success) location.reload();
+        };
+
+        document.querySelector('[data-program-confirm-status]').textContent = pendingProgramStatus.reintegration_status;
+        document.querySelector('[data-program-confirm-date]').textContent = formatProgramDate(pendingProgramStatus.reintegration_date);
+
+        if (programConfirmModal) {
+            programConfirmModal.show();
+        } else if (confirm('Save this 3-month program status update?')) {
+            await saveProgramStatus();
+        }
     });
+
+    programConfirmButton?.addEventListener('click', saveProgramStatus);
+    document.querySelector('[data-program-success-close]')?.addEventListener('click', () => location.reload());
 
     initLocationMap(root);
     initSkills(root);

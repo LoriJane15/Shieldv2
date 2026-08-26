@@ -32,4 +32,9 @@ class EclipWorkflowActivity extends Model
     {
         return $this->hasMany(EclipWorkflowActivityHistory::class, 'activity_id');
     }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(EclipWorkflowDocument::class, 'activity_id');
+    }
 }
