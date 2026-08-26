@@ -9,9 +9,6 @@
     .japic-hero::after { background:rgba(255,255,255,.08); border-radius:50%; content:''; height:220px; position:absolute; right:-55px; top:-110px; width:220px; }
     .japic-hero h2 { color:#fff; font-size:1.5rem; font-weight:750; }
     .japic-hero p { font-size:.82rem; opacity:.88; }
-    .japic-actions { display:flex; gap:.55rem; position:relative; z-index:1; }
-    .japic-actions .btn { border-radius:8px; font-size:.74rem; font-weight:700; }
-    .japic-actions .btn-outline-light:hover { color:#2f6fed; }
     .japic-summary { display:grid; gap:.8rem; grid-template-columns:repeat(4,1fr); margin:1rem 0; }
     .japic-stat { border:1px solid var(--japic-border); border-radius:12px; box-shadow:0 4px 14px rgba(23,43,77,.04); }
     .japic-stat .card-body { align-items:center; display:flex; gap:.8rem; padding:1rem; }
@@ -27,14 +24,14 @@
     .request-table td { border-color:#edf1f6; color:#52616f; font-size:.76rem; vertical-align:middle; }
     .request-status { background:#eaf1ff; border-radius:999px; color:#2f6fed; display:inline-flex; font-size:.64rem; font-weight:700; padding:.3rem .55rem; }
     .empty-state { color:#8492a6; font-size:.75rem; padding:2.5rem 1rem; text-align:center; }
-    @media(max-width:991.98px){.japic-summary{grid-template-columns:repeat(2,1fr)}.japic-hero>div{align-items:flex-start!important;flex-direction:column}.japic-actions{margin-top:1rem}}
-    @media(max-width:575.98px){.japic-summary{grid-template-columns:1fr}.japic-actions{flex-direction:column;width:100%}.japic-actions .btn{width:100%}}
+    @media(max-width:991.98px){.japic-summary{grid-template-columns:repeat(2,1fr)}.japic-hero>div{align-items:flex-start!important;flex-direction:column}}
+    @media(max-width:575.98px){.japic-summary{grid-template-columns:1fr}}
 </style>
 @endpush
 
 @section('content')
 <div class="japic-dashboard">
-    <header class="japic-hero"><div class="d-flex align-items-center justify-content-between position-relative" style="z-index:1"><div><div class="shield-module-eyebrow">Official Workflow · Step 4A</div><h2 class="mb-1">JAPIC Authentication and Certification</h2><p class="mb-0"><i class="mdi mdi-shield-check-outline mr-1" aria-hidden="true"></i>Start assigned reviews, record explicit decisions, and maintain certification references within the official deadline.</p></div><div class="japic-actions"><a href="{{ route('japic.authentication.index') }}" class="btn btn-light">Authentication Queue</a><a href="{{ route('japic.eclip.index') }}" class="btn btn-outline-light">Document Review</a></div></div></header>
+    <header class="japic-hero"><div class="d-flex align-items-center position-relative" style="z-index:1"><div><div class="shield-module-eyebrow">Official Workflow · Step 4A</div><h2 class="mb-1">JAPIC Authentication and Certification</h2><p class="mb-0"><i class="mdi mdi-shield-check-outline mr-1" aria-hidden="true"></i>Start assigned reviews, record explicit decisions, and maintain certification references within the official deadline.</p></div></div></header>
 
     <section class="japic-summary" aria-label="JAPIC assigned workload summary">
         @foreach([

@@ -8,7 +8,7 @@
 
 <section class="card review-card mb-4" aria-labelledby="reintegration-plan-title">
     <div class="card-body">
-        <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-clipboard-list-outline"></i></div><div><h3 id="reintegration-plan-title" class="section-title">Reintegration Plan Items</h3><p class="section-subtitle">Step 10 needs, assistance commitments, responsible agencies, target dates, and final status.</p></div></div>
+        <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-clipboard-text-outline" aria-hidden="true"></i></div><div><h3 id="reintegration-plan-title" class="section-title">Reintegration Plan Items</h3><p class="section-subtitle">Step 10 needs, assistance commitments, responsible agencies, target dates, and final status.</p></div></div>
         @if($case->hasActiveParticipant(auth()->user(), 'case_processor') && $canAddPlan)
             <details class="sidebar-document-item mt-3" @if($errors->hasAny(['identified_need','proposed_assistance','responsible_agency','form_of_assistance'])) open @endif><summary class="sidebar-document-heading"><strong>Add plan item</strong><i class="mdi mdi-plus-circle-outline"></i></summary>
                 <form method="POST" action="{{ route('lswdo.eclip.reintegration-plan-items.store', $case) }}" class="mt-3">@csrf
@@ -31,7 +31,7 @@
 
 <section class="card review-card mb-4" aria-labelledby="alternate-livelihood-title">
     <div class="card-body">
-        <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-account-switch-outline"></i></div><div><h3 id="alternate-livelihood-title" class="section-title">Alternate Livelihood Beneficiary</h3><p class="section-subtitle">Step 12 applies only when the FR/FVE cannot directly implement the livelihood project.</p></div></div>
+        <div class="sidebar-card-header"><div class="section-icon"><i class="mdi mdi-account-switch" aria-hidden="true"></i></div><div><h3 id="alternate-livelihood-title" class="section-title">Alternate Livelihood Beneficiary</h3><p class="section-subtitle">Step 12 applies only when the FR/FVE cannot directly implement the livelihood project.</p></div></div>
         @if($case->hasActiveParticipant(auth()->user(), 'case_processor') && $canAddAlternate)
             <details class="sidebar-document-item mt-3"><summary class="sidebar-document-heading"><strong>Record identified beneficiary</strong><i class="mdi mdi-plus-circle-outline"></i></summary>
                 <form method="POST" action="{{ route('lswdo.eclip.livelihood-assistances.store', $case) }}" class="mt-3">@csrf

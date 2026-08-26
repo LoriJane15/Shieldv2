@@ -82,6 +82,7 @@ class RoleWorkspaceDashboardTest extends TestCase
             ->get(route('japic.dashboard'))
             ->assertOk()
             ->assertSeeText('Official Workflow · Step 4A')
+            ->assertDontSee('class="japic-actions"', false)
             ->assertSeeText('FR-#JAPIC-ASSIGNED')
             ->assertDontSeeText('FR-#JAPIC-OUTSIDE')
             ->assertViewHas('summary', [

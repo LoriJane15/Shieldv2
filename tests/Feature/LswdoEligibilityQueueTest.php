@@ -95,6 +95,8 @@ class LswdoEligibilityQueueTest extends TestCase
             ->assertDontSeeText('Supporting Documents')
             ->assertSeeText('Agency Service Referrals')
             ->assertSeeText('Intervention Outcomes')
+            ->assertSee('mdi mdi-clipboard-text-outline', false)
+            ->assertSee('mdi mdi-account-switch', false)
             ->assertSeeText('Required documents');
     }
 
