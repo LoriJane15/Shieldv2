@@ -18,4 +18,9 @@ class Municipality extends Model
     {
         return $this->hasMany(EclipCase::class);
     }
+
+    public function ib39SurfacedFormerRebels(): HasMany
+    {
+        return $this->hasMany(Ib39SurfacedFormerRebel::class);
+    }
 }

@@ -128,6 +128,11 @@ class User extends Authenticatable
         return $this->hasMany(LswdoReferral::class, 'assigned_to');
     }
 
+    public function createdIb39SurfacedFormerRebels(): HasMany
+    {
+        return $this->hasMany(Ib39SurfacedFormerRebel::class, 'created_by');
+    }
+
     public function eclipEligibilityReviews(): HasMany
     {
         return $this->hasMany(EclipEligibilityReview::class, 'reviewed_by');

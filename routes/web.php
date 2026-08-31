@@ -266,6 +266,9 @@ Route::middleware(['auth', 'role:local_eclip_committee'])->prefix('local-eclip')
 
 Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->group(function () {
     Route::get('/', [Ib39\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'index'])->name('fr-profiles.index');
+    Route::get('/fr-profiles/create', [Ib39\SurfacedFormerRebelController::class, 'create'])->name('fr-profiles.create');
+    Route::post('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'store'])->name('fr-profiles.store');
     Route::get('/areas', [Ib39\AreaController::class, 'index'])->name('areas.index');
     Route::put('/areas/{area}', [Ib39\AreaController::class, 'update'])->name('areas.update');
     Route::get('/map', [Ib39\AreaController::class, 'map'])->name('map');
