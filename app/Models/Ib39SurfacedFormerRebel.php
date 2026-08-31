@@ -6,6 +6,7 @@ use App\Enums\Ib39FrCategory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Ib39SurfacedFormerRebel extends Model
@@ -69,5 +70,10 @@ class Ib39SurfacedFormerRebel extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function cdrProcessing(): HasOne
+    {
+        return $this->hasOne(Ib39CdrProcessing::class, 'ib39_surfaced_former_rebel_id');
     }
 }

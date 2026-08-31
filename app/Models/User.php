@@ -133,6 +133,26 @@ class User extends Authenticatable
         return $this->hasMany(Ib39SurfacedFormerRebel::class, 'created_by');
     }
 
+    public function completedIb39CdrProcessings(): HasMany
+    {
+        return $this->hasMany(Ib39CdrProcessing::class, 'completed_by');
+    }
+
+    public function editedIb39CdrForms(): HasMany
+    {
+        return $this->hasMany(Ib39CdrForm::class, 'last_edited_by');
+    }
+
+    public function createdIb39CdrDocumentVersions(): HasMany
+    {
+        return $this->hasMany(Ib39CdrDocumentVersion::class, 'created_by');
+    }
+
+    public function uploadedIb39CdrPhotoVersions(): HasMany
+    {
+        return $this->hasMany(Ib39CdrPhotoVersion::class, 'uploaded_by');
+    }
+
     public function eclipEligibilityReviews(): HasMany
     {
         return $this->hasMany(EclipEligibilityReview::class, 'reviewed_by');
