@@ -25,7 +25,20 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
         $this->assertTrue($authorized->can('view', $record));
         $this->actingAs($authorized)->get(route('ib39.fr-profiles.show', $record))->assertOk();
 
-        foreach (['super_admin', 'admin', 'lgu', 'gov_agency', 'japic', 'pnp', 'afp'] as $role) {
+        $inactive = User::factory()->role('39th_ib')->create(['is_active' => false]);
+        $this->assertFalse($inactive->can('view', $record));
+        $this->actingAs($inactive)
+            ->get(route('ib39.fr-profiles.show', $record))
+            ->assertRedirect(route('login'));
+
+        $roles = [
+            'super_admin', 'admin', 'lgu', 'gov_agency', 'mblrc', 'lswdo', 'japic',
+            'dilg_provincial_focal', 'dilg_regional', 'nboo_eclip_pmo', 'dilg_fms',
+            'local_eclip_committee', 'pnp', 'afp', 'eclip_assessor', 'dilg_reviewer',
+            'eclip_funding_officer',
+        ];
+
+        foreach ($roles as $role) {
             $user = User::factory()->role($role)->create();
             $this->assertFalse($user->can('view', $record));
             $this->actingAs($user)->get(route('ib39.fr-profiles.show', $record))->assertForbidden();
@@ -72,6 +85,9 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             ->assertSee('Not securely linked — unavailable')
             ->assertSeeInOrder(['CDR processing', 'JAPIC processing', 'PSWDO processing', 'Assistance records'])
             ->assertSeeInOrder(['FEA', 'Process Status', 'Not Available', 'Documents', 'Not Available'])
+            ->assertDontSee('href="/documents', false)
+            ->assertDontSee('href="/eclip', false)
+            ->assertDontSee('href="/assistance', false)
             ->assertDontSee('creator-secret@example.test')
             ->assertDontSee('876543210')
             ->assertDontSee('Forwarded')
@@ -148,6 +164,10 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('ib39.fr-profiles.show', $record->getKey()))
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->get(route('ib39.fr-profiles.show', 999999999))
             ->assertNotFound();
     }
 

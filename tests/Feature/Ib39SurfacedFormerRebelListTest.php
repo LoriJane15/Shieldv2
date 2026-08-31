@@ -48,6 +48,9 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
 
         $inactiveUser = User::factory()->role('39th_ib')->create(['is_active' => false]);
         $this->assertFalse($inactiveUser->can('viewAny', Ib39SurfacedFormerRebel::class));
+        $this->actingAs($inactiveUser)
+            ->get(route('ib39.fr-profiles.index'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_every_other_role_receives_forbidden_and_fails_view_any_policy(): void
@@ -325,6 +328,22 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
             ->assertOk()
             ->assertDontSee('FR Profiles')
             ->assertDontSee('Record Surfaced FR');
+    }
+
+    public function test_39th_ib_navigation_links_are_not_configured_for_other_roles(): void
+    {
+        $roles = collect(config('shield.roles'));
+        $ib39Routes = $roles->get('39th_ib')['nav'];
+
+        $this->assertContains('ib39.fr-profiles.index', array_column($ib39Routes, 'route'));
+        $this->assertContains('ib39.fr-profiles.create', array_column($ib39Routes, 'route'));
+
+        $roles->except('39th_ib')->each(function (array $role): void {
+            $routes = array_column($role['nav'] ?? [], 'route');
+
+            $this->assertNotContains('ib39.fr-profiles.index', $routes);
+            $this->assertNotContains('ib39.fr-profiles.create', $routes);
+        });
     }
 
     private function record(array $overrides = []): Ib39SurfacedFormerRebel
