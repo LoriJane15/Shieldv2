@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Ib39\FinalizeCdrRequest;
 use App\Http\Requests\Ib39\SaveCdrDraftRequest;
 use App\Http\Requests\Ib39\StartCdrProcessingRequest;
+use App\Http\Requests\Ib39\ViewCdrVersionHistoryRequest;
 use App\Models\Ib39CdrPhotoVersion;
 use App\Models\Ib39CdrProcessing;
 use App\Services\Ib39CdrDraftService;
@@ -20,10 +21,8 @@ use Illuminate\Support\Facades\Gate;
 
 class CdrController extends Controller
 {
-    public function show(Ib39CdrProcessing $cdr): Response
+    public function show(ViewCdrVersionHistoryRequest $request, Ib39CdrProcessing $cdr): Response
     {
-        Gate::authorize('view', $cdr);
-
         return $this->privateView('ib39.cdr.show', ['cdr' => $this->loadWorkspace($cdr)]);
     }
 
@@ -137,6 +136,7 @@ class CdrController extends Controller
             'surfacedFormerRebel',
             'form.lastEditor',
             'currentFinalVersion',
+            'documentVersions' => fn ($query) => $query->with(['creator', 'replacesVersion'])->orderByDesc('version_number'),
             'photos.currentVersion',
             'statusHistories' => fn ($query) => $query->latest(),
         ]);

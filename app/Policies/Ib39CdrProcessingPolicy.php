@@ -43,6 +43,25 @@ class Ib39CdrProcessingPolicy
         return $this->hasAccess($user, $processing) && $processing->status === Ib39CdrStatus::Ongoing;
     }
 
+    public function uploadFinal(User $user, Ib39CdrProcessing $processing): bool
+    {
+        return $this->hasAccess($user, $processing)
+            && in_array($processing->status, [Ib39CdrStatus::Pending, Ib39CdrStatus::Ongoing], true)
+            && $processing->current_final_version_id === null;
+    }
+
+    public function replaceFinal(User $user, Ib39CdrProcessing $processing): bool
+    {
+        return $this->hasAccess($user, $processing)
+            && $processing->status === Ib39CdrStatus::Completed
+            && $processing->current_final_version_id !== null;
+    }
+
+    public function viewVersionHistory(User $user, Ib39CdrProcessing $processing): bool
+    {
+        return $this->hasAccess($user, $processing);
+    }
+
     public function viewPhoto(User $user, Ib39CdrProcessing $processing): bool
     {
         return $this->hasAccess($user, $processing);
