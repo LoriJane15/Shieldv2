@@ -60,7 +60,7 @@
         <div class="table-responsive">
             <table class="table records-table">
                 <caption class="sr-only">Authorized surfaced former rebel profiles</caption>
-                <thead><tr><th>FR Reference Number</th><th>Name</th><th>FR Category</th><th>Area of Surfacing</th><th>Date of Surfacing</th><th>Firearms Indicator</th><th>CDR Status</th><th>Overall Case Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>FR Reference Number</th><th>Name</th><th>FR Category</th><th>Area of Surfacing</th><th>Date of Surfacing</th><th>Firearms Indicator</th><th>Overall Case Status</th><th>Action</th></tr></thead>
                 <tbody>
                 @forelse ($records as $record)
                     <tr>
@@ -70,7 +70,6 @@
                         <td class="area-text">{{ collect([$record->barangay?->name, $record->municipality->name, $record->province])->filter()->join(', ') }}</td>
                         <td>{{ $record->surfaced_at->format('M d, Y') }}</td>
                         <td><span class="badge-readonly {{ $record->possessed_firearms ? 'badge-yes' : 'badge-no' }}">{{ $record->possessed_firearms ? 'Yes' : 'No' }}</span></td>
-                        <td><span class="badge-readonly badge-new">{{ $record->cdr_status }}</span></td>
                         <td><span class="badge-readonly badge-new">{{ $record->overall_case_status }}</span></td>
                         <td><a href="{{ route('ib39.fr-profiles.show', $record) }}" class="btn btn-sm btn-outline-primary">View Profile</a></td>
                     </tr>

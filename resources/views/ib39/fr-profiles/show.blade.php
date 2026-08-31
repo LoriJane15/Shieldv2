@@ -64,6 +64,9 @@
         </div>
     </div>
 
+    @if($record->cdrProcessing)
+        <a href="{{ route('ib39.cdr.show', $record->cdrProcessing) }}" class="btn btn-primary mr-2">Open CDR Workspace</a>
+    @endif
     <a href="{{ route('ib39.fr-profiles.index') }}" class="btn btn-light"><i class="fa fa-arrow-left mr-1" aria-hidden="true"></i>Back to FR Profiles</a>
 </div>
 @endsection

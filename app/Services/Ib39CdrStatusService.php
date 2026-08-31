@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\Ib39CdrStatus;
+use App\Models\AuditLog;
 use App\Models\Ib39CdrProcessing;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,16 @@ class Ib39CdrStatusService
                 'event' => $event,
                 'remarks' => null,
                 'delay_reason' => null,
+                'ip_address' => $ipAddress,
+                'user_agent' => $userAgent ? mb_substr($userAgent, 0, 1000) : null,
+            ]);
+            AuditLog::query()->create([
+                'user_id' => $actor->id,
+                'action' => 'ib39_cdr_'.$event,
+                'entity_type' => Ib39CdrProcessing::class,
+                'entity_id' => $locked->id,
+                'previous_values' => ['status' => $fromStatus->value],
+                'new_values' => ['status' => Ib39CdrStatus::Ongoing->value],
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent ? mb_substr($userAgent, 0, 1000) : null,
             ]);

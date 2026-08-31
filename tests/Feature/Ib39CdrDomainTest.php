@@ -169,10 +169,76 @@ class Ib39CdrDomainTest extends TestCase
             $this->assertDatabaseCount('ib39_cdr_forms', 1);
         }
 
-        $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::WholeBodyWithFirearm]);
+        $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::FrPhoto]);
 
         $this->expectException(QueryException::class);
-        $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::WholeBodyWithFirearm]);
+        $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::FrPhoto]);
+    }
+
+    public function test_database_trigger_accepts_only_the_forward_corrected_fr_photo_type(): void
+    {
+        $processing = $this->processing();
+        $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::FrPhoto]);
+
+        foreach (['whole_body_with_firearm', 'half_body_without_firearm', 'other'] as $type) {
+            try {
+                DB::table('ib39_cdr_photos')->insert([
+                    'cdr_processing_id' => $processing->id,
+                    'photo_type' => $type,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $this->fail("The database accepted the legacy photo type {$type}.");
+            } catch (QueryException) {
+                $this->assertDatabaseMissing('ib39_cdr_photos', ['photo_type' => $type]);
+            }
+        }
+    }
+
+    public function test_photo_type_correction_rolls_back_and_re_migrates_on_disposable_sqlite(): void
+    {
+        $migration = require database_path('migrations/2026_08_31_000004_correct_ib39_cdr_photo_type.php');
+        $processing = $this->processing();
+
+        $migration->down();
+        DB::table('ib39_cdr_photos')->insert([
+            'cdr_processing_id' => $processing->id,
+            'photo_type' => 'whole_body_with_firearm',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        try {
+            DB::table('ib39_cdr_photos')->insert([
+                'cdr_processing_id' => $processing->id,
+                'photo_type' => 'fr_photo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->fail('Rollback did not restore the previous controlled photo values.');
+        } catch (QueryException) {
+            $this->assertDatabaseHas('ib39_cdr_photos', ['photo_type' => 'whole_body_with_firearm']);
+        }
+
+        DB::table('ib39_cdr_photos')->where('cdr_processing_id', $processing->id)->delete();
+        $migration->up();
+        DB::table('ib39_cdr_photos')->insert([
+            'cdr_processing_id' => $processing->id,
+            'photo_type' => 'fr_photo',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        try {
+            DB::table('ib39_cdr_photos')->insert([
+                'cdr_processing_id' => $processing->id,
+                'photo_type' => 'half_body_without_firearm',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $this->fail('Re-migration accepted a legacy photo type.');
+        } catch (QueryException) {
+            $this->assertDatabaseHas('ib39_cdr_photos', ['photo_type' => 'fr_photo']);
+            $this->assertDatabaseMissing('ib39_cdr_photos', ['photo_type' => 'half_body_without_firearm']);
+        }
     }
 
     public function test_document_version_numbers_are_unique_within_a_cdr(): void
@@ -227,7 +293,7 @@ class Ib39CdrDomainTest extends TestCase
             'content_schema_version' => 1,
         ]);
         $photo = $processing->photos()->create([
-            'photo_type' => Ib39CdrPhotoType::WholeBodyWithFirearm,
+            'photo_type' => Ib39CdrPhotoType::FrPhoto,
         ]);
         $photoVersion = $photo->versions()->create($this->photoVersionAttributes());
         $photo->update(['current_photo_version_id' => $photoVersion->id]);
@@ -255,7 +321,7 @@ class Ib39CdrDomainTest extends TestCase
         $processing = $this->processing();
         $history = $processing->statusHistories()->sole();
         $document = $processing->documentVersions()->create($this->versionAttributes($processing));
-        $photo = $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::HalfBodyWithoutFirearm]);
+        $photo = $processing->photos()->create(['photo_type' => Ib39CdrPhotoType::FrPhoto]);
         $photoVersion = $photo->versions()->create($this->photoVersionAttributes());
 
         foreach ([$history, $document, $photoVersion] as $immutable) {

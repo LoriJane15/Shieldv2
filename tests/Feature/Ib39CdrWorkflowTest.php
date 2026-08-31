@@ -184,12 +184,9 @@ class Ib39CdrWorkflowTest extends TestCase
         $this->actingAs($this->actor)
             ->get(route('ib39.fr-profiles.index'))
             ->assertOk()
-            ->assertSee('CDR Status')
-            ->assertSee('Pending')
+            ->assertDontSee('CDR Status')
             ->assertSee('CDR Ongoing')
-            ->assertSee('Completed')
             ->assertSee('Awaiting JAPIC Certification')
-            ->assertSee('Not Available')
             ->assertSee('Newly Recorded');
 
         $this->actingAs($this->actor)
