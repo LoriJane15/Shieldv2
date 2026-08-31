@@ -7,12 +7,14 @@ use App\Enums\Ib39FeaDocumentStatus;
 use App\Enums\Ib39FeaDocumentType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ib39FeaDocument extends Model
 {
     protected $fillable = [
         'document_type', 'status', 'compliance_status', 'is_required',
-        'started_at', 'completed_at', 'remarks', 'delay_reason',
+        'started_at', 'completed_at', 'remarks', 'compliance_reason',
+        'is_delayed', 'delay_reason',
         'prepared_by', 'last_updated_by',
     ];
 
@@ -26,6 +28,8 @@ class Ib39FeaDocument extends Model
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'remarks' => 'encrypted',
+            'compliance_reason' => 'encrypted',
+            'is_delayed' => 'boolean',
             'delay_reason' => 'encrypted',
         ];
     }
@@ -43,5 +47,10 @@ class Ib39FeaDocument extends Model
     public function lastUpdater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'last_updated_by');
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(Ib39FeaDocumentHistory::class, 'fea_document_id');
     }
 }

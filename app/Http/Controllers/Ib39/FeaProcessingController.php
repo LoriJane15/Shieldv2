@@ -32,7 +32,11 @@ class FeaProcessingController extends Controller
         $fea->load([
             'surfacedFormerRebel.municipality',
             'surfacedFormerRebel.barangay',
-            'documents' => fn ($query) => $query->orderBy('id'),
+            'documents' => fn ($query) => $query->with([
+                'preparer:id,name',
+                'lastUpdater:id,name',
+                'histories' => fn ($history) => $history->with('actor:id,name')->oldest('created_at')->oldest('id'),
+            ])->orderBy('id'),
         ]);
 
         return view('ib39.fea.show', compact('fea'));
