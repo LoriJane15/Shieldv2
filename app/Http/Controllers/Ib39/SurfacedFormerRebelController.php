@@ -23,7 +23,7 @@ class SurfacedFormerRebelController extends Controller
         $search = $filters['search'] ?? null;
 
         $records = Ib39SurfacedFormerRebel::query()
-            ->with(['municipality', 'barangay'])
+            ->with(['municipality', 'barangay', 'cdrProcessing:id,ib39_surfaced_former_rebel_id,status'])
             ->when($search, function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('reference_number', 'like', "%{$search}%")
@@ -66,7 +66,7 @@ class SurfacedFormerRebelController extends Controller
     {
         Gate::authorize('view', $ib39SurfacedFormerRebel);
 
-        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator']);
+        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator', 'cdrProcessing']);
 
         return view('ib39.fr-profiles.show', [
             'record' => $ib39SurfacedFormerRebel,

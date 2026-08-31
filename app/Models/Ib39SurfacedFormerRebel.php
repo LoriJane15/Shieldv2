@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Ib39CdrStatus;
 use App\Enums\Ib39FrCategory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -53,8 +54,28 @@ class Ib39SurfacedFormerRebel extends Model
     protected function overallCaseStatus(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => self::OVERALL_CASE_STATUS,
+            get: fn (): string => match ($this->loadedCdrStatus()) {
+                Ib39CdrStatus::Ongoing => 'CDR Ongoing',
+                Ib39CdrStatus::Completed => 'Awaiting JAPIC Certification',
+                default => self::OVERALL_CASE_STATUS,
+            },
         );
+    }
+
+    protected function cdrStatus(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): string => $this->loadedCdrStatus()?->value ?? 'Not Available',
+        );
+    }
+
+    private function loadedCdrStatus(): ?Ib39CdrStatus
+    {
+        if (! $this->relationLoaded('cdrProcessing')) {
+            return null;
+        }
+
+        return $this->cdrProcessing?->status;
     }
 
     public function municipality(): BelongsTo

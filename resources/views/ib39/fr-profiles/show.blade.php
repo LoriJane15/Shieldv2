@@ -32,6 +32,7 @@
                         <div class="detail-item"><dt class="detail-label">Barangay</dt><dd class="detail-value mb-0">{{ $record->barangay?->name ?? 'Not provided' }}</dd></div>
                         <div class="detail-item"><dt class="detail-label">Specific location</dt><dd class="detail-value mb-0">{{ $record->specific_location ?: 'Not provided' }}</dd></div>
                         <div class="detail-item"><dt class="detail-label">Possessed firearms</dt><dd class="detail-value mb-0">{{ $record->possessed_firearms ? 'Yes' : 'No' }}</dd></div>
+                        <div class="detail-item"><dt class="detail-label">CDR status</dt><dd class="detail-value mb-0">{{ $record->cdr_status }}</dd></div>
                         <div class="detail-item"><dt class="detail-label">Overall case status</dt><dd class="detail-value mb-0">{{ $record->overall_case_status }}</dd></div>
                         <div class="detail-item"><dt class="detail-label">Created date</dt><dd class="detail-value mb-0">{{ $record->created_at->format('F d, Y · h:i A') }}</dd></div>
                         <div class="detail-item"><dt class="detail-label">Recorded by</dt><dd class="detail-value mb-0">{{ $recordedBy }}</dd></div>
@@ -44,9 +45,10 @@
             <section class="card profile-card h-100" aria-labelledby="workflow-heading">
                 <div class="card-body">
                     <h3 id="workflow-heading" class="section-title">Related Workflows</h3>
-                    <p class="privacy-note">This standalone record has no secure cross-agency workflow links. No related records are inferred or matched.</p>
+                    <p class="privacy-note">Only the internal CDR status is linked to this record. No cross-agency records are inferred or matched.</p>
                     <div class="fallback-list mb-3">
-                        @foreach (['CDR processing', 'JAPIC processing', 'PSWDO processing', 'Assistance records'] as $workflow)
+                        <div class="fallback-item"><strong>CDR processing</strong><span>{{ $record->cdr_status }}</span></div>
+                        @foreach (['JAPIC processing', 'PSWDO processing', 'Assistance records'] as $workflow)
                             <div class="fallback-item"><strong>{{ $workflow }}</strong><span>Not securely linked — unavailable</span></div>
                         @endforeach
                     </div>

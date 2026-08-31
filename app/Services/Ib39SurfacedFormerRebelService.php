@@ -13,6 +13,7 @@ class Ib39SurfacedFormerRebelService
 {
     public function __construct(
         private readonly Ib39ReferenceSequenceService $references,
+        private readonly Ib39CdrProcessingService $cdrProcessings,
     ) {}
 
     public function create(
@@ -32,6 +33,13 @@ class Ib39SurfacedFormerRebelService
             $record->reference_number = $this->references->reserveSurfacedFormerRebelReference();
             $record->created_by = $actor->id;
             $record->save();
+
+            $this->cdrProcessings->ensureForSurfacedFormerRebel(
+                $record,
+                $actor,
+                $ipAddress,
+                $userAgent,
+            );
 
             AuditLog::query()->create([
                 'user_id' => $actor->id,
