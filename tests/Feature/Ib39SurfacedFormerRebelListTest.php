@@ -149,19 +149,16 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
             ->assertDontSee('NicknameSecret');
     }
 
-    public function test_profile_action_is_disabled_and_create_action_uses_the_approved_route(): void
+    public function test_profile_and_create_actions_use_the_approved_routes(): void
     {
-        $this->record();
+        $record = $this->record();
 
         $this->actingAs($this->creator)
             ->get(route('ib39.fr-profiles.index'))
             ->assertOk()
             ->assertSee('href="'.route('ib39.fr-profiles.create').'"', false)
-            ->assertSee('View Profile — Unavailable')
-            ->assertSee('disabled', false)
-            ->assertDontSee('/fr-profiles/1', false)
-            ->assertSee('<td><button type="button"', false)
-            ->assertDontSee('<td><a', false);
+            ->assertSee('href="'.route('ib39.fr-profiles.show', $record).'"', false)
+            ->assertSee('View Profile');
     }
 
     public function test_reference_first_name_and_last_name_searches_work(): void

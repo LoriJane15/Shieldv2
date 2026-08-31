@@ -71,7 +71,7 @@
                         <td>{{ $record->surfaced_at->format('M d, Y') }}</td>
                         <td><span class="badge-readonly {{ $record->possessed_firearms ? 'badge-yes' : 'badge-no' }}">{{ $record->possessed_firearms ? 'Yes' : 'No' }}</span></td>
                         <td><span class="badge-readonly badge-new">{{ $record->overall_case_status }}</span></td>
-                        <td><button type="button" class="btn btn-sm btn-light unavailable-action" disabled aria-disabled="true" title="Available in the next stage">View Profile — Unavailable</button></td>
+                        <td><a href="{{ route('ib39.fr-profiles.show', $record) }}" class="btn btn-sm btn-outline-primary">View Profile</a></td>
                     </tr>
                 @empty
                     <tr><td colspan="8"><div class="empty-state"><i class="mdi mdi-account-search" aria-hidden="true"></i><strong>{{ $hasActiveFilters ? 'No matching FR profiles found' : 'No surfaced FR profiles recorded' }}</strong><span>{{ $hasActiveFilters ? 'Adjust or reset the filters to view other records.' : 'Use Record Surfaced FR to create the first authorized record.' }}</span></div></td></tr>

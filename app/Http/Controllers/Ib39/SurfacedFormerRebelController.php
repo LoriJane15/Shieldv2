@@ -62,6 +62,20 @@ class SurfacedFormerRebelController extends Controller
         ]);
     }
 
+    public function show(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel): View
+    {
+        Gate::authorize('view', $ib39SurfacedFormerRebel);
+
+        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator']);
+
+        return view('ib39.fr-profiles.show', [
+            'record' => $ib39SurfacedFormerRebel,
+            'recordedBy' => filled($ib39SurfacedFormerRebel->creator?->name)
+                ? $ib39SurfacedFormerRebel->creator->name
+                : 'Unknown user',
+        ]);
+    }
+
     public function store(
         StoreSurfacedFormerRebelRequest $request,
         Ib39SurfacedFormerRebelService $records,
