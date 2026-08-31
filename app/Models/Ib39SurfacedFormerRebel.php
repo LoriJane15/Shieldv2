@@ -97,4 +97,9 @@ class Ib39SurfacedFormerRebel extends Model
     {
         return $this->hasOne(Ib39CdrProcessing::class, 'ib39_surfaced_former_rebel_id');
     }
+
+    public function feaProcessing(): HasOne
+    {
+        return $this->hasOne(Ib39FeaProcessing::class, 'ib39_surfaced_former_rebel_id');
+    }
 }

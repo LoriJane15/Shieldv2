@@ -266,6 +266,8 @@ Route::middleware(['auth', 'role:local_eclip_committee'])->prefix('local-eclip')
 
 Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->group(function () {
     Route::get('/', [Ib39\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/fea', [Ib39\FeaProcessingController::class, 'index'])->name('fea.index');
+    Route::get('/fea/{fea}', [Ib39\FeaProcessingController::class, 'show'])->name('fea.show');
     Route::get('/cdr/{cdr}', [Ib39\CdrController::class, 'show'])->name('cdr.show');
     Route::post('/cdr/{cdr}/start', [Ib39\CdrController::class, 'start'])->name('cdr.start');
     Route::get('/cdr/{cdr}/edit', [Ib39\CdrController::class, 'edit'])->name('cdr.edit');

@@ -54,8 +54,8 @@
                     </div>
                     <h4 class="section-title">FEA</h4>
                     <div class="fallback-list mb-3">
-                        <div class="fallback-item"><strong>Process Status</strong><span>{{ $record->possessed_firearms ? 'Not Available' : 'Not Applicable' }}</span></div>
-                        <div class="fallback-item"><strong>Documents</strong><span>{{ $record->possessed_firearms ? 'Not Available' : 'Not Applicable' }}</span></div>
+                        <div class="fallback-item"><strong>Process Status</strong><span>{{ $record->feaProcessing?->overallStatus()->value ?? ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span></div>
+                        <div class="fallback-item"><strong>Documents</strong><span>{{ $record->feaProcessing ? $record->feaProcessing->documents->count().' requirements' : ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span></div>
                     </div>
                     <h4 class="section-title">Initial Status History</h4>
                     <div class="history-item"><strong>{{ $record->overall_case_status }}</strong><span>{{ $record->created_at->format('F d, Y · h:i A') }} · Recorded by {{ $recordedBy }}</span></div>
@@ -66,6 +66,9 @@
 
     @if($record->cdrProcessing)
         <a href="{{ route('ib39.cdr.show', $record->cdrProcessing) }}" class="btn btn-primary mr-2">Open CDR Workspace</a>
+    @endif
+    @if($record->feaProcessing)
+        <a href="{{ route('ib39.fea.show', $record->feaProcessing) }}" class="btn btn-outline-primary mr-2">View FEA Record</a>
     @endif
     <a href="{{ route('ib39.fr-profiles.index') }}" class="btn btn-light"><i class="fa fa-arrow-left mr-1" aria-hidden="true"></i>Back to FR Profiles</a>
 </div>
