@@ -272,6 +272,8 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::put('/cdr/{cdr}/draft', [Ib39\CdrController::class, 'update'])->name('cdr.update');
     Route::get('/cdr/{cdr}/preview', [Ib39\CdrController::class, 'preview'])->name('cdr.preview');
     Route::get('/cdr/{cdr}/print', [Ib39\CdrController::class, 'print'])->name('cdr.print');
+    Route::get('/cdr/{cdr}/finalization-review', [Ib39\CdrController::class, 'finalizationReview'])->name('cdr.finalization.review');
+    Route::post('/cdr/{cdr}/finalize', [Ib39\CdrController::class, 'finalize'])->name('cdr.finalize');
     Route::post('/cdr/{cdr}/photos', [Ib39\CdrPhotoController::class, 'store'])->name('cdr.photos.store');
     Route::get('/cdr-photo-versions/{photoVersion}/preview', [Ib39\CdrPhotoController::class, 'show'])->name('cdr.photos.show');
     Route::get('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'index'])->name('fr-profiles.index');

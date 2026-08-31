@@ -11,16 +11,23 @@
             <div class="d-flex flex-wrap" style="gap:.5rem">
                 @if ($cdr->status === \App\Enums\Ib39CdrStatus::Pending)
                     <form method="POST" action="{{ route('ib39.cdr.start', $cdr) }}">@csrf<button class="btn btn-primary" type="submit">Start processing</button></form>
-                @else<a class="btn btn-primary" href="{{ route('ib39.cdr.edit', $cdr) }}">Edit draft</a>@endif
-                <a class="btn btn-outline-primary" href="{{ route('ib39.cdr.preview', $cdr) }}">Preview draft</a>
-                <a class="btn btn-outline-secondary" href="{{ route('ib39.cdr.print', $cdr) }}" target="_blank" rel="noopener">Print draft</a>
+                @elseif ($cdr->status === \App\Enums\Ib39CdrStatus::Ongoing)
+                    <a class="btn btn-primary" href="{{ route('ib39.cdr.edit', $cdr) }}">Edit draft</a>
+                    <a class="btn btn-danger" href="{{ route('ib39.cdr.finalization.review', $cdr) }}">Submit as Final</a>
+                @endif
+                <a class="btn btn-outline-primary" href="{{ route('ib39.cdr.preview', $cdr) }}">{{ $cdr->status === \App\Enums\Ib39CdrStatus::Completed ? 'View final copy' : 'Preview draft' }}</a>
+                <a class="btn btn-outline-secondary" href="{{ route('ib39.cdr.print', $cdr) }}" target="_blank" rel="noopener">{{ $cdr->status === \App\Enums\Ib39CdrStatus::Completed ? 'Print final copy' : 'Print draft' }}</a>
             </div>
         </div>
     </div></div>
-    <div class="card shadow-sm mb-4"><div class="card-body"><h3 class="h5">Draft details</h3><dl class="row mb-0">
+    <div class="card shadow-sm mb-4"><div class="card-body"><h3 class="h5">{{ $cdr->status === \App\Enums\Ib39CdrStatus::Completed ? 'Final document details' : 'Draft details' }}</h3><dl class="row mb-0">
         <dt class="col-sm-4">Schema version</dt><dd class="col-sm-8">{{ $cdr->form?->schema_version ?? 1 }}</dd>
         <dt class="col-sm-4">Last saved</dt><dd class="col-sm-8">{{ $cdr->form?->updated_at?->format('F d, Y h:i A') ?? 'Not yet saved' }}</dd>
         <dt class="col-sm-4">Last editor</dt><dd class="col-sm-8">{{ $cdr->form?->lastEditor?->name ?? 'Not available' }}</dd>
+        @if($cdr->status === \App\Enums\Ib39CdrStatus::Completed)
+            <dt class="col-sm-4">Final version</dt><dd class="col-sm-8">{{ $cdr->currentFinalVersion?->version_number }}</dd>
+            <dt class="col-sm-4">Finalized</dt><dd class="col-sm-8">{{ $cdr->completed_at?->format('F d, Y h:i A') }}</dd>
+        @endif
     </dl></div></div>
     <a class="btn btn-light" href="{{ route('ib39.fr-profiles.show', $cdr->surfacedFormerRebel) }}">Back to FR profile</a>
 </div></div>

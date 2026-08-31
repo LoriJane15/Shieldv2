@@ -38,6 +38,11 @@ class Ib39CdrProcessingPolicy
         return $this->updateDraft($user, $processing);
     }
 
+    public function finalize(User $user, Ib39CdrProcessing $processing): bool
+    {
+        return $this->hasAccess($user, $processing) && $processing->status === Ib39CdrStatus::Ongoing;
+    }
+
     public function viewPhoto(User $user, Ib39CdrProcessing $processing): bool
     {
         return $this->hasAccess($user, $processing);

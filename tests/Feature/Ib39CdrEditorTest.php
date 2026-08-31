@@ -62,6 +62,8 @@ class Ib39CdrEditorTest extends TestCase
             ['PUT', route('ib39.cdr.update', $cdr)],
             ['GET', route('ib39.cdr.preview', $cdr)],
             ['GET', route('ib39.cdr.print', $cdr)],
+            ['GET', route('ib39.cdr.finalization.review', $cdr)],
+            ['POST', route('ib39.cdr.finalize', $cdr)],
             ['POST', route('ib39.cdr.photos.store', $cdr)],
             ['GET', route('ib39.cdr.photos.show', $version)],
         ];
