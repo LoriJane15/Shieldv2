@@ -14,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 
 class Ib39FeaDocumentWorkflowService
 {
+    public function __construct(private readonly Ib39FeaDraftSchema $draftSchema) {}
+
     public function start(Ib39FeaProcessing $processing, Ib39FeaDocument $document, User $actor): Ib39FeaDocument
     {
         return DB::transaction(function () use ($processing, $document, $actor) {
@@ -125,6 +127,58 @@ class Ib39FeaDocumentWorkflowService
 
             $this->audit($lockedDocument, $actor, 'ib39_fea_preliminary_document_updated', array_keys($changes));
             $this->recordProcessingStatusChange($lockedProcessing, $overallBefore, $actor);
+
+            return $lockedDocument->fresh();
+        }, 5);
+    }
+
+    public function saveDraft(
+        Ib39FeaProcessing $processing,
+        Ib39FeaDocument $document,
+        array $draft,
+        int $expectedRevision,
+        User $actor,
+    ): Ib39FeaDocument {
+        return DB::transaction(function () use ($processing, $document, $draft, $expectedRevision, $actor) {
+            [$lockedProcessing, $lockedDocument] = $this->lock($processing, $document, $actor);
+            abort_unless($lockedDocument->document_type->hasDraftEditor(), 403);
+
+            if ($lockedDocument->status === Ib39FeaDocumentStatus::Completed) {
+                throw ValidationException::withMessages(['draft' => 'Completed documents cannot be edited.']);
+            }
+            if ($lockedDocument->draft_revision !== $expectedRevision) {
+                throw ValidationException::withMessages([
+                    'revision' => 'This draft was changed by another user. Reload the editor and review the latest revision before saving.',
+                ]);
+            }
+
+            $previous = $lockedDocument->draft_data ?? [];
+            $changedFields = $this->draftSchema->changedFields($previous, $draft);
+            if ($lockedDocument->draft_data !== null && $changedFields === []) {
+                return $lockedDocument;
+            }
+
+            if ($lockedDocument->status === Ib39FeaDocumentStatus::Pending) {
+                $this->start($lockedProcessing, $lockedDocument, $actor);
+                $lockedDocument->refresh();
+            }
+
+            $revision = $lockedDocument->draft_revision + 1;
+            $lockedDocument->update([
+                'draft_data' => $draft,
+                'draft_schema_version' => Ib39FeaDraftSchema::VERSION,
+                'draft_revision' => $revision,
+                'draft_saved_at' => now(),
+                'draft_saved_by' => $actor->id,
+                'last_updated_by' => $actor->id,
+            ]);
+            $lockedDocument->draftHistories()->create([
+                'fea_processing_id' => $lockedProcessing->id,
+                'user_id' => $actor->id,
+                'revision' => $revision,
+                'changed_fields' => $changedFields,
+            ]);
+            $this->audit($lockedDocument, $actor, 'ib39_fea_draft_saved', ['draft_revision', ...$changedFields]);
 
             return $lockedDocument->fresh();
         }, 5);

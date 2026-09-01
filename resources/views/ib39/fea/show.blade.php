@@ -33,6 +33,11 @@
                         <div class="metadata-item"><small>Last updated</small><span>{{ $document->last_updated_by ? $document->updated_at->format('F d, Y · h:i A') : 'Not updated' }}</span></div><div class="metadata-item"><small>Updated by</small><span>{{ filled($document->lastUpdater?->name) ? $document->lastUpdater->name : 'Not recorded' }}</span></div>
                         <div class="metadata-item full"><small>Remarks</small><span>{{ $document->remarks ?: 'No remarks recorded.' }}</span></div><div class="metadata-item full"><small>Compliance reason</small><span>{{ $document->compliance_reason ?: 'No compliance reason recorded.' }}</span></div><div class="metadata-item full"><small>Delay reason</small><span>{{ $document->delay_reason ?: 'No delay recorded.' }}</span></div>
                     </div>
+                    @if($document->document_type->hasDraftEditor())
+                        <a class="btn btn-sm btn-outline-primary mt-3" href="{{ route('ib39.fea.documents.draft.edit', [$fea, $document]) }}">Open Official Form Editor</a>
+                    @else
+                        <div class="alert alert-light mt-3 mb-0">This photograph requirement does not have a text-form editor.</div>
+                    @endif
                     @if($document->status === \App\Enums\Ib39FeaDocumentStatus::Pending)
                         <form method="POST" action="{{ route('ib39.fea.documents.start', [$fea, $document]) }}" class="mt-3">@csrf<button class="btn btn-sm btn-primary" type="submit">Start Preliminary Work</button></form>
                     @else

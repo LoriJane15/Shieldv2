@@ -25,6 +25,12 @@ class Ib39FeaDocumentPolicy
         return $this->hasAccess($user, $document, $processing);
     }
 
+    public function editDraft(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
+    {
+        return $document->document_type->hasDraftEditor()
+            && $this->start($user, $document, $processing);
+    }
+
     private function hasAccess(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
         return $user->is_active

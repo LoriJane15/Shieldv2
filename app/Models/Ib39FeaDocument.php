@@ -16,6 +16,7 @@ class Ib39FeaDocument extends Model
         'started_at', 'completed_at', 'remarks', 'compliance_reason',
         'is_delayed', 'delay_reason',
         'prepared_by', 'last_updated_by',
+        'draft_data', 'draft_schema_version', 'draft_revision', 'draft_saved_at', 'draft_saved_by',
     ];
 
     protected function casts(): array
@@ -31,6 +32,10 @@ class Ib39FeaDocument extends Model
             'compliance_reason' => 'encrypted',
             'is_delayed' => 'boolean',
             'delay_reason' => 'encrypted',
+            'draft_data' => 'encrypted:array',
+            'draft_schema_version' => 'integer',
+            'draft_revision' => 'integer',
+            'draft_saved_at' => 'datetime',
         ];
     }
 
@@ -52,5 +57,15 @@ class Ib39FeaDocument extends Model
     public function histories(): HasMany
     {
         return $this->hasMany(Ib39FeaDocumentHistory::class, 'fea_document_id');
+    }
+
+    public function draftSaver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'draft_saved_by');
+    }
+
+    public function draftHistories(): HasMany
+    {
+        return $this->hasMany(Ib39FeaDraftHistory::class, 'fea_document_id');
     }
 }

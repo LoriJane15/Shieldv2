@@ -22,4 +22,9 @@ enum Ib39FeaDocumentType: string
             self::FrWithFirearmPhoto => 'Photograph of the FR with the firearm',
         };
     }
+
+    public function hasDraftEditor(): bool
+    {
+        return in_array($this, [self::Tir, self::Cvif, self::Ptis, self::Justification], true);
+    }
 }
