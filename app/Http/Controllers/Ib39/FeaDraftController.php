@@ -9,6 +9,7 @@ use App\Models\Ib39FeaProcessing;
 use App\Services\Ib39FeaDocumentWorkflowService;
 use App\Services\Ib39FeaDraftSchema;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -35,5 +36,33 @@ class FeaDraftController extends Controller
 
         return redirect()->route('ib39.fea.documents.draft.edit', [$fea, $document])
             ->with('status', 'Draft revision '.$saved->draft_revision.' saved securely.');
+    }
+
+    public function preview(Ib39FeaProcessing $fea, Ib39FeaDocument $document): Response
+    {
+        return $this->renderDocument($fea, $document, false);
+    }
+
+    public function print(Ib39FeaProcessing $fea, Ib39FeaDocument $document): Response
+    {
+        return $this->renderDocument($fea, $document, true);
+    }
+
+    private function renderDocument(Ib39FeaProcessing $fea, Ib39FeaDocument $document, bool $printMode): Response
+    {
+        Gate::authorize('viewDraft', [$document, $fea]);
+        $fea->load('surfacedFormerRebel');
+
+        return response()->view('ib39.fea.preview', [
+            'fea' => $fea,
+            'document' => $document,
+            'draft' => $document->draft_data,
+            'printMode' => $printMode,
+        ])->withHeaders([
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'X-Robots-Tag' => 'noindex, nofollow, noarchive',
+        ]);
     }
 }

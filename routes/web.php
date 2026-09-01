@@ -272,6 +272,8 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::patch('/fea/{fea}/documents/{document}', [Ib39\FeaDocumentController::class, 'update'])->name('fea.documents.update');
     Route::get('/fea/{fea}/documents/{document}/draft', [Ib39\FeaDraftController::class, 'edit'])->name('fea.documents.draft.edit');
     Route::put('/fea/{fea}/documents/{document}/draft', [Ib39\FeaDraftController::class, 'update'])->name('fea.documents.draft.update');
+    Route::get('/fea/{fea}/documents/{document}/draft/preview', [Ib39\FeaDraftController::class, 'preview'])->name('fea.documents.draft.preview');
+    Route::get('/fea/{fea}/documents/{document}/draft/print', [Ib39\FeaDraftController::class, 'print'])->name('fea.documents.draft.print');
     Route::get('/cdr/{cdr}', [Ib39\CdrController::class, 'show'])->name('cdr.show');
     Route::post('/cdr/{cdr}/start', [Ib39\CdrController::class, 'start'])->name('cdr.start');
     Route::get('/cdr/{cdr}/edit', [Ib39\CdrController::class, 'edit'])->name('cdr.edit');

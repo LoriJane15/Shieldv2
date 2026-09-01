@@ -8,6 +8,7 @@
     </div>
 
     <div class="alert alert-warning">{{ \App\Models\Ib39FeaProcessing::PSWDO_ACCESS_MESSAGE }}</div>
+    <div class="alert alert-info d-flex justify-content-between align-items-center"><span>Preview and print use only the last saved draft. Save your changes first.</span><span><a class="btn btn-sm btn-outline-primary" href="{{ route('ib39.fea.documents.draft.preview', [$fea, $document]) }}">Preview Saved Draft</a> <a class="btn btn-sm btn-outline-secondary" href="{{ route('ib39.fea.documents.draft.print', [$fea, $document]) }}">Print Saved Draft</a></span></div>
     @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
     @if($errors->any())<div class="alert alert-danger"><strong>The draft was not saved.</strong><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
 

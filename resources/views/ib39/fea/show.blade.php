@@ -35,6 +35,7 @@
                     </div>
                     @if($document->document_type->hasDraftEditor())
                         <a class="btn btn-sm btn-outline-primary mt-3" href="{{ route('ib39.fea.documents.draft.edit', [$fea, $document]) }}">Open Official Form Editor</a>
+                        <a class="btn btn-sm btn-outline-secondary mt-3" href="{{ route('ib39.fea.documents.draft.preview', [$fea, $document]) }}">Preview Saved Draft</a>
                     @else
                         <div class="alert alert-light mt-3 mb-0">This photograph requirement does not have a text-form editor.</div>
                     @endif
