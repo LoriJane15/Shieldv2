@@ -56,7 +56,7 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertSee(route('ib39.fea.show', $processing));
     }
 
-    public function test_workspace_is_read_only_and_lists_exactly_six_approved_requirements(): void
+    public function test_workspace_lists_exactly_six_approved_requirements_and_private_draft_controls(): void
     {
         $processing = $this->processing();
         $actor = User::factory()->role('39th_ib')->create();
@@ -71,7 +71,8 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertSee('Photograph of the firearm')
             ->assertSee('Photograph of the FR with the firearm')
             ->assertSee('Final actions unavailable')
-            ->assertDontSee('type="file"', false);
+            ->assertSee('Private Draft Upload — DRAFT — NOT FINAL')
+            ->assertSee('type="file"', false);
     }
 
     public function test_soft_deleted_parent_is_absent_from_queue_and_workspace_is_denied(): void

@@ -17,6 +17,7 @@ class Ib39FeaDocument extends Model
         'is_delayed', 'delay_reason',
         'prepared_by', 'last_updated_by',
         'draft_data', 'draft_schema_version', 'draft_revision', 'draft_saved_at', 'draft_saved_by',
+        'current_draft_version_id', 'current_supporting_photo_version_id',
     ];
 
     protected function casts(): array
@@ -67,5 +68,25 @@ class Ib39FeaDocument extends Model
     public function draftHistories(): HasMany
     {
         return $this->hasMany(Ib39FeaDraftHistory::class, 'fea_document_id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(Ib39FeaDocumentVersion::class, 'fea_document_id');
+    }
+
+    public function uploadHistories(): HasMany
+    {
+        return $this->hasMany(Ib39FeaUploadHistory::class, 'fea_document_id');
+    }
+
+    public function currentDraftVersion(): BelongsTo
+    {
+        return $this->belongsTo(Ib39FeaDocumentVersion::class, 'current_draft_version_id');
+    }
+
+    public function currentSupportingPhotoVersion(): BelongsTo
+    {
+        return $this->belongsTo(Ib39FeaDocumentVersion::class, 'current_supporting_photo_version_id');
     }
 }

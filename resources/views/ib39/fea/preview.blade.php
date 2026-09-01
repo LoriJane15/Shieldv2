@@ -39,6 +39,7 @@
         .question-number { font-weight: 800; }
         .answer-box { min-height: 18mm; margin-top: 2mm; border: 1px solid #111; padding: 5px; white-space: pre-wrap; overflow-wrap: anywhere; }
         .photo-box { break-inside: avoid; min-height: 72mm; margin: 3mm 0 7mm; border: 2px dashed #555; display: grid; place-items: center; padding: 8px; color: #555; text-align: center; }
+        .photo-box img { display: block; max-height: 68mm; max-width: 100%; object-fit: contain; }
         .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
         .certification-box { border: 1px solid #111; padding: 5px; line-height: 1.4; }
         .continuation { break-before: page; page-break-before: always; }

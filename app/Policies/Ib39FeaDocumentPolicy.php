@@ -37,6 +37,17 @@ class Ib39FeaDocumentPolicy
             && $this->start($user, $document, $processing);
     }
 
+    public function uploadDraft(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
+    {
+        return $this->start($user, $document, $processing)
+            && (bool) $processing->surfacedFormerRebel()->value('possessed_firearms');
+    }
+
+    public function viewUploads(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
+    {
+        return $this->hasAccess($user, $document, $processing);
+    }
+
     private function hasAccess(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
         return $user->is_active

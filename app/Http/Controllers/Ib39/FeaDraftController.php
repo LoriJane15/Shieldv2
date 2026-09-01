@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ib39;
 
+use App\Enums\Ib39FeaDocumentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ib39\SaveFeaDraftRequest;
 use App\Models\Ib39FeaDocument;
@@ -52,12 +53,17 @@ class FeaDraftController extends Controller
     {
         Gate::authorize('viewDraft', [$document, $fea]);
         $fea->load('surfacedFormerRebel');
+        $firearmPhotoDocument = $fea->documents()->where('document_type', Ib39FeaDocumentType::FirearmPhoto)->with('currentDraftVersion')->first();
+        $firearmPhoto = $firearmPhotoDocument?->currentDraftVersion;
+        $document->load('currentSupportingPhotoVersion');
 
         return response()->view('ib39.fea.preview', [
             'fea' => $fea,
             'document' => $document,
             'draft' => $document->draft_data,
             'printMode' => $printMode,
+            'firearmPhoto' => $firearmPhoto,
+            'comparisonPhoto' => $document->document_type === Ib39FeaDocumentType::Justification ? $document->currentSupportingPhotoVersion : null,
         ])->withHeaders([
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',

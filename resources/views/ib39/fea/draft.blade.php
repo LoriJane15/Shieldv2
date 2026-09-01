@@ -30,7 +30,7 @@
             @foreach($fields as $field)
                 @php($value = $draft[$field['key']] ?? null)
                 @if($field['type'] === 'notice')
-                    <section class="alert alert-info"><strong>{{ $field['label'] }}</strong><div>Photo support will be added in a later stage.</div></section>
+                    <section class="alert alert-info"><strong>{{ $field['label'] }}</strong><div>Photo uploads are managed in the FEA workspace. Save this structured draft before previewing its current authorized photos.</div></section>
                 @elseif($field['type'] === 'table')
                     <section class="mb-4" data-draft-table="{{ $field['key'] }}" data-next-index="{{ count($value ?? []) }}">
                         <label class="font-weight-bold">{{ $field['label'] }}</label>

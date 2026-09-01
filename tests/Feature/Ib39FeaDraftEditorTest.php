@@ -57,7 +57,7 @@ class Ib39FeaDraftEditorTest extends TestCase
         }
 
         $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Justification)))
-            ->assertSee('Photo support will be added in a later stage', false);
+            ->assertSee('Photo uploads are managed in the FEA workspace', false);
         $this->assertDatabaseCount('ib39_fea_draft_histories', 0);
     }
 
