@@ -102,6 +102,42 @@ class Ib39FeaDraftPreviewTest extends TestCase
         $this->assertSame(2, substr_count($response->getContent(), 'EMPTY PHOTO AREA'));
     }
 
+    public function test_removed_legacy_signatories_stay_blank_and_justification_positions_are_dynamic(): void
+    {
+        $tir = $this->saveSyntheticDraft(Ib39FeaDocumentType::Tir, ['inspected_by' => 'LEGACY TIR NAME', 'noted_by' => 'LEGACY NOTER']);
+        $this->actingAs($this->actor)->get($this->url($tir, 'preview'))->assertOk()
+            ->assertSee('INSPECTED BY:')->assertSee('NOTED BY:')
+            ->assertDontSee('LEGACY TIR NAME')->assertDontSee('LEGACY NOTER');
+
+        $cvif = $this->saveSyntheticDraft(Ib39FeaDocumentType::Cvif, [
+            'technical_inventory_at' => 'LEGACY DUPLICATE PLACE',
+            'pnp_representative' => 'LEGACY PNP NAME',
+            'date_of_inspection' => '2026-09-02',
+            'place_of_inspection' => 'Synthetic Inspection Place',
+        ]);
+        $this->actingAs($this->actor)->get($this->url($cvif, 'preview'))->assertOk()
+            ->assertSee('on <span class="inline-line value">2026-09-02</span> at <span class="inline-line value">Synthetic Inspection Place</span>', false)
+            ->assertDontSee('LEGACY DUPLICATE PLACE')->assertDontSee('LEGACY PNP NAME');
+
+        $ptis = $this->saveSyntheticDraft(Ib39FeaDocumentType::Ptis, [
+            'to' => 'LEGACY TO', 'from' => 'LEGACY FROM', 'basis' => 'LEGACY BASIS',
+            'received_by' => 'LEGACY RECEIVER', 'commanding_officer' => 'LEGACY COMMANDER',
+            'supply_classification_officer' => 'TO CONTENT', 'organization_unit' => 'FROM CONTENT',
+        ]);
+        $this->actingAs($this->actor)->get($this->url($ptis, 'preview'))->assertOk()
+            ->assertSee('TO CONTENT')->assertSee('FROM CONTENT')->assertSee('BASIS:')
+            ->assertDontSee('LEGACY TO')->assertDontSee('LEGACY FROM')->assertDontSee('LEGACY BASIS')
+            ->assertDontSee('LEGACY RECEIVER')->assertDontSee('LEGACY COMMANDER');
+
+        $justification = $this->saveSyntheticDraft(Ib39FeaDocumentType::Justification, [
+            'prepared_by' => 'Prepared Person', 'prepared_by_position' => 'Prepared Rank',
+            'reviewed_by' => 'Reviewed Person', 'reviewed_by_position' => 'Reviewed Rank',
+        ]);
+        $this->actingAs($this->actor)->get($this->url($justification, 'preview'))->assertOk()
+            ->assertSee('Prepared Person')->assertSee('Prepared Rank')->assertSee('Reviewed Person')->assertSee('Reviewed Rank')
+            ->assertDontSee('Firearms Technician,RSAO PRO 11')->assertDontSee('OIC,Regional Supply Accountable Officer');
+    }
+
     public function test_preview_and_print_do_not_change_workflow_draft_actor_revision_or_histories(): void
     {
         $document = $this->saveSyntheticDraft(Ib39FeaDocumentType::Cvif);

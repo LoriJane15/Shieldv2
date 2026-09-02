@@ -276,6 +276,7 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::get('/fea/{fea}/documents/{document}/draft/print', [Ib39\FeaDraftController::class, 'print'])->name('fea.documents.draft.print');
     Route::post('/fea/{fea}/documents/{document}/draft-versions', [Ib39\FeaUploadController::class, 'store'])->name('fea.documents.versions.store');
     Route::post('/fea/{fea}/documents/{document}/comparison-photo-versions', [Ib39\FeaUploadController::class, 'storeComparison'])->name('fea.documents.comparison-versions.store');
+    Route::post('/fea/{fea}/documents/{document}/surrendered-photo-versions', [Ib39\FeaUploadController::class, 'storeSurrendered'])->name('fea.documents.surrendered-versions.store');
     Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/preview', [Ib39\FeaUploadController::class, 'preview'])->name('fea.documents.versions.preview');
     Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/download', [Ib39\FeaUploadController::class, 'download'])->name('fea.documents.versions.download');
     Route::get('/cdr/{cdr}', [Ib39\CdrController::class, 'show'])->name('cdr.show');

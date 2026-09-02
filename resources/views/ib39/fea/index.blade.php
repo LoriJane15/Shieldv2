@@ -18,7 +18,7 @@
     <section class="card fea-card" aria-label="FEA processing queue">
         <div class="table-responsive">
             <table class="table fea-table">
-                <thead><tr><th>FR Reference</th><th>Category</th><th>Surfacing Date</th><th>Surfacing Area</th><th>PSWDO Access Status</th><th>Overall FEA Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>FR Reference</th><th>Category</th><th>Surfacing Date</th><th>Surfacing Area</th><th>Overall FEA Status</th><th>Action</th></tr></thead>
                 <tbody>
                 @forelse($processings as $fea)
                     @php($record = $fea->surfacedFormerRebel)
@@ -27,12 +27,11 @@
                         <td>{{ $record->category->value }}</td>
                         <td>{{ $record->surfaced_at->format('M d, Y') }}</td>
                         <td>{{ $record->barangay?->name ? $record->barangay->name.', ' : '' }}{{ $record->municipality->name }}, {{ $record->province }}</td>
-                        <td class="fea-access"><strong>Not securely linked</strong><small>Final processing disabled</small></td>
                         <td><span class="fea-status">{{ $fea->overallStatus()->value }}</span></td>
                         <td><a class="btn btn-sm btn-outline-primary" href="{{ route('ib39.fea.show', $fea) }}">View FEA Record</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="fea-empty">No surfaced FR records currently require FEA processing.</td></tr>
+                    <tr><td colspan="6" class="fea-empty">No surfaced FR records currently require FEA processing.</td></tr>
                 @endforelse
                 </tbody>
             </table>

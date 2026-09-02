@@ -55,7 +55,11 @@ class Ib39FeaUploadService
                     throw ValidationException::withMessages(['file' => 'Completed documents cannot receive draft uploads.']);
                 }
 
-                $pointer = $slot === Ib39FeaUploadSlot::Primary ? 'current_draft_version_id' : 'current_supporting_photo_version_id';
+                $pointer = match ($slot) {
+                    Ib39FeaUploadSlot::Primary => 'current_draft_version_id',
+                    Ib39FeaUploadSlot::JustificationSurrendered => 'current_surrendered_photo_version_id',
+                    Ib39FeaUploadSlot::JustificationComparison => 'current_supporting_photo_version_id',
+                };
                 $currentId = $lockedDocument->{$pointer};
                 if ($currentId !== $expectedCurrentVersionId) {
                     throw ValidationException::withMessages([
@@ -148,14 +152,15 @@ class Ib39FeaUploadService
 
     private function isPhoto(Ib39FeaDocument $document, Ib39FeaUploadSlot $slot): bool
     {
-        return $slot === Ib39FeaUploadSlot::JustificationComparison
+        return in_array($slot, [Ib39FeaUploadSlot::JustificationSurrendered, Ib39FeaUploadSlot::JustificationComparison], true)
             || in_array($document->document_type, [Ib39FeaDocumentType::FirearmPhoto, Ib39FeaDocumentType::FrWithFirearmPhoto], true);
     }
 
     private function slotAllowed(Ib39FeaDocument $document, Ib39FeaUploadSlot $slot): bool
     {
         return $slot === Ib39FeaUploadSlot::Primary
-            || $document->document_type === Ib39FeaDocumentType::Justification;
+            || ($document->document_type === Ib39FeaDocumentType::Justification
+                && in_array($slot, [Ib39FeaUploadSlot::JustificationSurrendered, Ib39FeaUploadSlot::JustificationComparison], true));
     }
 
     private function audit(Ib39FeaDocumentVersion $version, User $actor, string $action, ?string $ip, ?string $agent): void

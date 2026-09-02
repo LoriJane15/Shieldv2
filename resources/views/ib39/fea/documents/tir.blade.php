@@ -13,6 +13,6 @@
     <div class="section-label">Condition:</div>
     <div class="choice-row">@foreach(['GOOD', 'FAIR', 'SCRAP'] as $choice)<span><span class="checkbox">{{ ($draft['condition'] ?? null) === $choice ? '✓' : '' }}</span> {{ $choice }}</span>@endforeach</div>
     <div class="section-label">Remarks:</div><div class="line-value value" style="min-height: 22mm">{{ $draft['remarks'] ?? '' }}</div>
-    <div class="signature-block"><strong>INSPECTED BY:</strong><div class="signature-line"></div><div class="printed-name">{{ $draft['inspected_by'] ?? '' }}</div><div class="signature-caption">(Signature over printed name)</div><div class="signature-title">AFP/PNP Officer</div></div>
-    <div class="signature-block"><strong>NOTED BY:</strong><div class="signature-line"></div><div class="printed-name">{{ $draft['noted_by'] ?? '' }}</div><div class="signature-caption">(Signature over printed name)</div><div class="signature-title">AFP/ PNP COMMANDING OFFICER</div></div>
+    <div class="signature-block"><strong>INSPECTED BY:</strong><div class="signature-line"></div><div class="signature-caption">(Signature over printed name)</div><div class="signature-title">AFP/PNP Officer</div></div>
+    <div class="signature-block"><strong>NOTED BY:</strong><div class="signature-line"></div><div class="signature-caption">(Signature over printed name)</div><div class="signature-title">AFP/ PNP COMMANDING OFFICER</div></div>
 </article>

@@ -17,7 +17,7 @@ class Ib39FeaDocument extends Model
         'is_delayed', 'delay_reason',
         'prepared_by', 'last_updated_by',
         'draft_data', 'draft_schema_version', 'draft_revision', 'draft_saved_at', 'draft_saved_by',
-        'current_draft_version_id', 'current_supporting_photo_version_id',
+        'current_draft_version_id', 'current_surrendered_photo_version_id', 'current_supporting_photo_version_id',
     ];
 
     protected function casts(): array
@@ -88,5 +88,10 @@ class Ib39FeaDocument extends Model
     public function currentSupportingPhotoVersion(): BelongsTo
     {
         return $this->belongsTo(Ib39FeaDocumentVersion::class, 'current_supporting_photo_version_id');
+    }
+
+    public function currentSurrenderedPhotoVersion(): BelongsTo
+    {
+        return $this->belongsTo(Ib39FeaDocumentVersion::class, 'current_surrendered_photo_version_id');
     }
 }

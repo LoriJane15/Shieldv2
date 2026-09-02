@@ -25,6 +25,11 @@ class FeaUploadController extends Controller
         return $this->save($request, $fea, $document, Ib39FeaUploadSlot::JustificationComparison, $uploads);
     }
 
+    public function storeSurrendered(UploadFeaDraftFileRequest $request, Ib39FeaProcessing $fea, Ib39FeaDocument $document, Ib39FeaUploadService $uploads): RedirectResponse
+    {
+        return $this->save($request, $fea, $document, Ib39FeaUploadSlot::JustificationSurrendered, $uploads);
+    }
+
     public function preview(Ib39FeaProcessing $fea, Ib39FeaDocument $document, Ib39FeaDocumentVersion $version, Ib39FeaUploadService $uploads): StreamedResponse
     {
         $this->authorizeVersion($fea, $document, $version, 'preview');
@@ -43,7 +48,11 @@ class FeaUploadController extends Controller
     {
         $version = $uploads->store($fea, $document, $slot, $request->file('file'), $request->validated('expected_current_version_id'), $request->validated('replacement_reason'), $request->user(), $request->ip(), $request->userAgent());
 
-        return redirect()->route('ib39.fea.show', $fea)->with('status', $slot->label().' version '.$version->version_number.' saved as DRAFT — NOT FINAL.');
+        $destination = $slot === Ib39FeaUploadSlot::Primary
+            ? route('ib39.fea.show', $fea)
+            : route('ib39.fea.documents.draft.edit', [$fea, $document]);
+
+        return redirect($destination)->with('status', $slot->label().' version '.$version->version_number.' saved as DRAFT — NOT FINAL.');
     }
 
     private function authorizeVersion(Ib39FeaProcessing $fea, Ib39FeaDocument $document, Ib39FeaDocumentVersion $version, string $ability): void

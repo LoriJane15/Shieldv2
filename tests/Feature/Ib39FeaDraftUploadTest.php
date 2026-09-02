@@ -16,6 +16,7 @@ use App\Services\Ib39SurfacedFormerRebelService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -106,6 +107,23 @@ class Ib39FeaDraftUploadTest extends TestCase
         $this->assertDatabaseCount('ib39_fea_document_versions', 0);
     }
 
+    public function test_photo_validation_errors_remain_visible_in_the_workspace_and_justification_editor(): void
+    {
+        $photo = $this->document(Ib39FeaDocumentType::FirearmPhoto);
+        $workspaceUrl = route('ib39.fea.show', $photo->processing);
+        $this->actingAs($this->actor)->from($workspaceUrl)->post($this->storeUrl($photo), [
+            'file' => UploadedFile::fake()->createWithContent('invalid.png', 'not an image'),
+        ])->assertRedirect($workspaceUrl)->assertSessionHasErrors('file');
+        $this->actingAs($this->actor)->get($workspaceUrl)->assertOk()->assertSee('validation-summary', false);
+
+        $justification = $this->document(Ib39FeaDocumentType::Justification);
+        $editorUrl = route('ib39.fea.documents.draft.edit', [$justification->processing, $justification]);
+        $this->actingAs($this->actor)->from($editorUrl)->post(route('ib39.fea.documents.surrendered-versions.store', [$justification->processing, $justification]), [
+            'file' => UploadedFile::fake()->createWithContent('invalid.png', 'not an image'),
+        ])->assertRedirect($editorUrl)->assertSessionHasErrors('file');
+        $this->actingAs($this->actor)->get($editorUrl)->assertOk()->assertSee('alert alert-danger', false);
+    }
+
     public function test_replacement_is_immutable_requires_reason_rejects_stale_and_deduplicates_retry(): void
     {
         $document = $this->document(Ib39FeaDocumentType::Tir);
@@ -191,19 +209,44 @@ class Ib39FeaDraftUploadTest extends TestCase
         $this->assertCount(1, Storage::disk('local')->allFiles("ib39/fea/{$document->fea_processing_id}/drafts/primary"));
     }
 
-    public function test_justification_support_photo_is_not_a_seventh_requirement_and_section_three_reuses_firearm_photo(): void
+    public function test_all_four_photo_streams_are_independent_and_replacing_one_changes_no_other_pointer(): void
     {
         $this->requireGd();
         $firearm = $this->document(Ib39FeaDocumentType::FirearmPhoto);
+        $frWithFirearm = $this->document(Ib39FeaDocumentType::FrWithFirearmPhoto);
         $justification = $this->document(Ib39FeaDocumentType::Justification);
         $this->actingAs($this->actor)->post($this->storeUrl($firearm), ['file' => UploadedFile::fake()->image('firearm.jpg', 40, 30)])->assertRedirect();
+        $this->actingAs($this->actor)->post($this->storeUrl($frWithFirearm), ['file' => UploadedFile::fake()->image('fr-firearm.jpg', 40, 30)])->assertRedirect();
+        $this->actingAs($this->actor)->post(route('ib39.fea.documents.surrendered-versions.store', [$justification->processing, $justification]), ['file' => UploadedFile::fake()->image('surrendered.png', 40, 30)])->assertRedirect();
         $this->actingAs($this->actor)->post(route('ib39.fea.documents.comparison-versions.store', [$justification->processing, $justification]), ['file' => UploadedFile::fake()->image('comparison.png', 40, 30)])->assertRedirect();
-        $justification->update(['draft_data' => app(Ib39FeaDraftSchema::class)->initial(Ib39FeaDocumentType::Justification, ''), 'draft_schema_version' => 1, 'draft_revision' => 1]);
+        $justification->update(['draft_data' => app(Ib39FeaDraftSchema::class)->initial(Ib39FeaDocumentType::Justification, ''), 'draft_schema_version' => Ib39FeaDraftSchema::VERSION, 'draft_revision' => 1]);
+
+        $pointers = [
+            $firearm->fresh()->current_draft_version_id,
+            $frWithFirearm->fresh()->current_draft_version_id,
+            $justification->fresh()->current_surrendered_photo_version_id,
+            $justification->fresh()->current_supporting_photo_version_id,
+        ];
+        $sectionThree = $justification->fresh()->currentSurrenderedPhotoVersion;
+        $this->actingAs($this->actor)->post(route('ib39.fea.documents.surrendered-versions.store', [$justification->processing, $justification]), [
+            'file' => UploadedFile::fake()->image('surrendered-replacement.png', 45, 35),
+            'expected_current_version_id' => $sectionThree->id,
+            'replacement_reason' => 'Clearer Section 3 image',
+        ])->assertRedirect();
+
+        $this->assertSame($pointers[0], $firearm->fresh()->current_draft_version_id);
+        $this->assertSame($pointers[1], $frWithFirearm->fresh()->current_draft_version_id);
+        $this->assertNotSame($pointers[2], $justification->fresh()->current_surrendered_photo_version_id);
+        $this->assertSame($pointers[3], $justification->fresh()->current_supporting_photo_version_id);
         $response = $this->actingAs($this->actor)->get(route('ib39.fea.documents.draft.preview', [$justification->processing, $justification]))->assertOk();
-        $response->assertSee(route('ib39.fea.documents.versions.preview', [$firearm->processing, $firearm, $firearm->fresh()->currentDraftVersion]), false);
+        $response->assertDontSee(route('ib39.fea.documents.versions.preview', [$firearm->processing, $firearm, $firearm->fresh()->currentDraftVersion]), false);
+        $response->assertDontSee(route('ib39.fea.documents.versions.preview', [$frWithFirearm->processing, $frWithFirearm, $frWithFirearm->fresh()->currentDraftVersion]), false);
+        $response->assertSee(route('ib39.fea.documents.versions.preview', [$justification->processing, $justification, $justification->fresh()->currentSurrenderedPhotoVersion]), false);
         $response->assertSee(route('ib39.fea.documents.versions.preview', [$justification->processing, $justification, $justification->fresh()->currentSupportingPhotoVersion]), false);
         $this->assertSame(6, $this->record->feaProcessing->documents()->count());
+        $this->assertSame(Ib39FeaUploadSlot::JustificationSurrendered, $justification->fresh()->currentSurrenderedPhotoVersion->slot);
         $this->assertSame(Ib39FeaUploadSlot::JustificationComparison, $justification->fresh()->currentSupportingPhotoVersion->slot);
+        $this->assertSame(2, $justification->versions()->where('slot', Ib39FeaUploadSlot::JustificationSurrendered)->count());
     }
 
     public function test_completed_ineligible_deleted_and_server_owned_final_fields_are_rejected(): void
@@ -215,6 +258,31 @@ class Ib39FeaDraftUploadTest extends TestCase
         $document->update(['status' => Ib39FeaDocumentStatus::Pending]);
         $this->record->delete();
         $this->actingAs($this->actor)->post($this->storeUrl($document), ['file' => $this->pdf()])->assertForbidden();
+    }
+
+    public function test_section_three_migration_rollback_refuses_without_changing_data_or_schema(): void
+    {
+        $this->requireGd();
+        $document = $this->document(Ib39FeaDocumentType::Justification);
+        $this->actingAs($this->actor)->post(route('ib39.fea.documents.surrendered-versions.store', [$document->processing, $document]), [
+            'file' => UploadedFile::fake()->image('section-three.png', 40, 30),
+        ])->assertRedirect();
+
+        $versionId = $document->fresh()->current_surrendered_photo_version_id;
+        $columns = Schema::getColumnListing('ib39_fea_documents');
+        $migration = require database_path('migrations/2026_09_02_000002_add_surrendered_photo_stream_to_ib39_fea_documents.php');
+
+        try {
+            $migration->down();
+            $this->fail('Rollback did not refuse an existing Section 3 version.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Cannot roll back while Justification Section 3 photo versions exist.', $exception->getMessage());
+        }
+
+        $this->assertSame($columns, Schema::getColumnListing('ib39_fea_documents'));
+        $this->assertSame($versionId, $document->fresh()->current_surrendered_photo_version_id);
+        $this->assertDatabaseHas('ib39_fea_document_versions', ['id' => $versionId, 'slot' => Ib39FeaUploadSlot::JustificationSurrendered->value]);
+        $this->assertDatabaseHas('ib39_fea_upload_histories', ['fea_document_version_id' => $versionId, 'slot' => Ib39FeaUploadSlot::JustificationSurrendered->value]);
     }
 
     private function document(Ib39FeaDocumentType $type): Ib39FeaDocument

@@ -8,7 +8,7 @@ use InvalidArgumentException;
 
 class Ib39FeaDraftSchema
 {
-    public const VERSION = 1;
+    public const VERSION = 2;
 
     public const MAX_ROWS = 30;
 
@@ -23,14 +23,11 @@ class Ib39FeaDraftSchema
                 ['key' => 'parts', 'label' => 'PARTS', 'type' => 'table', 'columns' => ['part' => 'PARTS', 'serviceable' => 'SERVICEABLE', 'unserviceable' => 'UNSERVICEABLE']],
                 ['key' => 'condition', 'label' => 'Condition', 'type' => 'choice', 'choices' => ['GOOD', 'FAIR', 'SCRAP']],
                 ['key' => 'remarks', 'label' => 'Remarks', 'type' => 'textarea'],
-                ['key' => 'inspected_by', 'label' => 'INSPECTED BY', 'type' => 'text', 'title' => 'AFP/PNP Officer'],
-                ['key' => 'noted_by', 'label' => 'NOTED BY', 'type' => 'text', 'title' => 'AFP/ PNP COMMANDING OFFICER'],
             ],
             Ib39FeaDocumentType::Cvif => [
                 ['key' => 'fr_name', 'label' => 'Name of FR or FVE', 'type' => 'text'],
                 ['key' => 'rm_number', 'label' => 'RM No.', 'type' => 'text'],
                 ...$this->firearmFields(),
-                ['key' => 'technical_inventory_at', 'label' => 'Inventory and technical conducted at', 'type' => 'text'],
                 ['key' => 'date_of_inspection', 'label' => 'Date of inspection', 'type' => 'date'],
                 ['key' => 'place_of_inspection', 'label' => 'Place of inspection', 'type' => 'text'],
                 ['key' => 'condition', 'label' => 'Condition', 'type' => 'text'],
@@ -40,25 +37,15 @@ class Ib39FeaDraftSchema
                 ['key' => 'cost_valuation', 'label' => 'Cost valuation (Php)', 'type' => 'decimal'],
                 ['key' => 'done_date', 'label' => 'DONE this (DD-MM-year)', 'type' => 'date'],
                 ['key' => 'done_place', 'label' => 'Place', 'type' => 'text'],
-                ['key' => 'pnp_representative', 'label' => 'CERTIFIED BY', 'type' => 'text', 'title' => 'PNP REPRESENTATIVE'],
-                ['key' => 'afp_representative', 'label' => 'CERTIFIED BY', 'type' => 'text', 'title' => 'AFP REPRESENTATIVE'],
-                ['key' => 'dilg_representative', 'label' => 'CERTIFIED BY', 'type' => 'text', 'title' => 'DILG REPRESENTATIVE'],
             ],
             Ib39FeaDocumentType::Ptis => [
-                ['key' => 'to', 'label' => 'TO', 'type' => 'text'],
-                ['key' => 'from', 'label' => 'FROM', 'type' => 'text'],
                 ['key' => 'supply_classification_officer', 'label' => 'SUPPLY CLASSIFICATION OFFICER', 'type' => 'text'],
                 ['key' => 'page_of_voucher_number', 'label' => 'PAGE ___ OF Voucher Number', 'type' => 'text'],
                 ['key' => 'organization_unit', 'label' => 'Organization/ Unit', 'type' => 'text'],
                 ['key' => 'turn_in_slip_number', 'label' => 'Turn-In Slip Number', 'type' => 'text'],
                 ['key' => 'items', 'label' => 'Turn-in items', 'type' => 'table', 'columns' => ['item' => 'ITEM', 'stock' => 'STOCK', 'nomenclature' => 'NOMENCLATURE', 'unit' => 'UNIT', 'quantity' => 'QTY', 'remarks' => 'REMARKS', 'symbol_action' => 'SYMBOL ACTION']],
-                ['key' => 'basis', 'label' => 'BASIS', 'type' => 'textarea'],
                 ['key' => 'turned_in_by', 'label' => 'TURNED IN BY', 'type' => 'text', 'title' => '(Name, please specify if FR or FVE)'],
-                ['key' => 'received_by', 'label' => 'RECEIVED BY', 'type' => 'text', 'title' => '(signature above printed name)'],
-                ['key' => 'inspected_by', 'label' => 'INSPECTED BY', 'type' => 'text', 'title' => '(signature above printed name)'],
                 ['key' => 'note', 'label' => 'NOTE', 'type' => 'textarea'],
-                ['key' => 'commanding_officer', 'label' => 'FOR THE COMMANDING OFFICER', 'type' => 'text', 'title' => 'AFP/ PNP Representative'],
-                ['key' => 'dilg_representative', 'label' => 'CONFIRMED BY', 'type' => 'text', 'title' => '(DILG Representative)'],
                 ['key' => 'organization_supply_officer_date', 'label' => 'DATE: (ORGANIZATION SUPPLY OFFICER)', 'type' => 'date'],
                 ['key' => 'station_supply_classification_officer_date', 'label' => '(DATE :) For Station Supply or Classification Officer', 'type' => 'date'],
             ],
@@ -76,8 +63,10 @@ class Ib39FeaDraftSchema
                 ['key' => 'other_source', 'label' => '2.2 If others,briefly state the source and justification.Also, how was the credibility of this sourced assessed?', 'type' => 'textarea'],
                 ['key' => 'photo_notice_3', 'label' => '3. Photo documentation of the firearms surrendered', 'type' => 'notice'],
                 ['key' => 'photo_notice_4', 'label' => '4. Photo of an example of the firearms surrendered that is good condition', 'type' => 'notice'],
-                ['key' => 'prepared_by', 'label' => 'Prepared by', 'type' => 'text', 'title' => 'Firearms Technician,RSAO PRO 11'],
-                ['key' => 'reviewed_by', 'label' => 'Reviewed by', 'type' => 'text', 'title' => 'OIC,Regional Supply Accountable Officer ,PRO 11'],
+                ['key' => 'prepared_by', 'label' => 'Prepared By — full name', 'type' => 'text'],
+                ['key' => 'prepared_by_position', 'label' => 'Prepared By — rank/position', 'type' => 'text'],
+                ['key' => 'reviewed_by', 'label' => 'Reviewed By — full name', 'type' => 'text'],
+                ['key' => 'reviewed_by_position', 'label' => 'Reviewed By — rank/position', 'type' => 'text'],
             ],
             default => throw new InvalidArgumentException('This document does not have a draft editor.'),
         };

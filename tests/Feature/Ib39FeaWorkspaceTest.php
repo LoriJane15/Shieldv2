@@ -50,7 +50,7 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertOk()
             ->assertSee('FEA Processing')
             ->assertSee('FR Reference')
-            ->assertSee('PSWDO Access Status')
+            ->assertDontSee('PSWDO Access Status')
             ->assertSee('Awaiting PSWDO Enrollment')
             ->assertSee('View FEA Record')
             ->assertSee(route('ib39.fea.show', $processing));
@@ -70,9 +70,33 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertSee('Justification on the TIR and CVC/CVIF')
             ->assertSee('Photograph of the firearm')
             ->assertSee('Photograph of the FR with the firearm')
-            ->assertSee('Final actions unavailable')
-            ->assertSee('Private Draft Upload — DRAFT — NOT FINAL')
+            ->assertSee('Upload Final TIR')
+            ->assertSee('Upload Final CVIF')
+            ->assertSee('Upload Final PTIS')
+            ->assertSee('Upload Final Justification Form')
+            ->assertSee('Upload Photo — Photograph of the firearm')
+            ->assertSee('Upload Photo — Photograph of the FR with the firearm')
+            ->assertSee('View Upload History')
+            ->assertDontSee('Existing Private Draft Versions — DRAFT — NOT FINAL')
+            ->assertDontSee('Existing draft uploads and their immutable histories remain available.')
+            ->assertDontSee('No private draft file uploaded.')
+            ->assertDontSee('Unavailable: secure PSWDO linkage and final submission are not implemented.')
+            ->assertDontSee('This photograph requirement does not have a text-form editor.')
+            ->assertDontSee('Private Photo Upload — DRAFT — NOT FINAL')
+            ->assertDontSee('JPEG or PNG only. Maximum 20 MiB. Files are stored privately as immutable versions.')
+            ->assertDontSee('No private photo uploaded.')
             ->assertSee('type="file"', false);
+        $content = $response->getContent();
+        $this->assertSame(4, substr_count($content, 'type="button" disabled'));
+        $this->assertSame(1, substr_count($content, 'PSWDO dependency:'));
+        foreach (['Upload Final TIR', 'Upload Final CVIF', 'Upload Final PTIS', 'Upload Final Justification Form'] as $label) {
+            $buttonPosition = strpos($content, $label);
+            $previewPosition = strrpos(substr($content, 0, $buttonPosition), 'Preview Saved Draft');
+            $this->assertNotFalse($buttonPosition);
+            $this->assertNotFalse($previewPosition);
+            $this->assertLessThan(500, $buttonPosition - $previewPosition);
+        }
+        $this->assertSame(6, $processing->documents()->count());
     }
 
     public function test_soft_deleted_parent_is_absent_from_queue_and_workspace_is_denied(): void

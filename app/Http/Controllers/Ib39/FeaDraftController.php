@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Ib39;
 
-use App\Enums\Ib39FeaDocumentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ib39\SaveFeaDraftRequest;
 use App\Models\Ib39FeaDocument;
@@ -20,7 +19,13 @@ class FeaDraftController extends Controller
     {
         Gate::authorize('editDraft', [$document, $fea]);
         $fea->load('surfacedFormerRebel');
-        $document->load(['draftSaver:id,name', 'draftHistories' => fn ($query) => $query->with('actor:id,name')->latest('revision')]);
+        $document->load([
+            'draftSaver:id,name',
+            'draftHistories' => fn ($query) => $query->with('actor:id,name')->latest('revision'),
+            'versions.uploader:id,name',
+            'currentSurrenderedPhotoVersion.uploader:id,name',
+            'currentSupportingPhotoVersion.uploader:id,name',
+        ]);
         $fields = $schema->fields($document->document_type);
         $draft = $document->draft_data ?? $schema->initial($document->document_type, $fea->surfacedFormerRebel->display_name);
 
@@ -53,17 +58,15 @@ class FeaDraftController extends Controller
     {
         Gate::authorize('viewDraft', [$document, $fea]);
         $fea->load('surfacedFormerRebel');
-        $firearmPhotoDocument = $fea->documents()->where('document_type', Ib39FeaDocumentType::FirearmPhoto)->with('currentDraftVersion')->first();
-        $firearmPhoto = $firearmPhotoDocument?->currentDraftVersion;
-        $document->load('currentSupportingPhotoVersion');
+        $document->load(['currentSurrenderedPhotoVersion', 'currentSupportingPhotoVersion']);
 
         return response()->view('ib39.fea.preview', [
             'fea' => $fea,
             'document' => $document,
             'draft' => $document->draft_data,
             'printMode' => $printMode,
-            'firearmPhoto' => $firearmPhoto,
-            'comparisonPhoto' => $document->document_type === Ib39FeaDocumentType::Justification ? $document->currentSupportingPhotoVersion : null,
+            'surrenderedPhoto' => $document->currentSurrenderedPhotoVersion,
+            'comparisonPhoto' => $document->currentSupportingPhotoVersion,
         ])->withHeaders([
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
             'Pragma' => 'no-cache',

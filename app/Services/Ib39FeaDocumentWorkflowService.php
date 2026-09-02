@@ -153,6 +153,9 @@ class Ib39FeaDocumentWorkflowService
             }
 
             $previous = $lockedDocument->draft_data ?? [];
+            // Preserve encrypted values retired by newer schemas without exposing
+            // them as editable or accepting them back from the request.
+            $draft = array_replace($previous, $draft);
             $changedFields = $this->draftSchema->changedFields($previous, $draft);
             if ($lockedDocument->draft_data !== null && $changedFields === []) {
                 return $lockedDocument;

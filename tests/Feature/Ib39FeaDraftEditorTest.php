@@ -46,8 +46,10 @@ class Ib39FeaDraftEditorTest extends TestCase
             $document = $this->document($type);
             $before = $document->updated_at;
             $response = $this->actingAs($this->actor)->get($this->editUrl($document))->assertOk();
-            $response->assertSee($document->document_type->label())
-                ->assertDontSee('type="file"', false);
+            $response->assertSee($document->document_type->label());
+            if ($type !== Ib39FeaDocumentType::Justification) {
+                $response->assertDontSee('type="file"', false);
+            }
             if (array_key_exists('fr_name', $this->blankDraft($type))) {
                 $response->assertSee('Synthetic Draft Subject');
             }
@@ -57,7 +59,7 @@ class Ib39FeaDraftEditorTest extends TestCase
         }
 
         $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Justification)))
-            ->assertSee('Photo uploads are managed in the FEA workspace', false);
+            ->assertDontSee('This photo has its own upload and immutable version history below.', false);
         $this->assertDatabaseCount('ib39_fea_draft_histories', 0);
     }
 
@@ -112,6 +114,72 @@ class Ib39FeaDraftEditorTest extends TestCase
             ->assertSessionHasErrors('revision');
         $this->assertSame('First saved name', $document->fresh()->draft_data['fr_name']);
         $this->assertSame(1, $document->fresh()->draft_revision);
+    }
+
+    public function test_retired_legacy_values_are_preserved_encrypted_but_no_longer_editable(): void
+    {
+        $document = $this->document(Ib39FeaDocumentType::Tir);
+        $legacy = $this->blankDraft($document->document_type) + [
+            'inspected_by' => 'LEGACY INSPECTOR',
+            'noted_by' => 'LEGACY COMMANDER',
+        ];
+        $document->update(['draft_data' => $legacy, 'draft_schema_version' => 1, 'draft_revision' => 1]);
+
+        $this->actingAs($this->actor)->get($this->editUrl($document))->assertOk()
+            ->assertDontSee('name="draft[inspected_by]"', false)
+            ->assertDontSee('name="draft[noted_by]"', false)
+            ->assertDontSee('LEGACY INSPECTOR');
+
+        $active = $this->blankDraft($document->document_type);
+        $active['remarks'] = 'Updated active value';
+        $this->actingAs($this->actor)->put($this->updateUrl($document), ['revision' => 1, 'draft' => $active])->assertRedirect();
+
+        $saved = $document->fresh();
+        $this->assertSame(Ib39FeaDraftSchema::VERSION, $saved->draft_schema_version);
+        $this->assertSame('LEGACY INSPECTOR', $saved->draft_data['inspected_by']);
+        $this->assertSame('LEGACY COMMANDER', $saved->draft_data['noted_by']);
+        $this->assertSame('Updated active value', $saved->draft_data['remarks']);
+        $raw = DB::table('ib39_fea_documents')->where('id', $document->id)->value('draft_data');
+        $this->assertStringNotContainsString('LEGACY INSPECTOR', $raw);
+    }
+
+    public function test_corrected_fields_condition_and_justification_photo_forms_are_rendered(): void
+    {
+        $tir = $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Tir)))->assertOk();
+        $tir->assertSee('value="GOOD"', false)->assertSee('value="FAIR"', false)->assertSee('value="SCRAP"', false)->assertDontSee('Not selected')
+            ->assertDontSee('INSPECTED BY: (Signature over printed name)')
+            ->assertDontSee('NOTED BY: (Signature over printed name)');
+        $this->assertSame(0, substr_count($tir->getContent(), 'type="radio" name="draft[condition]" value=""'));
+
+        $cvif = $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Cvif)))->assertOk();
+        $cvif->assertDontSee('Inventory and technical conducted at')->assertDontSee('name="draft[pnp_representative]"', false);
+
+        $ptis = $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Ptis)))->assertOk();
+        foreach (['to', 'from', 'basis', 'received_by', 'inspected_by', 'commanding_officer', 'dilg_representative'] as $key) {
+            $ptis->assertDontSee('name="draft['.$key.']"', false);
+        }
+
+        $justification = $this->actingAs($this->actor)->get($this->editUrl($this->document(Ib39FeaDocumentType::Justification)))->assertOk();
+        $justification->assertSee('name="draft[prepared_by_position]"', false)
+            ->assertSee('name="draft[reviewed_by_position]"', false)
+            ->assertSee('data-photo-slot="justification_surrendered"', false)
+            ->assertSee('data-photo-slot="justification_comparison"', false)
+            ->assertSee('form="support-photo-form-3"', false)
+            ->assertSee('form="support-photo-form-4"', false)
+            ->assertDontSee('Supporting attachment only')
+            ->assertDontSee('No Section 3 photo has been uploaded.')
+            ->assertDontSee('No Section 4 photo has been uploaded.');
+        $content = $justification->getContent();
+        $this->assertSame(2, substr_count($content, '>Upload Photo</button>'));
+        $draftFormStart = strpos($content, '<form method="POST"', strpos($content, 'id="draft-form"') - 200);
+        $firstSupportingForm = strpos($content, '<form id="support-photo-form-3"');
+        $secondSupportingForm = strpos($content, '<form id="support-photo-form-4"');
+        $this->assertNotFalse($draftFormStart);
+        $this->assertNotFalse($firstSupportingForm);
+        $this->assertNotFalse($secondSupportingForm);
+        $this->assertLessThan($draftFormStart, $firstSupportingForm);
+        $this->assertLessThan($draftFormStart, $secondSupportingForm);
+        $this->assertSame(substr_count($content, '<form'), substr_count($content, '</form>'));
     }
 
     public function test_schema_rejects_unknown_keys_tampered_arrays_server_owned_fields_and_excess_rows(): void

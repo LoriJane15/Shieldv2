@@ -77,7 +77,8 @@ class Ib39FeaPreliminaryAuthorizationTest extends TestCase
             ->assertDontSee($script, false)
             ->assertSee('No securely linked PSWDO enrollment is available. Final FEA processing is disabled.')
             ->assertSee('type="file"', false)
-            ->assertSee('Private Draft Upload — DRAFT — NOT FINAL')
+            ->assertSee('View Upload History')
+            ->assertSee('Upload Final CVIF')
             ->assertSee(route('ib39.fea.documents.draft.preview', [$processing, $document]))
             ->assertDontSee('Final Copy');
     }
