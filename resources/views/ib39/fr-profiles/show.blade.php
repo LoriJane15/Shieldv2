@@ -236,11 +236,11 @@
                     <div class="workflow-tile-list mb-3">
                         <div class="workflow-tile">
                             <strong>Process Status</strong>
-                            <span>{{ $record->possessed_firearms ? 'Not Available' : 'Not Applicable' }}</span>
+                            <span>{{ $record->feaProcessing?->overallStatus()->value ?? ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span>
                         </div>
                         <div class="workflow-tile">
                             <strong>Documents</strong>
-                            <span>{{ $record->possessed_firearms ? 'Not Available' : 'Not Applicable' }}</span>
+                            <span>{{ $record->feaProcessing ? $record->feaProcessing->documents->count().' requirements' : ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span>
                         </div>
                     </div>
 
@@ -268,6 +268,12 @@
             <a href="{{ route('ib39.cdr.show', $record->cdrProcessing) }}" class="btn-action-primary">
                 <i class="mdi mdi-file-document-edit-outline"></i>
                 <span>Open CDR Workspace</span>
+            </a>
+        @endif
+        @if($record->feaProcessing)
+            <a href="{{ route('ib39.fea.show', $record->feaProcessing) }}" class="btn-action-secondary">
+                <i class="mdi mdi-file-document-outline"></i>
+                <span>View FEA Record</span>
             </a>
         @endif
         <a href="{{ route('ib39.fr-profiles.index') }}" class="btn-action-secondary">

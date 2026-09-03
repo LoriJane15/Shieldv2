@@ -66,7 +66,7 @@ class SurfacedFormerRebelController extends Controller
     {
         Gate::authorize('view', $ib39SurfacedFormerRebel);
 
-        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator', 'cdrProcessing']);
+        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator', 'cdrProcessing', 'feaProcessing.documents']);
 
         return view('ib39.fr-profiles.show', [
             'record' => $ib39SurfacedFormerRebel,

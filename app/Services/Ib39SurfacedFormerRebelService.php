@@ -14,6 +14,7 @@ class Ib39SurfacedFormerRebelService
     public function __construct(
         private readonly Ib39ReferenceSequenceService $references,
         private readonly Ib39CdrProcessingService $cdrProcessings,
+        private readonly Ib39FeaSynchronizationService $feaProcessings,
     ) {}
 
     public function create(
@@ -40,6 +41,8 @@ class Ib39SurfacedFormerRebelService
                 $ipAddress,
                 $userAgent,
             );
+
+            $this->feaProcessings->ensureForSurfacedFormerRebel($record);
 
             AuditLog::query()->create([
                 'user_id' => $actor->id,

@@ -135,9 +135,10 @@ return [
             'nav' => [
                 ['label' => 'Dashboard', 'route' => 'ib39.dashboard',   'icon' => 'squares-2x2', 'skyicon' => 'icon-grid', 'section' => 'Overview'],
                 ['label' => 'FR Profiles', 'route' => 'ib39.fr-profiles.index', 'icon' => 'users', 'skyicon' => 'icon-people', 'section' => 'Reintegration'],
+                ['label' => 'Record Surfaced FR', 'route' => 'ib39.fr-profiles.create', 'icon' => 'user-plus', 'skyicon' => 'icon-user-follow', 'section' => 'Reintegration'],
+                ['label' => 'FEA Processing', 'route' => 'ib39.fea.index', 'icon' => 'document-text', 'skyicon' => 'icon-docs', 'section' => 'Reintegration'],
                 ['label' => 'Add Area',  'route' => 'ib39.areas.index', 'icon' => 'map-pin',     'skyicon' => 'icon-map', 'section' => 'Operational Areas'],
-                ['label' => 'Map',       'route' => 'ib39.map',         'icon' => 'map',         'skyicon' => 'icon-location-pin', 'section' => 'Operational Areas'],
-            ],
+                ['label' => 'Map',       'route' => 'ib39.map',         'icon' => 'map',         'skyicon' => 'icon-location-pin', 'section' => 'Operational Areas'],            ],
         ],
         'afp' => [
             'label' => 'AFP',
