@@ -1,7 +1,7 @@
 .operational-map-page {
-    --map-primary: #2f6fed;
-    --map-navy: #172b4d;
-    --map-border: #e7ecf3;
+    --map-primary: #401595;
+    --map-navy: #18181b;
+    --map-border: #e4e4e7;
 }
 
 .map-back {
@@ -19,27 +19,17 @@
 .map-hero {
     position: relative;
     overflow: hidden;
-    padding: 1.5rem;
-    border-radius: 16px;
-    background: linear-gradient(125deg, #173b74, #2f6fed);
+    padding: 1.25rem 1.5rem;
+    border-radius: 15px;
+    background: linear-gradient(115deg, #152a4d 0%, #172f57 58%, #123c4d 100%);
     color: #fff;
-    box-shadow: 0 10px 28px rgba(47, 111, 237, .16);
+    box-shadow: none;
+    min-height: 110px;
 }
 
-.map-hero::after {
-    position: absolute;
-    top: -95px;
-    right: -50px;
-    width: 190px;
-    height: 190px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .08);
-    content: '';
-}
-
-.map-eyebrow { font-size: .7rem; font-weight: 700; letter-spacing: .1em; opacity: .76; text-transform: uppercase; }
-.map-hero h2 { color: #fff; font-size: 1.55rem; font-weight: 700; }
-.map-hero p { font-size: .8rem; opacity: .86; }
+.map-eyebrow { font-size: .62rem; font-weight: 800; letter-spacing: .14em; color: #ff9a62; text-transform: uppercase; }
+.map-hero h2 { color: #fff; font-size: 1.48rem; font-weight: 800; letter-spacing: -.025em; margin-bottom: .2rem; }
+.map-hero p { font-size: .78rem; color: #bac7e5; }
 
 .map-count-card {
     position: relative;
@@ -85,7 +75,7 @@
 .map-input-wrap .fa { position: absolute; top: 50%; left: .85rem; z-index: 2; color: #8492a6; transform: translateY(-50%); }
 .map-input-wrap .form-control { padding-left: 2.4rem; }
 .map-toolbar .form-control { height: 40px; border-color: #dfe5ee; border-radius: 8px; color: #52616f; font-size: .78rem; }
-.map-toolbar .form-control:focus { border-color: #80a6ee; box-shadow: 0 0 0 3px rgba(47, 111, 237, .1); }
+.map-toolbar .form-control:focus { border-color: #401595; box-shadow: 0 0 0 3px rgba(64, 21, 149, .11); }
 .map-tool-button { height: 40px; border-radius: 8px; font-size: .76rem; font-weight: 600; white-space: nowrap; }
 
 .map-meta-bar {
@@ -101,14 +91,14 @@
 }
 
 .map-meta-bar span { display: inline-flex; align-items: center; gap: .35rem; }
-.map-meta-bar a { display: inline-flex; align-items: center; gap: .35rem; margin-left: auto; color: #2f6fed; font-weight: 600; }
+.map-meta-bar a { display: inline-flex; align-items: center; gap: .35rem; margin-left: auto; color: #401595; font-weight: 600; }
 .map-meta-bar a:hover { text-decoration: none; }
 .map-live-dot { color: #20a779; font-size: .48rem; }
 
 .map-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 36rem; }
 .map-legend { padding: 1.15rem; border-right: 1px solid #edf1f6; background: #fbfcfe; }
 .legend-heading { display: flex; align-items: flex-start; gap: .65rem; margin-bottom: 1rem; }
-.legend-heading > .fa { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: 9px; background: #eaf1ff; color: #2f6fed; }
+.legend-heading > .fa { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: 9px; background: #f1ebfa; color: #401595; }
 .legend-heading h3 { margin: 0 0 .15rem; color: var(--map-navy); font-size: .82rem; font-weight: 700; }
 .legend-heading p { margin: 0; color: #8492a6; font-size: .66rem; line-height: 1.35; }
 .legend-items { display: grid; gap: .25rem; }
@@ -133,14 +123,15 @@
     margin-top: 1rem;
     padding: .7rem;
     border-radius: 9px;
-    background: #eef5ff;
-    color: #526b91;
+    background: #f4effa;
+    border-left: 4px solid #401595;
+    color: #53416b;
     font-size: .65rem;
     line-height: 1.4;
 }
 
-.map-privacy-note .fa { margin-top: .1rem; color: #2f6fed; }
-.map-privacy-note strong { display: block; color: #36537c; }
+.map-privacy-note .fa { margin-top: .1rem; color: #401595; }
+.map-privacy-note strong { display: block; color: #401595; }
 .map-stage { position: relative; min-width: 0; height: 36rem; }
 #ib39Map { width: 100%; height: 100%; background: #e2e8f0; }
 #ib39Map.leaflet-container { position: relative; z-index: 1; overflow: hidden; font-family: inherit; }

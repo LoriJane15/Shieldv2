@@ -1,5 +1,14 @@
 <header class="official-header" aria-label="Fixed official CDR header">
-    <img src="{{ asset('assets/39th/39th.png') }}" alt="39th Infantry Battalion emblem">
-    <div><strong>C O N F I D E N T I A L</strong><span>ARMY 2040: WORLD-CLASS. MULTI-MISSION READY. CROSS DOMAIN CAPABLE.</span></div>
-    <div class="agila-mark" aria-label="Agila emblem">AGILA</div>
+    <div class="header-logo-left">
+        <img src="{{ asset('assets/39th/10id.png') }}" alt="10th Infantry Division Agila emblem">
+    </div>
+    <div class="header-center">
+        <strong class="confidential-badge">C O N F I D E N T I A L</strong>
+        <span class="vision-badge">ARMY 2040: WORLD-CLASS, MULTI-MISSION READY, CROSS DOMAIN CAPABLE.</span>
+    </div>
+    <div class="header-logo-right">
+        <div class="agila-round-mark" aria-label="39th Infantry Battalion emblem">
+            <img src="{{ asset('assets/39th/39th.png') }}" alt="39th Infantry Battalion emblem">
+        </div>
+    </div>
 </header>

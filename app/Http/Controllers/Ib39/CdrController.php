@@ -15,6 +15,7 @@ use App\Services\Ib39CdrFinalizationService;
 use App\Services\Ib39CdrStatusService;
 use App\Support\Ib39CdrFormSchema;
 use App\Support\Ib39CdrMissingFields;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
@@ -53,8 +54,17 @@ class CdrController extends Controller
         SaveCdrDraftRequest $request,
         Ib39CdrProcessing $cdr,
         Ib39CdrDraftService $drafts,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $drafts->save($cdr, $request->validatedContent(), $request->user(), $request->ip(), $request->userAgent());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'saved' => true,
+                'message' => 'CDR draft saved automatically.',
+                'saved_at' => now()->toIso8601String(),
+                'formatted_time' => now()->format('h:i:s A'),
+            ]);
+        }
 
         return redirect()->route('ib39.cdr.edit', $cdr)->with('status', 'CDR draft saved.');
     }

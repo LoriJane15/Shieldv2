@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     @php
-        $shieldWorkspaceRoles = ['mblrc', 'lswdo', 'japic', 'pnp', 'local_eclip_committee'];
+        $shieldWorkspaceRoles = ['mblrc', 'lswdo', 'japic', 'pnp', 'local_eclip_committee', '39th_ib'];
         $isShieldWorkspace = auth()->check() && in_array(auth()->user()->role, $shieldWorkspaceRoles, true);
     @endphp
     <meta charset="utf-8">
@@ -53,6 +53,13 @@
                         <i class="mdi mdi-magnify" aria-hidden="true"></i>
                         <label class="sr-only" for="mblrc-navbar-search">Search the FR/FVE registry</label>
                         <input id="mblrc-navbar-search" name="search" type="search" maxlength="100" placeholder="Search registry…" autocomplete="off">
+                        <button type="submit">Search</button>
+                    </form>
+                @elseif ($role === '39th_ib')
+                    <form class="mblrc-navbar-search d-none d-md-flex" method="GET" action="{{ route('ib39.fr-profiles.index') }}" role="search">
+                        <i class="mdi mdi-magnify" aria-hidden="true"></i>
+                        <label class="sr-only" for="ib39-navbar-search">Search FR profiles</label>
+                        <input id="ib39-navbar-search" name="search" type="search" maxlength="100" placeholder="Search reference, first or last name…" autocomplete="off">
                         <button type="submit">Search</button>
                     </form>
                 @endif
