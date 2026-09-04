@@ -287,7 +287,7 @@ class Ib39CdrEditorTest extends TestCase
     public function test_workspace_link_is_on_profile_and_stage_four_does_not_create_external_workflows(): void
     {
         $cdr = $this->record->cdrProcessing;
-        $tables = ['eclip_cases', 'eclip_authentication_requests', 'eclip_fea_documents', 'eclip_assistance_requests', 'fr_government_assistances', 'notifications'];
+        $tables = ['fr_government_assistances', 'notifications'];
         $counts = collect($tables)->mapWithKeys(fn (string $table) => [$table => DB::table($table)->count()]);
 
         $this->actingAs($this->actor)->get(route('ib39.fr-profiles.show', $this->record))->assertOk()->assertSee(route('ib39.cdr.show', $cdr));

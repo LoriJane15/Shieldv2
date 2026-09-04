@@ -39,7 +39,6 @@ class AuditLog extends Model
         return match (true) {
             $entity === 'User' => 'User Management',
             $entity === 'GovAgency' => 'Government Agencies',
-            str_starts_with($entity, 'Eclip') => 'E-CLIP',
             str_starts_with($entity, 'Rcsp') => 'RCSP',
             str_starts_with($entity, 'Implementation'), $entity === 'AgencyImplanResponse' => 'IMPLAN',
             str_starts_with($entity, 'FormerRebel'), str_starts_with($entity, 'Fr') => 'Former Rebel Registry',

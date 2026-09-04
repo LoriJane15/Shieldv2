@@ -119,20 +119,7 @@ class UserController extends Controller
         abort_if($user->id === auth()->id(), 403, 'You cannot delete your own account.');
         abort_if(
             $user->rcspForms()->exists()
-                || $user->implementations()->exists()
-                || $user->createdEclipCases()->exists()
-                || $user->eclipEligibilityReviews()->exists()
-                || $user->eclipStatusHistories()->exists()
-                || $user->eclipDocumentVersions()->exists()
-                || $user->eclipDocumentReviews()->exists()
-                || $user->eclipDocumentRequirementHistories()->exists()
-                || $user->eclipAssistanceRequests()->exists()
-                || $user->eclipAssistanceRevisions()->exists()
-                || $user->eclipAssistanceCategoryHistories()->exists()
-                || $user->eclipDilgReviews()->exists()
-                || $user->eclipFundTransactions()->exists()
-                || $user->eclipAssistanceReleases()->exists()
-                || $user->eclipReportExports()->exists(),
+                || $user->implementations()->exists(),
             422,
             'This user owns workflow records and cannot be deleted.'
         );

@@ -141,10 +141,6 @@ class Ib39CdrDomainTest extends TestCase
             $this->assertNull($history->delay_reason);
         }
 
-        $this->assertDatabaseCount('eclip_cases', 0);
-        $this->assertDatabaseCount('eclip_authentication_requests', 0);
-        $this->assertDatabaseCount('eclip_fea_documents', 0);
-        $this->assertDatabaseCount('eclip_assistance_requests', 0);
     }
 
     public function test_unique_constraint_prevents_duplicate_processing_records(): void

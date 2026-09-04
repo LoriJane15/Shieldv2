@@ -33,11 +33,6 @@ class GovAgency extends Model
         return $this->hasMany(ImplementationTagging::class);
     }
 
-    public function eclipBasicServices(): HasMany
-    {
-        return $this->hasMany(EclipBasicService::class);
-    }
-
     public function getProfileUrlAttribute(): string
     {
         if (! $this->profile) {

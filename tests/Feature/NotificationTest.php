@@ -52,7 +52,7 @@ class NotificationTest extends TestCase
             'type' => 'Tests\\Notification',
             'notifiable_type' => User::class,
             'notifiable_id' => $user->id,
-            'data' => json_encode(['case_number' => 'ECLIP-TEST', 'message' => 'Test notification.']),
+            'data' => json_encode(['title' => 'Test record', 'message' => 'Test notification.']),
             'read_at' => null,
             'created_at' => now(),
             'updated_at' => now(),

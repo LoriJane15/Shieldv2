@@ -3,7 +3,6 @@
 namespace Tests\Feature\SuperAdmin;
 
 use App\Models\AuditLog;
-use App\Models\EclipCase;
 use App\Models\GovAgency;
 use App\Models\Municipality;
 use App\Models\User;
@@ -23,7 +22,7 @@ class AuditLogInvestigationTest extends TestCase
         ]);
         $log = $this->log($actor, [
             'action' => 'updated_case',
-            'entity_type' => EclipCase::class,
+            'entity_type' => GovAgency::class,
             'entity_id' => 918,
             'previous_values' => ['confidential_narrative' => 'Previous protected value'],
             'new_values' => ['confidential_narrative' => 'New protected value'],
@@ -38,7 +37,7 @@ class AuditLogInvestigationTest extends TestCase
             ->assertSee('Audit Investigation Actor')
             ->assertSee('LSWDO · Investigation Municipality')
             ->assertSee('UPDATED CASE')
-            ->assertSee('E-CLIP')
+            ->assertSee('Government Agencies')
             ->assertSee($log->eventReference())
             ->assertSee('192.0.2.15')
             ->assertSee('Synthetic Browser on Test Platform')
@@ -54,7 +53,7 @@ class AuditLogInvestigationTest extends TestCase
         $admin = User::factory()->role('admin')->create(['name' => 'Excluded Audit Actor']);
         $matching = $this->log($lswdo, [
             'action' => 'updated_case',
-            'entity_type' => EclipCase::class,
+            'entity_type' => GovAgency::class,
             'entity_id' => 123,
             'created_at' => '2026-08-09 05:00:00',
             'updated_at' => '2026-08-09 05:00:00',
@@ -70,7 +69,7 @@ class AuditLogInvestigationTest extends TestCase
         $response = $this->actingAs(User::factory()->role('super_admin')->create())->get(route('super_admin.audit-logs.index', [
             'search' => $matching->eventReference(),
             'action' => 'updated_case',
-            'module' => EclipCase::class,
+            'module' => GovAgency::class,
             'role' => 'lswdo',
             'date_range' => 'custom',
             'date_from' => '2026-08-09',

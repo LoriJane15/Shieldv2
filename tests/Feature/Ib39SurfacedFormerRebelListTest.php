@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\Ib39FrCategory;
 use App\Models\AuditLog;
 use App\Models\Barangay;
-use App\Models\EclipCase;
 use App\Models\FormerRebel;
 use App\Models\Ib39SurfacedFormerRebel;
 use App\Models\Municipality;
@@ -296,7 +295,6 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
         $this->record();
         $before = [
             'records' => Ib39SurfacedFormerRebel::withTrashed()->count(),
-            'cases' => EclipCase::query()->count(),
             'audits' => AuditLog::query()->count(),
         ];
 
@@ -305,7 +303,6 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
             ->assertOk();
 
         $this->assertSame($before['records'], Ib39SurfacedFormerRebel::withTrashed()->count());
-        $this->assertSame($before['cases'], EclipCase::query()->count());
         $this->assertSame($before['audits'], AuditLog::query()->count());
         $this->assertFalse(Ib39SurfacedFormerRebel::query()->getModel()->isFillable('overall_case_status'));
     }

@@ -79,24 +79,12 @@ class FormerRebel extends Model
         return $this->hasMany(FrGovernmentAssistance::class);
     }
 
-    public function eclipCases(): HasMany
-    {
-        return $this->hasMany(EclipCase::class);
-    }
-
-    public function mblrcEnrollment(): HasOne
-    {
-        return $this->hasOne(MblrcEnrollment::class);
-    }
-
     public function hasRecordedHistory(): bool
     {
         return $this->programStatus()->exists()
             || $this->educationWorks()->exists()
             || $this->locationHistories()->exists()
             || $this->skills()->exists()
-            || $this->assistances()->exists()
-            || $this->eclipCases()->exists()
-            || $this->mblrcEnrollment()->exists();
+            || $this->assistances()->exists();
     }
 }

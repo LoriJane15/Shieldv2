@@ -221,7 +221,7 @@
                             <strong>CDR processing</strong>
                             <span class="badge-pill-status badge-pill-cdr mt-1">{{ $record->cdr_status }}</span>
                         </div>
-                        @foreach (['JAPIC processing', 'PSWDO processing', 'Assistance records'] as $workflow)
+                        @foreach (['PSWDO processing', 'Assistance records'] as $workflow)
                             <div class="workflow-tile">
                                 <strong>{{ $workflow }}</strong>
                                 <span>Not securely linked — unavailable</span>

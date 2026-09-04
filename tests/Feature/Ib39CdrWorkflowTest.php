@@ -186,7 +186,7 @@ class Ib39CdrWorkflowTest extends TestCase
             ->assertOk()
             ->assertDontSee('CDR Status')
             ->assertSee('CDR Ongoing')
-            ->assertSee('Awaiting JAPIC Certification')
+            ->assertSee('CDR Completed')
             ->assertSee('Newly Recorded');
 
         $this->actingAs($this->actor)
@@ -226,10 +226,6 @@ class Ib39CdrWorkflowTest extends TestCase
     public function test_creation_does_not_create_other_workflow_or_messaging_records(): void
     {
         $tables = [
-            'eclip_cases',
-            'eclip_authentication_requests',
-            'eclip_fea_documents',
-            'eclip_assistance_requests',
             'fr_government_assistances',
             'notifications',
         ];

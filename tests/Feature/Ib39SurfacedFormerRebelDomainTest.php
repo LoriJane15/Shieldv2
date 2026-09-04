@@ -39,7 +39,7 @@ class Ib39SurfacedFormerRebelDomainTest extends TestCase
         foreach ([
             'forwarded', 'forwarding_organization', 'other_organization_specification',
             'name', 'display_name', 'real_name', 'firstname', 'middlename', 'lastname',
-            'alias', 'nickname', 'identity_document_number', 'former_rebel_id', 'eclip_case_id',
+            'alias', 'nickname', 'identity_document_number', 'former_rebel_id',
         ] as $forbiddenColumn) {
             $this->assertFalse(Schema::hasColumn('ib39_surfaced_former_rebels', $forbiddenColumn));
         }

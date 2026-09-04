@@ -23,7 +23,6 @@ class StoreSurfacedFormerRebelRequest extends FormRequest
         'nickname',
         'identity_document_number',
         'former_rebel_id',
-        'eclip_case_id',
     ];
 
     public function authorize(): bool

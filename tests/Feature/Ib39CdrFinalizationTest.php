@@ -111,7 +111,7 @@ class Ib39CdrFinalizationTest extends TestCase
     public function test_finalization_owns_completion_metadata_encrypts_immutable_snapshot_and_avoids_external_workflows(): void
     {
         $cdr = $this->ongoing(['assessment' => 'Sensitive snapshot value']);
-        $tables = ['eclip_cases', 'eclip_authentication_requests', 'eclip_fea_documents', 'eclip_assistance_requests', 'fr_government_assistances', 'notifications'];
+        $tables = ['fr_government_assistances', 'notifications'];
         $before = collect($tables)->mapWithKeys(fn ($table) => [$table => DB::table($table)->count()]);
 
         $this->travelTo(now()->startOfSecond());

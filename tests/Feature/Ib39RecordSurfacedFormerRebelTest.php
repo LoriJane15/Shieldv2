@@ -289,7 +289,7 @@ class Ib39RecordSurfacedFormerRebelTest extends TestCase
             'reference_number', 'created_by', 'forwarded', 'forwarding_organization',
             'other_organization_specification', 'firstname', 'middlename', 'lastname',
             'real_name', 'alias', 'nickname', 'identity_document_number',
-            'former_rebel_id', 'eclip_case_id',
+            'former_rebel_id',
         ];
     }
 }

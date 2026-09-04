@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Enums\EclipCaseStatus;
 use App\Models\AuditLog;
-use App\Models\EclipCase;
 use App\Models\FormerRebel;
+use App\Models\GovAgency;
 use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,30 +39,12 @@ class RolePrivacyNavigationTest extends TestCase
         }
     }
 
-    public function test_technical_administrators_cannot_view_cases_or_download_case_files(): void
-    {
-        $case = $this->case();
-
-        foreach (['admin', 'super_admin'] as $role) {
-            $user = User::factory()->role($role)->create();
-
-            $this->assertFalse($user->can('view', $case));
-            $this->assertFalse($user->can('downloadDocument', $case));
-            $this->assertFalse($user->can('downloadFundingProof', $case));
-            $this->assertFalse($user->can('downloadReleaseAcknowledgment', $case));
-        }
-    }
-
     public function test_role_navigation_shows_consolidated_modules(): void
     {
         $expectations = [
-            'super_admin' => ['System Analytics', 'General Audit Logs'],
-            'admin' => ['SHIELD Monitoring', 'Cluster Analytics', 'Cluster Monitoring', 'Contribution Monitoring'],
-            'mblrc' => ['FR/FVE Registry', 'Integration Monitoring', 'E-CLIP Cases'],
-            'lswdo' => ['Dashboard', 'MBLRC Referrals', 'E-CLIP Cases'],
-            'japic' => ['Dashboard', 'Authentication Queue', 'E-CLIP Documents'],
-            'pnp' => ['Dashboard', 'FEA Queue'],
-            'local_eclip_committee' => ['Surfaced FR/FVE', 'Assistance Release', 'Analytics'],
+            'super_admin' => ['User Management', 'Government Agencies', 'General Audit Logs'],
+            'admin' => ['SHIELD Monitoring', 'Cluster Monitoring', 'Contribution Monitoring'],
+            'mblrc' => ['FR/FVE Registry'],
         ];
 
         foreach ($expectations as $role => $labels) {
@@ -86,35 +67,9 @@ class RolePrivacyNavigationTest extends TestCase
             ->assertSee('mblrc-interface', false)
             ->assertSee('mblrc-navbar-search', false)
             ->assertSee('Toggle sidebar navigation')
-            ->assertSee('Integration Monitoring')
             ->assertDontSee('icon-bell menu-icon', false)
             ->assertDontSee('Secure workspace')
             ->assertDontSee('MBLRC Workspace');
-
-        foreach ([
-            'lswdo' => ['route' => 'lswdo.eclip.index', 'module_route' => 'lswdo.referrals.index', 'heading' => 'Eligibility Review Queue', 'section' => 'Case Management'],
-            'japic' => ['route' => 'japic.eclip.index', 'module_route' => 'japic.authentication.index', 'heading' => 'Document Review Queue', 'section' => 'Document Review'],
-            'pnp' => ['route' => 'pnp.dashboard', 'module_route' => 'pnp.eclip-fea.index', 'heading' => 'PNP E-CLIP Coordination', 'section' => 'Case Processing'],
-            'local_eclip_committee' => ['route' => 'local_eclip.cases.index', 'module_route' => 'local_eclip.cases.index', 'heading' => 'Assistance Release Queue', 'section' => 'Case Management'],
-        ] as $role => $expectation) {
-            $user = User::factory()->role($role)->create();
-
-            $this->actingAs($user)->get(route($expectation['route']))
-                ->assertOk()
-                ->assertSee('assets/css/mblrc-workspace.css', false)
-                ->assertSee('mblrc-interface shield-role-interface shield-role-'.$role, false)
-                ->assertSee('Toggle sidebar navigation')
-                ->assertSee($expectation['heading'])
-                ->assertSee($expectation['section'])
-                ->assertDontSee('System Active')
-                ->assertDontSee('mblrc-navbar-search', false);
-
-            $this->actingAs($user)->get(route($expectation['module_route']))
-                ->assertOk()
-                ->assertSee('shield-module-header', false)
-                ->assertSee('shield-module-icon', false)
-                ->assertDontSee('System Active');
-        }
 
         $admin = User::factory()->role('admin')->create();
 
@@ -130,14 +85,8 @@ class RolePrivacyNavigationTest extends TestCase
     {
         $admin = User::factory()->role('admin')->create();
         $this->actingAs($admin)->get(route('admin.dashboard'))
-            ->assertDontSee('E-CLIP Documents')
-            ->assertDontSee('E-CLIP Assistance')
+            ->assertDontSee('System Analytics')
             ->assertDontSee('Users', false);
-
-        $lswdo = User::factory()->role('lswdo')->create();
-        $this->actingAs($lswdo)->get(route('lswdo.referrals.index'))
-            ->assertDontSee('E-CLIP Eligibility')
-            ->assertDontSee('Assistance Assessment');
     }
 
     public function test_super_admin_can_view_sanitized_general_audit_log_metadata(): void
@@ -146,7 +95,7 @@ class RolePrivacyNavigationTest extends TestCase
         $log = AuditLog::query()->create([
             'user_id' => $actor->id,
             'action' => 'updated_case',
-            'entity_type' => EclipCase::class,
+            'entity_type' => GovAgency::class,
             'entity_id' => 918,
             'previous_values' => ['confidential_narrative' => 'Previous secret'],
             'new_values' => ['confidential_narrative' => 'New secret'],
@@ -164,25 +113,5 @@ class RolePrivacyNavigationTest extends TestCase
         $this->actingAs(User::factory()->role('admin')->create())
             ->get(route('super_admin.audit-logs.index'))
             ->assertForbidden();
-    }
-
-    private function case(): EclipCase
-    {
-        $municipality = Municipality::query()->create(['name' => 'Restricted Case Municipality']);
-        $formerRebel = FormerRebel::query()->create([
-            'classified_id' => 'FR-#RESTRICTED',
-            'firstname' => 'Restricted',
-            'lastname' => 'Beneficiary',
-            'municipality_id' => $municipality->id,
-        ]);
-        $creator = User::factory()->role('mblrc')->create();
-
-        return EclipCase::query()->create([
-            'case_number' => 'ECLIP-RESTRICTED',
-            'former_rebel_id' => $formerRebel->id,
-            'municipality_id' => $municipality->id,
-            'created_by' => $creator->id,
-            'status' => EclipCaseStatus::Eligible,
-        ]);
     }
 }

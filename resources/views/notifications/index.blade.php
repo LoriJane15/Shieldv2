@@ -34,21 +34,15 @@
             @forelse($notifications as $notification)
                 @php
                     $isUnread = $notification->read_at === null;
-                    $routeName = $notification->data['route'] ?? '';
-                    $icon = match ($routeName) {
-                        'eclip_funding.cases.show' => 'mdi-bank-transfer',
-                        'local_eclip.cases.show' => 'mdi-hand-coin-outline',
-                        'eclip_assessor.cases.show' => 'mdi-clipboard-edit-outline',
-                        default => 'mdi-file-document-check-outline',
-                    };
+                    $icon = 'mdi-file-document-check-outline';
                 @endphp
                 <form method="POST" action="{{ route('notifications.read', $notification) }}" class="notification-form" data-notification-row data-notification-id="{{ $notification->id }}" data-read-state="{{ $isUnread ? 'unread' : 'read' }}">
                     @csrf
-                    <button class="notification-item {{ $isUnread ? 'unread' : '' }}" type="submit" aria-label="Open notification for {{ $notification->data['case_number'] ?? 'E-CLIP case' }}">
+                    <button class="notification-item {{ $isUnread ? 'unread' : '' }}" type="submit" aria-label="Open notification">
                         <span class="notification-icon"><i class="mdi {{ $icon }}"></i></span>
                         <span class="notification-content">
-                            <span class="notification-top"><span class="notification-case">{{ $notification->data['case_number'] ?? 'E-CLIP case' }}</span>@if($isUnread)<span class="unread-label">New</span>@endif</span>
-                            <span class="notification-message">{{ $notification->data['message'] ?? 'An E-CLIP case was updated.' }}</span>
+                            <span class="notification-top"><span class="notification-case">{{ $notification->data['title'] ?? 'System notification' }}</span>@if($isUnread)<span class="unread-label">New</span>@endif</span>
+                            <span class="notification-message">{{ $notification->data['message'] ?? 'A system record was updated.' }}</span>
                             <span class="notification-meta"><span><i class="mdi mdi-clock-outline"></i> <time datetime="{{ $notification->created_at->toIso8601String() }}" title="{{ $notification->created_at->format('M d, Y h:i A') }}">{{ $notification->created_at->diffForHumans() }}</time></span>@if(isset($notification->data['status']))<span><i class="mdi mdi-progress-check"></i> {{ str($notification->data['status'])->replace('_', ' ')->title() }}</span>@endif</span>
                         </span>
                         <i class="mdi mdi-chevron-right open-icon"></i>

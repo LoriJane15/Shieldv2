@@ -83,10 +83,9 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             ->assertSee('Safe Recorder Name')
             ->assertSee('Only the internal CDR status is linked to this record.')
             ->assertSee('Not securely linked — unavailable')
-            ->assertSeeInOrder(['CDR processing', 'JAPIC processing', 'PSWDO processing', 'Assistance records'])
+            ->assertSeeInOrder(['CDR processing', 'PSWDO processing', 'Assistance records'])
             ->assertSeeInOrder(['FEA', 'Process Status', 'Not Available', 'Documents', 'Not Available'])
             ->assertDontSee('href="/documents', false)
-            ->assertDontSee('href="/eclip', false)
             ->assertDontSee('href="/assistance', false)
             ->assertDontSee('creator-secret@example.test')
             ->assertDontSee('876543210')
@@ -142,7 +141,7 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             fn (string $sql): bool => (bool) preg_match('/^\s*(insert|update|delete|replace|alter|create|drop|truncate)\b/', $sql),
         ));
 
-        foreach (['former_rebels', 'fr_government_assistances', 'eclip_', 'document_access_logs'] as $externalTable) {
+        foreach (['former_rebels', 'fr_government_assistances', 'document_access_logs'] as $externalTable) {
             $this->assertFalse(
                 collect($queries)->contains(
                     fn (string $sql): bool => (bool) preg_match(

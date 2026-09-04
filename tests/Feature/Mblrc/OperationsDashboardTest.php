@@ -2,13 +2,9 @@
 
 namespace Tests\Feature\Mblrc;
 
-use App\Enums\EclipCaseStatus;
 use App\Models\Barangay;
-use App\Models\EclipCase;
-use App\Models\EclipDocumentRequirement;
 use App\Models\FormerRebel;
 use App\Models\FrProgramStatus;
-use App\Models\MblrcEnrollment;
 use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,28 +38,6 @@ class OperationsDashboardTest extends TestCase
             'former_rebel_id' => $reintegrated->id,
             'reintegration_status' => 'Completed',
         ]);
-        MblrcEnrollment::query()->create([
-            'former_rebel_id' => $active->id,
-            'assigned_user_id' => $user->id,
-            'created_by' => $user->id,
-            'status' => 'in_progress',
-            'integration_started_at' => now()->subMonthsNoOverflow(5),
-        ]);
-        EclipDocumentRequirement::query()->create([
-            'code' => 'OPS-REQ',
-            'name' => 'Operations Requirement',
-            'is_required' => true,
-            'is_active' => true,
-            'sort_order' => 1,
-        ]);
-        EclipCase::query()->create([
-            'case_number' => 'ECLIP-OPS-001',
-            'former_rebel_id' => $active->id,
-            'municipality_id' => $municipality->id,
-            'created_by' => $user->id,
-            'status' => EclipCaseStatus::Draft,
-        ]);
-
         $response = $this->actingAs($user)->get(route('mblrc.dashboard'));
 
         $response->assertOk()
@@ -83,7 +57,6 @@ class OperationsDashboardTest extends TestCase
             ->assertSee('Monthly Program Movement')
             ->assertSee('Registry Outcome Trend')
             ->assertSee('analytics-metric-value', false)
-            ->assertSee('Cases missing required documents')
             ->assertSee('Profiles without geotags')
             ->assertDontSee('Live operational data')
             ->assertSee('mdi-check-decagram', false)
@@ -99,14 +72,11 @@ class OperationsDashboardTest extends TestCase
                 'Active' => 1,
                 'Reintegrated' => 1,
                 'Ongoing' => 1,
-                'At Risk' => 1,
             ])
             ->assertViewHas('attentionItems', function ($items) {
                 $counts = collect($items)->pluck('count', 'title');
 
-                return $counts['Integration monitoring overdue'] === 1
-                    && $counts['Cases missing required documents'] === 1
-                    && $counts['Profiles without geotags'] === 1;
+                return $counts['Profiles without geotags'] === 1;
             });
     }
 

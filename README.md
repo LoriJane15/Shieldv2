@@ -150,8 +150,8 @@ Last updated: July 30, 2026
 ### Development Database
 
 - Added an environment-protected `DevelopmentSeeder`.
-- Added synthetic accounts for all thirteen roles, including the complete E-CLIP
-  workflow roles. Municipality-scoped E-CLIP accounts use Digos City.
+- Added synthetic accounts for all supported roles. Municipality-scoped development
+  accounts use Digos City.
 - Added synthetic agencies, RCSP reference records, RCSP workflow states, IMPLAN
   states, Former Rebel monitoring records, and map data.
 - Made development seeding repeatable without duplicating its managed records.

@@ -56,7 +56,7 @@ class Ib39SurfacedFormerRebel extends Model
         return Attribute::make(
             get: fn (): string => match ($this->loadedCdrStatus()) {
                 Ib39CdrStatus::Ongoing => 'CDR Ongoing',
-                Ib39CdrStatus::Completed => 'Awaiting JAPIC Certification',
+                Ib39CdrStatus::Completed => 'CDR Completed',
                 default => self::OVERALL_CASE_STATUS,
             },
         );

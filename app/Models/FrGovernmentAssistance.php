@@ -9,7 +9,7 @@ class FrGovernmentAssistance extends Model
 {
     protected $fillable = [
         'former_rebel_id', 'assistance_type', 'amount_or_value', 'provider', 'date_received',
-        'status', 'remarks', 'certificate_file', 'source_type', 'source_id',
+        'status', 'remarks', 'certificate_file',
     ];
 
     protected function casts(): array

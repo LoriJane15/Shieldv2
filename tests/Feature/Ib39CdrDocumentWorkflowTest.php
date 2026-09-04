@@ -224,7 +224,7 @@ class Ib39CdrDocumentWorkflowTest extends TestCase
 
     public function test_stage5_creates_no_external_workflow_records(): void
     {
-        $tables = ['eclip_cases', 'eclip_authentication_requests', 'eclip_fea_documents', 'eclip_assistance_requests', 'fr_government_assistances', 'notifications'];
+        $tables = ['fr_government_assistances', 'notifications'];
         $before = collect($tables)->mapWithKeys(fn ($table) => [$table => DB::table($table)->count()]);
         $this->upload($this->record->cdrProcessing);
         foreach ($before as $table => $count) {

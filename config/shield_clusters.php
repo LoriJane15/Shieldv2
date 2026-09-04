@@ -60,7 +60,7 @@ return [
         ],
     ],
     'comprehensive' => [
-        'name' => 'E-CLIP and Amnesty Program Cluster',
+        'name' => 'Comprehensive Program Cluster',
         'logo' => 'comprehensive.png',
         'agencies' => $shared,
     ],

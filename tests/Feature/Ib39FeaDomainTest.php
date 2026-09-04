@@ -105,7 +105,7 @@ class Ib39FeaDomainTest extends TestCase
 
     public function test_schema_has_no_pswdo_or_cross_workflow_identity_link_and_status_is_not_stored(): void
     {
-        foreach (['pswdo_status', 'pswdo_enrollment_id', 'mblrc_enrollment_id', 'former_rebel_id', 'eclip_case_id', 'overall_status'] as $column) {
+        foreach (['pswdo_status', 'pswdo_enrollment_id', 'mblrc_enrollment_id', 'former_rebel_id', 'overall_status'] as $column) {
             $this->assertFalse(Schema::hasColumn('ib39_fea_processings', $column));
         }
 

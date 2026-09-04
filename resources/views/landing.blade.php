@@ -14,7 +14,7 @@
                 <p class="text-sm font-semibold uppercase tracking-widest text-shield-200">Katuparan Center · Department of the Interior and Local Government</p>
                 <h1 class="mt-4 text-4xl font-extrabold sm:text-5xl">SHIELD 2.0</h1>
                 <p class="mt-3 max-w-3xl text-lg font-semibold text-shield-100">Strengthening Institutions and Empowering Localities Against Discrimination 2.0</p>
-                <p class="mt-6 max-w-2xl leading-7 text-shield-100">A secure, role-based government platform for authorized Basic Services and ECLIP/Amnesty Program monitoring, referrals, case workflows, and inter-agency coordination.</p>
+                <p class="mt-6 max-w-2xl leading-7 text-shield-100">A secure, role-based government platform for authorized monitoring, records management, and inter-agency coordination.</p>
                 <div class="mt-8">
                     @auth
                         <a href="{{ route(auth()->user()->homeRoute()) }}" class="inline-flex rounded-lg bg-white px-5 py-3 font-bold text-shield-800 shadow hover:bg-shield-50">Open assigned workspace</a>

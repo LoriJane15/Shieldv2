@@ -215,9 +215,21 @@
                         <a href="/" class="nav-item nav-link active">Home</a>
                         <a href="#about" class="nav-item nav-link">About the Project</a>
                         <a href="#features" class="nav-item nav-link">Features</a>
-                        <a href="/login" class="nav-item nav-link login-btn" onclick="document.querySelectorAll('video').forEach(function(video){video.pause();video.removeAttribute('src');video.querySelectorAll('source').forEach(function(source){source.removeAttribute('src');});video.load();}); window.location.href='/login'; return false;">
-                            Log in <i class="fas fa-arrow-right"></i>
-                        </a>
+                        @guest
+                            <a href="{{ route('login') }}" class="nav-item nav-link login-btn">
+                                Log in <i class="fas fa-arrow-right"></i>
+                            </a>
+                        @else
+                            <a href="{{ route('profile.edit') }}" class="nav-item nav-link">
+                                My Account
+                            </a>
+                            <form method="POST" action="{{ route('logout') }}" class="d-flex align-items-center">
+                                @csrf
+                                <button type="submit" class="nav-item nav-link login-btn border-0 bg-transparent">
+                                    Log out <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </form>
+                        @endguest
                     </div>
                 </div>
             </nav>
@@ -1186,24 +1198,7 @@
         });
     </script>
 
-    <!-- Add this JavaScript before the closing body tag -->
     <script>
-        document.querySelectorAll('a.login-btn[href="/login"]').forEach(function(link) {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-
-                document.querySelectorAll('video').forEach(function(video) {
-                    video.pause();
-                    video.querySelectorAll('source').forEach(function(source) {
-                        source.removeAttribute('src');
-                    });
-                    video.load();
-                });
-
-                window.location.assign(link.href);
-            });
-        });
-
         // Simplified scroll event listener that only handles color transition
         window.addEventListener('scroll', function() {
             const navbar = document.querySelector('.container-fluid.bg-white.sticky-top');

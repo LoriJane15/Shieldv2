@@ -18,7 +18,7 @@ class DevelopmentSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_creates_scoped_accounts_and_synthetic_workflow_data(): void
+    public function test_it_creates_scoped_accounts_and_synthetic_operational_data(): void
     {
         config()->set('shield.development_seed_password', 'local-test-password');
 
@@ -44,7 +44,7 @@ class DevelopmentSeederTest extends TestCase
         $this->assertSame(3, RcspBarangay::query()->count());
         $this->assertSame(4, Implementation::query()->count());
         $this->assertGreaterThan(0, AgencyImplanResponse::query()->count());
-        $this->assertSame(13, FormerRebel::query()->count());
+        $this->assertSame(3, FormerRebel::query()->count());
         $this->assertSame(3, MapBarangay::query()->count());
 
         $this->assertSame(
@@ -65,7 +65,7 @@ class DevelopmentSeederTest extends TestCase
         $this->assertSame(6, RcspPhase::query()->count());
         $this->assertSame(3, RcspBarangay::query()->count());
         $this->assertSame(4, Implementation::query()->count());
-        $this->assertSame(13, FormerRebel::query()->count());
+        $this->assertSame(3, FormerRebel::query()->count());
         $this->assertSame(3, MapBarangay::query()->count());
     }
 }
