@@ -18,6 +18,12 @@ class Ib39SurfacedFormerRebel extends Model
 
     public const OVERALL_CASE_STATUS = 'Newly Recorded';
 
+    public const OVERALL_CASE_STATUS_CDR_ONGOING = 'CDR Ongoing';
+
+    public const OVERALL_CASE_STATUS_CDR_COMPLETED = 'CDR Completed';
+
+    public const OVERALL_CASE_STATUS_CANCELLED = 'Cancelled';
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -54,11 +60,13 @@ class Ib39SurfacedFormerRebel extends Model
     protected function overallCaseStatus(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => match ($this->loadedCdrStatus()) {
-                Ib39CdrStatus::Ongoing => 'CDR Ongoing',
-                Ib39CdrStatus::Completed => 'CDR Completed',
-                default => self::OVERALL_CASE_STATUS,
-            },
+            get: fn (): string => $this->loadedCancellationExists()
+                ? self::OVERALL_CASE_STATUS_CANCELLED
+                : match ($this->loadedCdrStatus()) {
+                    Ib39CdrStatus::Ongoing => self::OVERALL_CASE_STATUS_CDR_ONGOING,
+                    Ib39CdrStatus::Completed => self::OVERALL_CASE_STATUS_CDR_COMPLETED,
+                    default => self::OVERALL_CASE_STATUS,
+                },
         );
     }
 
@@ -76,6 +84,11 @@ class Ib39SurfacedFormerRebel extends Model
         }
 
         return $this->cdrProcessing?->status;
+    }
+
+    private function loadedCancellationExists(): bool
+    {
+        return $this->relationLoaded('cancellation') && $this->cancellation !== null;
     }
 
     public function municipality(): BelongsTo
@@ -101,5 +114,15 @@ class Ib39SurfacedFormerRebel extends Model
     public function feaProcessing(): HasOne
     {
         return $this->hasOne(Ib39FeaProcessing::class, 'ib39_surfaced_former_rebel_id');
+    }
+
+    public function cancellation(): HasOne
+    {
+        return $this->hasOne(Ib39FrCancellation::class, 'ib39_surfaced_former_rebel_id');
+    }
+
+    public function japicCertificationProcessing(): HasOne
+    {
+        return $this->hasOne(JapicCertificationProcessing::class, 'ib39_surfaced_former_rebel_id');
     }
 }

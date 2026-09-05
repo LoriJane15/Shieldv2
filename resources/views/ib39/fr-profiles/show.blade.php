@@ -69,6 +69,11 @@
     .btn-action-primary:hover,.btn-action-primary:focus{background:#280274;border-color:#280274;color:#fff;box-shadow:0 6px 16px rgba(40,2,116,.25)}
     .btn-action-secondary{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;background:#fff;border:1px solid #d8e0ea;color:#475569;font-size:.82rem;font-weight:650;padding:.65rem 1.2rem;border-radius:9px;text-decoration:none!important;transition:all .15s ease}
     .btn-action-secondary:hover,.btn-action-secondary:focus{background:#f8fafc;color:#1e293b}
+    .btn-action-danger{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;background:#fff;border:1px solid #dc2626;color:#b91c1c;font-size:.82rem;font-weight:750;padding:.65rem 1.2rem;border-radius:9px;transition:all .15s ease}
+    .btn-action-danger:hover,.btn-action-danger:focus{background:#fef2f2;color:#991b1b}
+    .cancellation-alert{background:#fff7ed;border:1px solid #fed7aa;border-left:4px solid #ea580c;border-radius:10px;color:#7c2d12;padding:1rem;margin-bottom:1rem}
+    .cancellation-alert strong{display:block;font-size:.82rem;margin-bottom:.3rem}
+    .cancellation-alert p{font-size:.76rem;line-height:1.5;margin:0;overflow-wrap:anywhere}
 
     @media(max-width:991px){.info-tile-grid,.workflow-tile-list{grid-template-columns:1fr}}
     @media(max-width:767px){.profile-hero{padding:1.2rem}.hero-top-row{flex-direction:column;align-items:flex-start}.hero-badges{width:100%}.profile-card-body{padding:1.1rem}.profile-footer-actions{flex-direction:column;width:100%}.btn-action-primary,.btn-action-secondary{width:100%}}
@@ -183,6 +188,12 @@
                             </dd>
                         </div>
                         <div class="info-tile">
+                            <dt class="info-tile-label"><i class="mdi mdi-certificate-outline"></i> JAPIC certification</dt>
+                            <dd class="info-tile-value">
+                                {{ $record->japicCertificationProcessing?->status->value ?? 'Not Available' }}
+                            </dd>
+                        </div>
+                        <div class="info-tile">
                             <dt class="info-tile-label"><i class="mdi mdi-clock-outline"></i> Created date</dt>
                             <dd class="info-tile-value">{{ $record->created_at->format('F d, Y · h:i A') }}</dd>
                         </div>
@@ -209,6 +220,14 @@
                     </h3>
                 </div>
                 <div class="profile-card-body">
+                    @if($record->cancellation)
+                        <div class="cancellation-alert" role="status">
+                            <strong>Cancelled {{ $record->cancellation->cancelled_at->format('F d, Y · h:i A') }}</strong>
+                            <p><b>Previous status:</b> {{ $record->cancellation->previous_overall_status }}</p>
+                            <p><b>Cancelled by:</b> {{ $record->cancellation->cancelledBy?->name ?? 'User unavailable' }}</p>
+                            <p><b>Reason:</b> {{ $record->cancellation->reason }}</p>
+                        </div>
+                    @endif
                     <div class="privacy-box">
                         <i class="mdi mdi-shield" aria-hidden="true"></i>
                         <div>
@@ -257,6 +276,17 @@
                             <span>{{ $record->created_at->format('F d, Y · h:i A') }} · Recorded by {{ $recordedBy }}</span>
                         </div>
                     </div>
+                    @if($record->cancellation)
+                        <div class="history-card-item mt-2">
+                            <div class="history-icon">
+                                <i class="mdi mdi-cancel"></i>
+                            </div>
+                            <div>
+                                <strong>FR cancelled</strong>
+                                <span>{{ $record->cancellation->cancelled_at->format('F d, Y · h:i A') }} · Previous status: {{ $record->cancellation->previous_overall_status }}</span>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </section>
         </div>
@@ -280,6 +310,64 @@
             <i class="mdi mdi-arrow-left"></i>
             <span>Back to FR Profiles</span>
         </a>
+        @can('cancel', $record)
+            @if(! $record->cancellation)
+                <button type="button" class="btn-action-danger" data-bs-toggle="modal" data-bs-target="#cancelFrModal">
+                    <i class="mdi mdi-cancel"></i>
+                    <span>Cancel FR</span>
+                </button>
+            @endif
+        @endcan
     </div>
 </div>
+
+@can('cancel', $record)
+    @if(! $record->cancellation)
+        <div class="modal fade" id="cancelFrModal" tabindex="-1" aria-labelledby="cancelFrModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="POST" action="{{ route('ib39.fr-profiles.cancel', $record) }}">
+                        @csrf
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="cancelFrModalLabel">Final confirmation: cancel FR</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-danger" role="alert">
+                                This action cannot be undone. The FR and all CDR, FEA, document, upload, and history records will be retained, but the FR cannot enter or continue JAPIC certification.
+                            </div>
+                            <div class="mb-3">
+                                <label for="cancellation-reason" class="form-label font-weight-bold">Cancellation reason</label>
+                                <textarea id="cancellation-reason" name="reason" class="form-control @error('reason') is-invalid @enderror" rows="4" maxlength="2000" required>{{ old('reason') }}</textarea>
+                                @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="form-check">
+                                <input id="cancellation-confirmed" name="confirmed" value="1" class="form-check-input @error('confirmed') is-invalid @enderror" type="checkbox" required @checked(old('confirmed'))>
+                                <label class="form-check-label" for="cancellation-confirmed">I confirm that I am cancelling the correct surfaced FR.</label>
+                                @error('confirmed')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Keep FR active</button>
+                            <button type="submit" class="btn btn-danger">Confirm cancellation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+@endcan
 @endsection
+
+@if($errors->has('reason') || $errors->has('confirmed'))
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var modal = document.getElementById('cancelFrModal');
+                if (modal) {
+                    bootstrap.Modal.getOrCreateInstance(modal).show();
+                }
+            });
+        </script>
+    @endpush
+@endif

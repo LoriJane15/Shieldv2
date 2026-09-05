@@ -68,4 +68,9 @@ class Ib39CdrDocumentVersion extends Model
     {
         return $this->hasMany(self::class, 'replaces_version_id');
     }
+
+    public function triggeredJapicCertificationProcessings(): HasMany
+    {
+        return $this->hasMany(JapicCertificationProcessing::class, 'triggering_cdr_document_version_id');
+    }
 }

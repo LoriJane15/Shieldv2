@@ -123,4 +123,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Ib39CdrPhotoVersion::class, 'uploaded_by');
     }
+
+    public function ib39FrCancellations(): HasMany
+    {
+        return $this->hasMany(Ib39FrCancellation::class, 'cancelled_by');
+    }
 }

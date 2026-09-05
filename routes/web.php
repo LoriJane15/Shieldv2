@@ -180,6 +180,7 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::get('/fr-profiles/create', [Ib39\SurfacedFormerRebelController::class, 'create'])->name('fr-profiles.create');
     Route::post('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'store'])->name('fr-profiles.store');
     Route::get('/fr-profiles/{ib39SurfacedFormerRebel}', [Ib39\SurfacedFormerRebelController::class, 'show'])->name('fr-profiles.show');
+    Route::post('/fr-profiles/{ib39SurfacedFormerRebel}/cancel', Ib39\SurfacedFormerRebelCancellationController::class)->name('fr-profiles.cancel');
     Route::get('/areas', [Ib39\AreaController::class, 'index'])->name('areas.index');
     Route::put('/areas/{area}', [Ib39\AreaController::class, 'update'])->name('areas.update');
     Route::get('/map', [Ib39\AreaController::class, 'map'])->name('map');

@@ -21,4 +21,9 @@ class Ib39SurfacedFormerRebelPolicy
     {
         return $user->is_active && $user->hasRole('39th_ib');
     }
+
+    public function cancel(User $user, Ib39SurfacedFormerRebel $record): bool
+    {
+        return $user->is_active && $user->hasRole('39th_ib');
+    }
 }
