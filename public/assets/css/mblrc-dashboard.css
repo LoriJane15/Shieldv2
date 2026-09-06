@@ -1,0 +1,85 @@
+/*
+ * MBLRC dashboard — card design carried over from the legacy
+ * accounts/mblrc/index.php, where the gradients were inline styles.
+ */
+
+.mblrc-stat-card {
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+}
+
+.mblrc-stat-card .card-body { position: relative; }
+
+.mblrc-stat-card .fs-30 { font-size: 1.875rem; line-height: 1.2; }
+
+.mblrc-stat-card .opacity-90 { opacity: 0.9; }
+.mblrc-stat-card .opacity-75 { opacity: 0.75; }
+
+.mblrc-card-icon { opacity: 0.5; }
+
+.mblrc-stat-card .progress {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 9999px;
+}
+
+.mblrc-stat-card .progress-bar {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* ---- The legacy gradients, one per metric --------------------------- */
+.mblrc-card-registered {
+    background: linear-gradient(135deg, #FF8A00 0%, #FF6B00 100%);
+    box-shadow: 0 8px 25px rgba(255, 138, 0, 0.3);
+}
+
+.mblrc-card-enrolled {
+    background: linear-gradient(135deg, #FFB84D 0%, #FF9500 100%);
+    box-shadow: 0 8px 25px rgba(255, 184, 77, 0.3);
+}
+
+.mblrc-card-completed {
+    background: linear-gradient(135deg, #4B97FF 0%, #2E7BFF 100%);
+    box-shadow: 0 8px 25px rgba(75, 151, 255, 0.3);
+}
+
+.mblrc-card-reintegrated {
+    background: linear-gradient(135deg, #3D0075 0%, #5A1A9B 100%);
+    box-shadow: 0 8px 25px rgba(61, 0, 117, 0.3);
+}
+
+.mblrc-card-notstarted {
+    background: linear-gradient(135deg, #FF4B4B 0%, #E63946 100%);
+    box-shadow: 0 8px 25px rgba(255, 75, 75, 0.3);
+}
+
+.mblrc-card-ongoing {
+    background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+    box-shadow: 0 8px 25px rgba(255, 165, 0, 0.3);
+}
+
+.mblrc-card-actions {
+    background: linear-gradient(135deg, #28A745 0%, #20C997 100%);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.mblrc-quick-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #157347;
+    font-weight: 600;
+    border-radius: 9999px;
+    padding: 0.35rem 1rem;
+}
+
+.mblrc-quick-btn:hover {
+    background: #fff;
+    color: #0f5132;
+}
+
+/* ---- Map ------------------------------------------------------------- */
+#frMap {
+    height: 420px;
+    width: 100%;
+    border-radius: 8px;
+}

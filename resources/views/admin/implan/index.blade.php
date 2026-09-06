@@ -73,7 +73,7 @@
                                                             <a href="{{ route('admin.implan.show', $im) }}" class="btn btn-primary btn-sm">Open</a>
                                                             @if ($key === 'verification')
                                                                 <form method="POST" action="{{ route('admin.implan.verify', $im) }}"
-                                                                      onsubmit="return confirm('Mark this IMPLAN as verified?')">
+                                                                      data-confirm="Mark this IMPLAN as verified?" data-confirm-title="Verify IMPLAN" data-confirm-action="Verify" data-confirm-danger="false">
                                                                     @csrf
                                                                     <button class="btn btn-primary btn-sm">Verify</button>
                                                                 </form>

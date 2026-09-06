@@ -109,7 +109,9 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Comments</h4>
+                    <h4 class="card-title d-flex align-items-center gap-2">Comments
+                        <i class="fa fa-circle small text-muted" data-live-indicator title="Offline — reload to see new remarks"></i>
+                    </h4>
 
                     <form id="commentForm" class="mb-4"
                           data-post="{{ route('admin.rcsp.comment', $form->id) }}">
@@ -126,7 +128,7 @@
                         </div>
                     </form>
 
-                    <div id="commentsList">
+                    <div id="commentsList" data-form-id="{{ $form->id }}">
                         @forelse ($form->fileComments->sortByDesc('id') as $c)
                             @php $isAdmin = ($c->user?->role === 'admin' || $c->user?->role === 'super_admin'); @endphp
                             <div class="comment-card mb-3">

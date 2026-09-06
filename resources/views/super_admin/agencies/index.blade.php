@@ -64,7 +64,7 @@
                                                 </a>
                                                 @if (! $a->users_count)
                                                     <form method="POST" action="{{ route('super_admin.agencies.destroy', $a) }}"
-                                                          onsubmit="return confirm('Delete {{ $a->acronym }}?')" style="display:inline;">
+                                                          data-confirm="Delete {{ $a->acronym }}?" data-confirm-title="Confirm delete" data-confirm-action="Delete" style="display:inline;">
                                                         @csrf @method('DELETE')
                                                         <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
                                                             <i class="icon-trash delete-icon" style="font-size:18px;"></i>

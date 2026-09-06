@@ -103,11 +103,17 @@
 </div>
 
 <script src="{{ asset('assets/vendors/js/vendor.bundle.base.js') }}"></script>
-<script src="{{ asset('assets/js/off-canvas.js') }}"></script>
+<script src="{{ asset('assets/vendors/sweetalert/sweetalert.min.js') }}"></script>
+    <script src="{{ asset('assets/js/off-canvas.js') }}"></script>
 <script src="{{ asset('assets/js/hoverable-collapse.js') }}"></script>
+<script src="{{ asset('assets/js/jquery.cookie.js') }}"></script>
 <script src="{{ asset('assets/js/template.js') }}"></script>
 <script src="{{ asset('assets/js/settings.js') }}"></script>
 <script src="{{ asset('assets/vendors/chart.js/Chart.min.js') }}"></script>
+{{-- App JS bundle: maps, confirm dialogs, cascades, live comments.
+     Only the JS entry — resources/css/app.css is Tailwind and would
+     override the SkyDash Bootstrap styling. --}}
+@vite(['resources/js/app.js'])
 @stack('scripts')
 </body>
 </html>

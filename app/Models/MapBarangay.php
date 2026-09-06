@@ -18,6 +18,17 @@ class MapBarangay extends Model
     }
 
     /**
+     * Legend for the choropleth, in the same order the legacy map showed it.
+     * Keep in sync with classify().
+     */
+    public const LEGEND = [
+        ['status' => 'Konsolidado', 'color' => 'rgba(255,0,0,0.5)',   'label' => '20 or more FRs'],
+        ['status' => 'Rekonsilida', 'color' => 'rgba(255,165,0,0.5)', 'label' => '15–19 FRs'],
+        ['status' => 'Expansion',   'color' => 'rgba(255,255,0,0.5)', 'label' => '10–14 FRs'],
+        ['status' => 'Recovery',    'color' => 'rgba(0,255,0,0.5)',   'label' => 'Fewer than 10 FRs'],
+    ];
+
+    /**
      * RCSP infestation classification by former-rebel count.
      * Thresholds and colors preserved from the legacy 39th-IB module.
      */

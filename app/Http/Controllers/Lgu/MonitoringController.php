@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Lgu;
 
+use App\Events\RcspCommentPosted;
 use App\Http\Controllers\Controller;
 use App\Models\RcspActivity;
 use App\Models\RcspBarangay;
@@ -59,6 +60,14 @@ class MonitoringController extends Controller
         $activities = RcspActivity::where('rcsp_phase_id', $phaseId)->pluck('id');
 
         abort_if($activities->isEmpty(), 422, 'No activities for this phase.');
+
+        // One file input per activity; the legacy app checked MIME + size via
+        // security_helpers::validateFileUpload(), so keep an equivalent rule here.
+        $request->validate(
+            $activities->mapWithKeys(fn ($id) => [
+                "file_{$id}" => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:25600'],
+            ])->all()
+        );
 
         DB::transaction(function () use ($request, $rcspBarangay, $phaseId, $activities) {
             foreach ($activities as $activityId) {
@@ -159,6 +168,8 @@ class MonitoringController extends Controller
             'user_id' => $request->user()->id,
             'text' => $data['text'],
         ]);
+
+        broadcast(new RcspCommentPosted($comment))->toOthers();
 
         return response()->json([
             'success' => true,

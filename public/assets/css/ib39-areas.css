@@ -1,0 +1,256 @@
+/*
+ * Add Area modals — styling carried over from the legacy
+ * accounts/39th-IB/add_rcsp.php <style> block.
+ *
+ * Bootstrap still drives show/hide, but the inner chrome is the legacy design.
+ * Everything is prefixed `ib39-` rather than reusing the legacy class names
+ * (.modal-content, .close, .form-group, .submit-btn), which would collide with
+ * Bootstrap's and with SkyDash's own rules.
+ */
+
+.ib39-modal .modal-content {
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 2.5rem;
+}
+
+.ib39-modal .modal-dialog {
+    max-width: 520px;
+}
+
+.ib39-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Legacy used Font Awesome glyphs: plus for Add, pencil for Update. */
+.ib39-modal-title::before {
+    font-family: "FontAwesome", "Font Awesome 5 Free";
+    font-size: 1.25rem;
+    color: #2563eb;
+}
+
+.ib39-modal-title.is-add::before { content: "\f067"; }
+.ib39-modal-title.is-edit::before { content: "\f044"; }
+
+/* ---- Form controls ---------------------------------------------------- */
+.ib39-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.ib39-form-group label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ib39-form-group input,
+.ib39-form-group select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: #111827;
+    transition: all 0.2s ease;
+    background: #f9fafb;
+}
+
+.ib39-form-group input:focus,
+.ib39-form-group select:focus {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.ib39-form-group input:disabled,
+.ib39-form-group select:disabled {
+    background: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* ---- Threshold info panel --------------------------------------------- */
+.ib39-form-info {
+    margin-top: 1rem;
+    padding: 1.25rem 1.25rem 1.25rem 3rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    border: 1px solid #bae6fd;
+    position: relative;
+    font-size: 0.813rem;
+    color: #0c4a6e;
+}
+
+.ib39-form-info::before {
+    content: "\f05a";
+    font-family: "FontAwesome", "Font Awesome 5 Free";
+    position: absolute;
+    top: 1.25rem;
+    left: 1.25rem;
+    color: #0284c7;
+    font-size: 1rem;
+}
+
+.ib39-form-info ul {
+    margin: 0.75rem 0 0;
+    padding-left: 0;
+    list-style-type: none;
+}
+
+.ib39-form-info li {
+    margin-bottom: 0.5rem;
+    font-size: 0.813rem;
+    color: #0c4a6e;
+    position: relative;
+    padding-left: 1.5rem;
+    line-height: 1.5;
+}
+
+.ib39-form-info li::before {
+    content: "\f111";
+    font-family: "FontAwesome", "Font Awesome 5 Free";
+    position: absolute;
+    left: 0;
+    color: #0284c7;
+    font-size: 0.5rem;
+    top: 0.5rem;
+}
+
+/* ---- Submit ----------------------------------------------------------- */
+.ib39-submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-top: 2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.ib39-submit-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(37, 99, 235, 0.4);
+    color: #fff;
+}
+
+.ib39-submit-btn:active { transform: translateY(0); }
+
+/* ---- Close ------------------------------------------------------------ */
+.ib39-close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    line-height: 1;
+    z-index: 2;
+}
+
+.ib39-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ---- Table action buttons --------------------------------------------- */
+.ib39-action-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.ib39-edit-btn,
+.ib39-delete-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.ib39-edit-btn {
+    background: linear-gradient(135deg, #bfdbfe 0%, #dbeafe 100%);
+    color: #2563eb;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+
+.ib39-delete-btn {
+    background: linear-gradient(135deg, #fecaca 0%, #fee2e2 100%);
+    color: #dc2626;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+}
+
+.ib39-edit-btn:hover {
+    background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);
+    color: #2563eb;
+}
+
+.ib39-delete-btn:hover {
+    background: linear-gradient(135deg, #fca5a5 0%, #fecaca 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15);
+    color: #dc2626;
+}
+
+/* Row hover */
+.ib39-areas-table tbody tr:hover td {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+/* ---- Status badge glyphs ---------------------------------------------- */
+/* SkyDash ships Font Awesome 4.7, so the family is 'FontAwesome' and the
+   glyphs render at normal weight. The codepoints match the legacy page. */
+.status-badge::before {
+    font-family: "FontAwesome", "Font Awesome 5 Free";
+}
+
+.status-konsolidado::before { content: "\f024"; }  /* flag */
+.status-rekonsilida::before { content: "\f071"; }  /* warning triangle */
+.status-expansion::before   { content: "\f0c8"; }  /* square */
+.status-recovery::before    { content: "\f055"; }  /* plus-circle */
+
+/* ---- Empty state ------------------------------------------------------ */
+.ib39-no-results {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748b;
+    font-style: italic;
+}

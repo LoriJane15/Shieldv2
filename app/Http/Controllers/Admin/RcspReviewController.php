@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\RcspCommentPosted;
 use App\Http\Controllers\Controller;
 use App\Models\RcspActivity;
 use App\Models\RcspBarangay;
@@ -121,6 +122,8 @@ class RcspReviewController extends Controller
             'user_id' => $request->user()->id,
             'text' => $data['text'],
         ]);
+
+        broadcast(new RcspCommentPosted($comment))->toOthers();
 
         return response()->json([
             'success' => true,

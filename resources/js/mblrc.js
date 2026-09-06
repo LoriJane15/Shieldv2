@@ -54,7 +54,7 @@ export function initFormCascade() {
 
 // -- Dashboard: charts + clustered map ----------------------------------
 export function initDashboard() {
-    const el = document.getElementById('mblrcDashboard');
+    const el = document.getElementById('mblrcData');
     if (!el) return;
 
     fetch(el.dataset.analytics, { headers: { Accept: 'application/json' } })

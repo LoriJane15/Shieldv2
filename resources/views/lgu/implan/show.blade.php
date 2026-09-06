@@ -34,7 +34,7 @@
             <div class="justify-content-end d-flex gap-2">
                 @if (! in_array($implan->status, ['for verification', 'verified']))
                     <form method="POST" action="{{ route('lgu.implan.verify', $implan) }}"
-                          onsubmit="return confirm('Send this IMPLAN for verification?')">
+                          data-confirm="Send this IMPLAN for verification?" data-confirm-title="Submit for verification" data-confirm-action="Send" data-confirm-danger="false">
                         @csrf
                         <button class="btn btn-sm btn-success"><i class="mdi mdi-send"></i> Send for verification</button>
                     </form>

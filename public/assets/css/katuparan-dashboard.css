@@ -1,0 +1,449 @@
+  /* Modern Dashboard Styles */
+  body {
+    background: #f8fafc;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .main-panel {
+    background: transparent;
+  }
+
+  /* Hero Section with Map */
+  .hero-section {
+    position: relative;
+    height: 70vh;
+    min-height: 500px;
+    border-radius: 24px;
+    overflow: hidden;
+    margin: 2rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    background: #f1f5f9; /* Fallback background */
+  }
+
+  .map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .map-container iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #f1f5f9;
+  }
+
+  /* Modern Overlay */
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(15, 23, 42, 0.8) 0%,
+      rgba(15, 23, 42, 0.6) 30%,
+      rgba(15, 23, 42, 0.3) 60%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    padding: 3rem;
+    pointer-events: none; /* Allow map interaction */
+  }
+
+  .hero-content {
+    pointer-events: auto; /* Re-enable pointer events for content */
+  }
+
+  .hero-content {
+    max-width: 600px;
+    color: white;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 2rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .hero-stat {
+    text-align: center;
+  }
+
+  .hero-stat-number {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #60a5fa;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stats Cards Section */
+  .stats-section {
+    padding: 3rem 2rem;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+  }
+
+  .section-subtitle {
+    font-size: 1.125rem;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Municipality Cards Grid */
+  .municipality-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+  }
+
+  .municipality-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .municipality-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .municipality-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+
+  .municipality-card:hover::before {
+    opacity: 1;
+  }
+
+  .municipality-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .municipality-seal {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .municipality-info h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .municipality-info p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .municipality-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .rcsp-count {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+    line-height: 1;
+  }
+
+  .rcsp-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-align: right;
+  }
+
+  /* Chart Section */
+  .chart-section {
+    background: white;
+    border-radius: 24px;
+    padding: 3rem;
+    margin: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .chart-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+
+  .legend-color.series-1 {
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  }
+
+  .legend-color.series-2 {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .chart-container {
+    height: 400px;
+    position: relative;
+  }
+
+  /* Quick Stats Bar */
+  .quick-stats {
+    display: flex;
+    gap: 1rem;
+    margin: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .quick-stat-card {
+    flex: 1;
+    min-width: 200px;
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    text-align: center;
+    transition: transform 0.2s ease;
+  }
+
+  .quick-stat-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .quick-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+  }
+
+  .quick-stat-icon.blue {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #3b82f6;
+  }
+
+  .quick-stat-icon.green {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #10b981;
+  }
+
+  .quick-stat-icon.purple {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    color: #8b5cf6;
+  }
+
+  .quick-stat-icon.orange {
+    background: linear-gradient(135deg, #fed7aa, #fdba74);
+    color: #f97316;
+  }
+
+  .quick-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+  }
+
+  .quick-stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .hero-section {
+      height: 60vh;
+      margin: 1rem;
+    }
+
+    .hero-overlay {
+      padding: 2rem;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+    }
+
+    .hero-stats {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .municipality-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-section {
+      margin: 1rem;
+      padding: 2rem;
+    }
+
+    .quick-stats {
+      margin: 1rem;
+      flex-direction: column;
+    }
+  }
+
+  /* Animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .municipality-card {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .municipality-card:nth-child(1) { animation-delay: 0.1s; }
+  .municipality-card:nth-child(2) { animation-delay: 0.2s; }
+  .municipality-card:nth-child(3) { animation-delay: 0.3s; }
+  .municipality-card:nth-child(4) { animation-delay: 0.4s; }
+  .municipality-card:nth-child(5) { animation-delay: 0.5s; }
+
+/* Map search box — legacy hero had "Search for barangay or municipality". */
+.hero-map-search { position: relative; }
+.hero-map-search input {
+  width: 280px; padding: 0.6rem 0.9rem; border: none; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92); font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.hero-map-search input:focus { outline: 2px solid #3b82f6; }
+.hero-map-search ul {
+  list-style: none; margin: 0.35rem 0 0; padding: 0.25rem; max-height: 15rem; overflow-y: auto;
+  background: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+.hero-map-search li { padding: 0.45rem 0.6rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.hero-map-search li:hover { background: #eff6ff; }
+
+/*
+ * The hero map fills .map-container by absolute positioning rather than
+ * height:100%. The percentage chain (.hero-section -> .map-container -> map)
+ * resolved to 0, so Leaflet rendered its tiles into a zero-height box —
+ * initialised and painting, but invisible.
+ */
+#heroMap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

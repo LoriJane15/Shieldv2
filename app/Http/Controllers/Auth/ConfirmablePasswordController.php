@@ -24,8 +24,9 @@ class ConfirmablePasswordController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // SHIELD logs in by username — there is no email on file.
         if (! Auth::guard('web')->validate([
-            'email' => $request->user()->email,
+            'username' => $request->user()->username,
             'password' => $request->password,
         ])) {
             throw ValidationException::withMessages([
@@ -35,6 +36,6 @@ class ConfirmablePasswordController extends Controller
 
         $request->session()->put('auth.password_confirmed_at', time());
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route($request->user()->homeRoute(), absolute: false));
     }
 }

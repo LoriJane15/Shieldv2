@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\FormerRebel;
 use App\Models\GovAgency;
 use App\Models\Implementation;
+use App\Models\MapBarangay;
 use App\Models\Municipality;
 use App\Models\RcspBarangay;
 use App\Models\RcspForm;
+use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -31,15 +33,24 @@ class DashboardController extends Controller
             'pending_forms' => RcspForm::where('status', 'submitted')->distinct('rcsp_barangay_id')->count('rcsp_barangay_id'),
             'for_verification' => Implementation::where('status', 'for verification')->count(),
             'agencies' => GovAgency::count(),
+            'municipalities' => Municipality::count(),
         ];
 
-        // Recognized RCSP barangays (completed) + total per municipality, with seal.
+        // Per-municipality RCSP breakdown for the cards and the progress chart.
+        // The legacy dashboard hardcoded these numbers; here they are real.
         $municipalities = Municipality::orderBy('name')->get()->map(function ($m) {
+            $name = trim($m->name);
+            $total = RcspBarangay::where('municipality_id', $m->id)->count();
+            $completed = RcspBarangay::where('municipality_id', $m->id)->where('status', 'Completed')->count();
+
             return [
-                'name' => trim($m->name),
-                'total' => RcspBarangay::where('municipality_id', $m->id)->count(),
-                'recognized' => RcspBarangay::where('municipality_id', $m->id)->where('status', 'Completed')->count(),
-                'seal' => $this->seals[trim($m->name)] ?? null,
+                'name' => $name,
+                // Digos is the province's only component city; the rest are municipalities.
+                'kind' => str_contains(strtolower($name), 'digos') ? 'Component City' : 'Municipality',
+                'total' => $total,
+                'recognized' => $completed,
+                'in_progress' => $total - $completed,
+                'seal' => $this->seals[$name] ?? null,
             ];
         });
 
@@ -55,5 +66,25 @@ class DashboardController extends Controller
             ]);
 
         return view('admin.dashboard', compact('stats', 'municipalities', 'frPoints'));
+    }
+
+    /**
+     * Barangay status for the dashboard hero map, keyed "Municipality|Barangay"
+     * to match public/assets/mapping/barangays.geojson. Same shape as the
+     * 39th-IB endpoint, exposed here so the Katuparan role need not be granted
+     * access to that area.
+     */
+    public function areaData(): JsonResponse
+    {
+        $rows = MapBarangay::get(['id', 'municipality', 'barangay', 'frs', 'status', 'infestation_color'])
+            ->mapWithKeys(fn ($a) => [
+                "{$a->municipality}|{$a->barangay}" => [
+                    'frs' => (int) $a->frs,
+                    'status' => $a->status,
+                    'color' => $a->infestation_color,
+                ],
+            ]);
+
+        return response()->json($rows);
     }
 }

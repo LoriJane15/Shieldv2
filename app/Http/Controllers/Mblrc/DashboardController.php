@@ -16,6 +16,7 @@ class DashboardController extends Controller
     {
         $stats = [
             'registered' => FormerRebel::count(),
+            // Legacy counted "enrolled" as former rebels whose status is Active.
             'active' => FormerRebel::where('status', 'Active')->count(),
             'reintegrated' => FormerRebel::where('status', 'Reintegrated')->count(),
             'completed' => FrProgramStatus::where('reintegration_status', 'Completed')->count(),
@@ -23,7 +24,17 @@ class DashboardController extends Controller
             'not_started' => FrProgramStatus::where('reintegration_status', 'Not-Started')->count(),
         ];
 
-        return view('mblrc.dashboard', compact('stats'));
+        // "As of <date>" captions under each headline figure, as the legacy cards had.
+        $fmt = fn ($d) => $d ? Carbon::parse($d)->format('M d, Y') : now()->format('M d, Y');
+
+        $asOf = [
+            'registered' => $fmt(FormerRebel::max('registered_at')),
+            'enrolled' => $fmt(FormerRebel::where('status', 'Active')->max('updated_at')),
+            'completed' => $fmt(FrProgramStatus::where('reintegration_status', 'Completed')->max('reintegration_date')),
+            'reintegrated' => $fmt(FormerRebel::where('status', 'Reintegrated')->max('updated_at')),
+        ];
+
+        return view('mblrc.dashboard', compact('stats', 'asOf'));
     }
 
     /** Monthly time-series for the two dashboard line charts (last 7 months). */

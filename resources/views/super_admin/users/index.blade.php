@@ -69,7 +69,7 @@
                                                 </a>
                                                 @if ($u->id !== auth()->id())
                                                     <form method="POST" action="{{ route('super_admin.users.destroy', $u) }}"
-                                                          onsubmit="return confirm('Delete {{ $u->username }}?')" style="display:inline;">
+                                                          data-confirm="Delete {{ $u->username }}?" data-confirm-title="Confirm delete" data-confirm-action="Delete" style="display:inline;">
                                                         @csrf @method('DELETE')
                                                         <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
                                                             <i class="icon-trash delete-icon" style="font-size:18px;"></i>

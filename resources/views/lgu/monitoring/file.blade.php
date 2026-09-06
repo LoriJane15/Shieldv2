@@ -101,7 +101,9 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title">Comments</h4>
+                    <h4 class="card-title d-flex align-items-center gap-2">Comments
+                        <i class="fa fa-circle small text-muted" data-live-indicator title="Offline — reload to see new remarks"></i>
+                    </h4>
 
                     @if ($form->remarks)
                         <div class="alert alert-warning py-2 small"><strong>Reviewer remark:</strong> {{ $form->remarks }}</div>
@@ -115,7 +117,7 @@
                         <div class="text-end"><button type="submit" class="btn btn-primary">Post Comment</button></div>
                     </form>
 
-                    <div id="commentsList">
+                    <div id="commentsList" data-form-id="{{ $form->id }}">
                         @forelse ($form->fileComments->sortByDesc('id') as $c)
                             @php $reviewer = in_array($c->user?->role, ['admin', 'super_admin']); @endphp
                             <div class="comment-card mb-3">

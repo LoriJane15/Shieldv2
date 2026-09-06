@@ -1,7 +1,12 @@
 import './bootstrap';
 import { gsap } from 'gsap';
 import { initFormCascade, initDashboard, initProfile } from './mblrc';
-import { initIb39Dashboard, initIb39Map } from './ib39';
+import { initIb39Dashboard } from './ib39';
+import { initIb39FullMap } from './ib39-map';
+import { initIb39Areas } from './ib39-areas';
+import { initRcspComments } from './rcsp-comments';
+import { initConfirmDialogs } from './confirm-dialog';
+import { initKatuparanDashboard } from './katuparan-dashboard';
 
 window.gsap = gsap;
 
@@ -9,21 +14,49 @@ window.gsap = gsap;
  * SHIELD — vanilla JS interaction layer (no Alpine).
  * Behaviors are wired via data-attributes so Blade stays declarative.
  */
-document.addEventListener('DOMContentLoaded', () => {
-    initSidebar();
-    initDropdowns();
-    initModals();
-    initTabs();
-    initFlashToasts();
-    revealOnLoad();
+/**
+ * Each feature self-gates on its own DOM markers, but they are also isolated:
+ * one throwing must not stop the rest. Previously a single error silently took
+ * out every module registered after it.
+ */
+function run(name, fn) {
+    try {
+        fn();
+    } catch (error) {
+        console.error(`[shield] ${name} failed to initialise:`, error);
+    }
+}
 
-    // mblrc modules self-gate on the presence of their DOM markers.
-    initFormCascade();
-    initDashboard();
-    initProfile();
-    initIb39Dashboard();
-    initIb39Map();
-});
+function boot() {
+    run('sidebar', initSidebar);
+    run('dropdowns', initDropdowns);
+    run('modals', initModals);
+    run('tabs', initTabs);
+    run('flashToasts', initFlashToasts);
+    run('reveal', revealOnLoad);
+
+    run('mblrc.formCascade', initFormCascade);
+    run('mblrc.dashboard', initDashboard);
+    run('mblrc.profile', initProfile);
+    run('ib39.dashboard', initIb39Dashboard);
+    run('ib39.map', initIb39FullMap);
+    run('ib39.areas', initIb39Areas);
+    run('rcsp.comments', initRcspComments);
+    run('confirmDialogs', initConfirmDialogs);
+    run('katuparan.dashboard', initKatuparanDashboard);
+}
+
+/*
+ * `@vite` emits this as <script type="module">, which is deferred. Depending on
+ * when the module graph finishes evaluating, DOMContentLoaded may already have
+ * fired by the time this runs — in which case a listener for it never fires and
+ * nothing initialises. Check readyState instead of assuming.
+ */
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+} else {
+    boot();
+}
 
 // Mobile sidebar toggle -------------------------------------------------
 function initSidebar() {

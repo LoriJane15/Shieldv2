@@ -69,7 +69,7 @@
                                         <td>{{ $rb->created_at?->format('M d, Y') ?? '—' }}</td>
                                         <td>
                                             <form method="POST" action="{{ route('lgu.rcsp.destroy', $rb) }}"
-                                                  onsubmit="return confirm('Delete this RCSP barangay?')" style="display:inline;">
+                                                  data-confirm="Delete this RCSP barangay?" data-confirm-title="Confirm delete" data-confirm-action="Delete" style="display:inline;">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
                                                     <i class="icon-trash delete-icon" style="font-size:18px;"></i>

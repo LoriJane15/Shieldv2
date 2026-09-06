@@ -1,97 +1,153 @@
 @extends('layouts.skydash-v')
 @section('title', 'Dashboard')
-@section('heading', 'MBLRC — Overview')
+@section('heading', 'Dashboard')
 
 @push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-<style>#frMap{height:420px;width:100%;border-radius:8px}</style>
+    <link rel="stylesheet" href="{{ asset('assets/vendors/leaflet/leaflet.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/vendors/leaflet/MarkerCluster.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/vendors/leaflet/MarkerCluster.Default.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/mblrc-dashboard.css') }}">
 @endpush
 
 @section('content')
-<div class="row">
-    @foreach ([
-        ['Registered FRs', $stats['registered'], 'bg-gradient-primary', 'mdi-account-multiple'],
-        ['Active', $stats['active'], 'bg-gradient-success', 'mdi-account-check'],
-        ['Reintegrated', $stats['reintegrated'], 'bg-gradient-info', 'mdi-hand-heart'],
-        ['Completed', $stats['completed'], 'bg-gradient-dark', 'mdi-school'],
-        ['On-going', $stats['ongoing'], 'bg-gradient-warning', 'mdi-progress-clock'],
-        ['Not-Started', $stats['not_started'], 'bg-gradient-secondary', 'mdi-pause-circle'],
-    ] as [$label, $value, $bg, $icon])
-        <div class="col-md-4 col-xl-2 grid-margin stretch-card">
-            <div class="card {{ $bg }} text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 class="mb-0 font-weight-bold">{{ $value }}</h3>
-                            <p class="mb-0 text-white-50">{{ $label }}</p>
+    {{-- Welcome bar, ported from the legacy accounts/mblrc/index.php --}}
+    <div class="row">
+        <div class="col-md-12 grid-margin">
+            <div class="row">
+                <div class="col-12 col-xl-8 mb-4 mb-xl-0">
+                    <h3 class="font-weight-bold">Welcome Mindanao Baptist Rural Learning Center</h3>
+                    <h6 class="font-weight-normal mb-0">
+                        All systems are running smoothly! You have
+                        <span class="text-primary">{{ $stats['not_started'] }} not-started programs!</span>
+                    </h6>
+                </div>
+                <div class="col-12 col-xl-4">
+                    <div class="justify-content-end d-flex">
+                        <div class="dropdown flex-md-grow-1 flex-xl-grow-0">
+                            <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button"
+                                    id="dropdownMenuDate2" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="mdi mdi-calendar"></i> Today ({{ now()->format('d M Y') }})
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuDate2">
+                                <a class="dropdown-item" href="#">January - March</a>
+                                <a class="dropdown-item" href="#">March - June</a>
+                                <a class="dropdown-item" href="#">June - August</a>
+                                <a class="dropdown-item" href="#">August - November</a>
+                            </div>
                         </div>
-                        <i class="mdi {{ $icon }} icon-lg"></i>
                     </div>
                 </div>
             </div>
         </div>
-    @endforeach
-</div>
+    </div>
 
-<div class="row">
-    <div class="col-lg-6 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Program Status Analytics</h4>
-                <p class="text-muted mb-3">Reintegration progress, last 7 months</p>
-                <canvas id="programChart" height="140"></canvas>
+    {{-- Headline figures. Gradients + progress bars are the legacy card design. --}}
+    <div class="row mb-4">
+        @php
+            $cards = [
+                ['Total Registered Former Rebels', $stats['registered'], 'mblrc-card-registered', 'fa-users', $asOf['registered'], 100],
+                ['Total Enrolled in Program', $stats['active'], 'mblrc-card-enrolled', 'fa-graduation-cap', $asOf['enrolled'],
+                    $stats['registered'] ? $stats['active'] / $stats['registered'] * 100 : 0],
+                ['Total Completed 3-Month Program', $stats['completed'], 'mblrc-card-completed', 'fa-trophy', $asOf['completed'],
+                    $stats['active'] ? $stats['completed'] / $stats['active'] * 100 : 0],
+                ['Total Former Rebels Reintegrated', $stats['reintegrated'], 'mblrc-card-reintegrated', 'fa-home', $asOf['reintegrated'],
+                    $stats['registered'] ? $stats['reintegrated'] / $stats['registered'] * 100 : 0],
+            ];
+        @endphp
+
+        @foreach ($cards as [$label, $value, $variant, $icon, $date, $pct])
+            <div class="col-md-3 stretch-card transparent">
+                <div class="card mblrc-stat-card {{ $variant }}">
+                    <div class="card-body position-relative">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <p class="mb-3 opacity-90">{{ $label }}</p>
+                                <p class="fs-30 mb-2 font-weight-bold">{{ $value }}</p>
+                                <p class="mb-0 opacity-75"><small>As of {{ $date }}</small></p>
+                            </div>
+                            <div class="mblrc-card-icon">
+                                <i class="fa {{ $icon }} fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="progress mt-3">
+                            <div class="progress-bar" style="width: {{ round($pct) }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Secondary row: programme status + quick actions --}}
+    <div class="row mb-4">
+        <div class="col-md-4 stretch-card transparent">
+            <div class="card mblrc-stat-card mblrc-card-notstarted">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-2 opacity-90">Not-Started Program</p>
+                        <p class="fs-30 mb-0 font-weight-bold">{{ $stats['not_started'] }}</p>
+                    </div>
+                    <i class="fa fa-pause-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 stretch-card transparent">
+            <div class="card mblrc-stat-card mblrc-card-ongoing">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-2 opacity-90">On-going Program</p>
+                        <p class="fs-30 mb-0 font-weight-bold">{{ $stats['ongoing'] }}</p>
+                    </div>
+                    <i class="fa fa-play-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 stretch-card transparent">
+            <div class="card mblrc-stat-card mblrc-card-actions">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-2 opacity-90">Quick Actions</p>
+                        <a href="{{ route('mblrc.fr.index') }}" class="btn btn-sm mblrc-quick-btn">
+                            <i class="fa fa-eye"></i> View All
+                        </a>
+                    </div>
+                    <i class="fa fa-bolt fa-2x"></i>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-6 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Overall Statistics</h4>
-                <p class="text-muted mb-3">Registered vs reintegrated, last 7 months</p>
-                <canvas id="overallChart" height="140"></canvas>
+
+    <div class="row">
+        <div class="col-lg-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-0">Program Status Analytics</h4>
+                    <p class="text-muted mb-3">Reintegration progress, last 7 months</p>
+                    <canvas id="programChart" height="140"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-0">Overall Statistics</h4>
+                    <p class="text-muted mb-3">Registered vs reintegrated, last 7 months</p>
+                    <canvas id="overallChart" height="140"></canvas>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-12 grid-margin stretch-card">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title">Former Rebel Locations</h4>
-                <div id="frMap" data-locations="{{ route('mblrc.fr.locations') }}"></div>
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Former Rebels Location Map</h4>
+                    <div id="frMap" data-locations="{{ route('mblrc.fr.locations') }}"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="mblrcData" data-analytics="{{ route('mblrc.analytics') }}" hidden></div>
+    <div id="mblrcData" data-analytics="{{ route('mblrc.analytics') }}" hidden></div>
 @endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script>
-(function(){
-    const ds = (label,data,color)=>({label,data,borderColor:color,backgroundColor:color+'22',tension:.35,fill:true,pointRadius:3});
-    fetch(document.getElementById('mblrcData').dataset.analytics).then(r=>r.json()).then(d=>{
-        new Chart(document.getElementById('programChart'),{type:'line',data:{labels:d.labels,datasets:[
-            ds('Not-Started',d.program.not_started,'#98a2b3'),ds('On-going',d.program.ongoing,'#f79009'),ds('Completed',d.program.completed,'#039855')]},
-            options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-        new Chart(document.getElementById('overallChart'),{type:'line',data:{labels:d.labels,datasets:[
-            ds('Registered',d.overall.registered,'#2c4199'),ds('Reintegrated',d.overall.reintegrated,'#12b76a')]},
-            options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-    });
-    const map=L.map('frMap').setView([6.7497,125.3572],10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-    const cluster=L.markerClusterGroup(); map.addLayer(cluster);
-    fetch(document.getElementById('frMap').dataset.locations).then(r=>r.json()).then(rows=>{
-        const b=[]; rows.forEach(fr=>{ L.marker([fr.lat,fr.lng]).bindPopup('<strong>'+fr.name+'</strong><br>'+fr.status+'<br><a href="'+fr.url+'">View profile</a>').addTo(cluster); b.push([fr.lat,fr.lng]); });
-        if(b.length) map.fitBounds(b,{padding:[30,30]});
-    });
-})();
-</script>
-@endpush

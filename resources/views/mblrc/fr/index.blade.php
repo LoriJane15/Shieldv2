@@ -61,7 +61,7 @@
                                                 <i class="mdi mdi-pencil" style="font-size:18px;"></i>
                                             </a>
                                             <form method="POST" action="{{ route('mblrc.fr.destroy', $fr) }}"
-                                                  onsubmit="return confirm('Are you sure you want to delete this Former Rebel? This action cannot be undone.')"
+                                                  data-confirm="Are you sure you want to delete this Former Rebel? This action cannot be undone." data-confirm-title="Confirm delete" data-confirm-action="Delete"
                                                   style="display:inline;">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" style="background:none;border:none;color:#dc3545;padding:0;cursor:pointer;" title="Delete">

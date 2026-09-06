@@ -24,7 +24,7 @@
                 <span class="{{ $statusBadge }}">{{ $implan->status }}</span>
                 @if ($implan->status === 'for verification')
                     <form method="POST" action="{{ route('admin.implan.verify', $implan) }}"
-                          onsubmit="return confirm('Mark this plan as verified?')">
+                          data-confirm="Mark this plan as verified?" data-confirm-title="Verify IMPLAN" data-confirm-action="Verify" data-confirm-danger="false">
                         @csrf
                         <button class="btn btn-sm btn-success"><i class="mdi mdi-check-decagram"></i> Verify</button>
                     </form>

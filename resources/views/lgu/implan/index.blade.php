@@ -92,7 +92,7 @@
                                     <div class="d-flex align-items-center gap-2">
                                         <a href="{{ route('lgu.implan.show', $im) }}" class="btn-open">Open</a>
                                         <form method="POST" action="{{ route('lgu.implan.destroy', $im) }}"
-                                              onsubmit="return confirm('Delete this IMPLAN?')" style="display:inline;">
+                                              data-confirm="Delete this IMPLAN?" data-confirm-title="Confirm delete" data-confirm-action="Delete" style="display:inline;">
                                             @csrf @method('DELETE')
                                             <button type="submit" style="background:none;border:none;padding:0;cursor:pointer;" title="Delete">
                                                 <i class="icon-trash delete-icon" style="font-size:18px;"></i>

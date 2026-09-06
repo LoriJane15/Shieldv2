@@ -62,6 +62,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('katuparan')->name('admin.')->
     Route::get('/clusters', [Admin\OverviewController::class, 'clusters'])->name('clusters.index');
     Route::get('/clusters/{slug}', [Admin\OverviewController::class, 'clusterProfile'])->name('clusters.show');
     Route::get('/users', [Admin\OverviewController::class, 'users'])->name('users.index');
+
+    // Barangay infestation colours for the dashboard hero map.
+    Route::get('/area-data', [Admin\DashboardController::class, 'areaData'])->name('area.data');
 });
 
 Route::middleware(['auth', 'role:lgu'])->prefix('lgu')->name('lgu.')->group(function () {
@@ -79,8 +82,8 @@ Route::middleware(['auth', 'role:lgu'])->prefix('lgu')->name('lgu.')->group(func
     Route::get('/rcsp-form/{form}/file', [Lgu\MonitoringController::class, 'file'])->name('monitoring.file');
     Route::post('/rcsp-form/{form}/comment', [Lgu\MonitoringController::class, 'storeComment'])->name('monitoring.comment');
 
-    // Evaluation status (read-only rollup)
-    Route::get('/evaluation', [Lgu\DashboardController::class, 'index'])->name('evaluation.index');
+    // Legacy page_rscp_eval.php lived at its own URL; the list at /lgu/rcsp is that page.
+    Route::redirect('/evaluation', '/lgu/rcsp')->name('evaluation.index');
 
     // IMPLAN
     Route::get('/implan', [Lgu\ImplanController::class, 'index'])->name('implan.index');
@@ -133,9 +136,14 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
 Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->group(function () {
     Route::get('/', [Ib39\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/areas', [Ib39\AreaController::class, 'index'])->name('areas.index');
+    Route::post('/areas', [Ib39\AreaController::class, 'store'])->name('areas.store');
     Route::put('/areas/{area}', [Ib39\AreaController::class, 'update'])->name('areas.update');
+    Route::delete('/areas/{area}', [Ib39\AreaController::class, 'destroy'])->name('areas.destroy');
+    Route::get('/barangays', [Ib39\AreaController::class, 'barangays'])->name('barangays');
     Route::get('/map', [Ib39\AreaController::class, 'map'])->name('map');
     Route::get('/map-data', [Ib39\AreaController::class, 'mapData'])->name('map.data');
+    Route::get('/area-data', [Ib39\AreaController::class, 'areaData'])->name('area.data');
+    Route::get('/barangay-data', [Ib39\AreaController::class, 'barangayData'])->name('barangay.data');
 });
 
 Route::middleware(['auth', 'role:afp'])->prefix('afp')->name('afp.')->group(function () {
