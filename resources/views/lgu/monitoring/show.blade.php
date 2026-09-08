@@ -60,6 +60,12 @@
 @endpush
 
 @section('content')
+    @if ($rcspBarangay->catalog_key === 'rcsp-demo-v1')
+        @include('rcsp._demo_notice')
+    @endif
+    @if ($errors->any())
+        <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
     <div class="row mb-3">
         <div class="col-9 col-xl-8 mb-3 mb-xl-0">
             <h3 class="font-weight-bold">
@@ -141,8 +147,8 @@
                                             <div class="conduct-options">
                                                 @foreach (['yes' => '<i class="ti-check text-success"></i>', 'no' => '<i class="ti-close text-danger"></i>', 'n/a' => '<span class="text-dark small">N/A</span>'] as $val => $icon)
                                                     <label class="conduct-opt">
-                                                        <input type="radio" name="conduct_{{ $activity->id }}" value="{{ $val }}"
-                                                               class="form-check-input" @checked($form?->conduct === $val) @disabled($locked)>
+                                                        <input type="radio" name="conduct[{{ $activity->id }}]" value="{{ $val }}"
+                                                               class="form-check-input" @checked(old("conduct.{$activity->id}", $form?->conduct) === $val) @disabled($locked) required>
                                                         {!! $icon !!}
                                                     </label>
                                                 @endforeach
@@ -151,7 +157,7 @@
                                         <td>
                                             @unless ($locked)
                                                 <label class="file-drop">
-                                                    <input type="file" name="file_{{ $activity->id }}" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                                     <input type="file" name="evidence[{{ $activity->id }}]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                                            class="file-input" hidden>
                                                     <i class="mdi mdi-cloud-upload-outline file-drop-icon"></i>
                                                     <span class="file-drop-text">Click to upload evidence</span>

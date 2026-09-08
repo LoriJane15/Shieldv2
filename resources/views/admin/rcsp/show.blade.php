@@ -3,6 +3,12 @@
 @section('heading', 'RCSP Implementation Monitoring Form')
 
 @section('content')
+    @if ($rcspBarangay->catalog_key === 'rcsp-demo-v1')
+        @include('rcsp._demo_notice')
+    @endif
+    @if ($errors->any())
+        <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
+    @endif
     <div class="d-flex justify-content-end mb-2">
         <a href="{{ route('admin.rcsp.index') }}" class="btn btn-sm btn-light bg-white">
             <i class="mdi mdi-arrow-left"></i> Back to list
@@ -77,12 +83,7 @@
 
                             <td>
                                 @if ($form)
-                                    <select name="statuses[{{ $form->id }}]" class="form-select status-dropdown" required>
-                                        <option value="approved" @selected($form->status === 'approved')>Approved</option>
-                                        <option value="disapproved" @selected($form->status === 'disapproved')>Disapproved</option>
-                                        <option value="to be complied" @selected($form->status === 'to be complied')>To be Complied</option>
-                                        <option value="to be conducted" @selected(! in_array($form->status, ['approved', 'disapproved', 'to be complied']))>To be Conducted</option>
-                                    </select>
+                                    @include('admin.rcsp._review_fields', ['form' => $form])
                                 @else
                                     <span class="badge bg-secondary">Not submitted</span>
                                 @endif

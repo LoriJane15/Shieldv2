@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RcspBarangay extends Model
 {
-    protected $fillable = ['barangay_id', 'municipality_id', 'status', 'current_phase'];
+    protected $fillable = ['barangay_id', 'municipality_id', 'status', 'current_phase', 'catalog_key'];
 
     public function barangay(): BelongsTo
     {

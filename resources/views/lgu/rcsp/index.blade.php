@@ -12,6 +12,9 @@
 @endphp
 
 @section('content')
+    @if ($rcspBarangays->contains(fn ($record) => $record->catalog_key === 'rcsp-demo-v1'))
+        @include('rcsp._demo_notice')
+    @endif
     <div class="row mb-3">
         <div class="col-8 col-xl-8 mb-3 mb-xl-0">
             <h3 class="font-weight-bold">RCSP Evaluation <span class="fs-4" style="color: #280274; font-weight: bold;">- {{ $municipalName }}</span></h3>

@@ -5,7 +5,7 @@
 @php
     $bgy = $form->rcspBarangay;
     $ext = strtolower(pathinfo($form->file, PATHINFO_EXTENSION));
-    $fileUrl = $form->file ? Storage::url($form->file) : null;
+    $fileUrl = $form->file ? route('rcsp.evidence', $form) : null;
     $fallbackAvatar = asset('assets/img/kc-logo.svg');
     $avatarFor = fn ($u) => $u && $u->logo ? asset('assets/'.$u->logo) : $fallbackAvatar;
     $avatar = $avatarFor($form->lguUser);          // header = uploader

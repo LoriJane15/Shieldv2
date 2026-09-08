@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RcspPhase extends Model
 {
-    protected $fillable = ['name', 'number'];
+    protected $fillable = ['name', 'number', 'catalog_key'];
 
     public function activities(): HasMany
     {

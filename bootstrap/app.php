@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveAccount;
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\SecurityHeaders;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,10 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->web(append: [EnsureActiveAccount::class]);
+        $middleware->append(SecurityHeaders::class);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureRole::class,
+            'role' => EnsureRole::class,
         ]);
 
         /*
@@ -25,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * plainly "dashboard", so the fallback sent them to "/" — the public
          * landing page — which looked like the Log in button doing nothing.
          */
-        \Illuminate\Auth\Middleware\RedirectIfAuthenticated::redirectUsing(
+        RedirectIfAuthenticated::redirectUsing(
             fn ($request) => $request->user()
                 ? route($request->user()->homeRoute())
                 : '/'

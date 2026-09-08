@@ -19,17 +19,22 @@ class RcspLifecycleTest extends TestCase
     use RefreshDatabase;
 
     private Municipality $muni;
+
     private Barangay $barangay;
+
     private User $lgu;
+
     private User $admin;
+
     private RcspBarangay $rb;
+
     /** @var array<int,RcspPhase> */
     private array $phases = [];
 
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('public');
+        Storage::fake('local');
 
         $this->muni = Municipality::create(['name' => 'Digos']);
         $this->barangay = Barangay::create(['municipality_id' => $this->muni->id, 'name' => 'Aplaya']);
@@ -55,10 +60,10 @@ class RcspLifecycleTest extends TestCase
     private function submitPhaseZero(): void
     {
         $activities = RcspActivity::where('rcsp_phase_id', $this->phases[0]->id)->get();
-        $payload = ['phase_id' => $this->phases[0]->id];
+        $payload = ['phase_id' => $this->phases[0]->id, 'conduct' => []];
         foreach ($activities as $a) {
-            $payload["conduct_{$a->id}"] = 'yes';
-            $payload["file_{$a->id}"] = UploadedFile::fake()->create("evidence_{$a->id}.pdf", 50, 'application/pdf');
+            $payload['conduct'][$a->id] = 'yes';
+            $payload['evidence'][$a->id] = UploadedFile::fake()->create("evidence_{$a->id}.pdf", 50, 'application/pdf');
         }
 
         $this->actingAs($this->lgu)
@@ -76,7 +81,7 @@ class RcspLifecycleTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('admin.rcsp.review', $this->rb), [
                 'phase_id' => $this->phases[0]->id,
-                'statuses' => $statuses,
+                'statuses' => $statuses, 'remarks' => [],
             ])->assertRedirect();
     }
 
@@ -92,7 +97,7 @@ class RcspLifecycleTest extends TestCase
         // evidence files landed on the fake public disk
         foreach ($forms as $f) {
             $this->assertNotNull($f->file);
-            Storage::disk('public')->assertExists($f->file);
+            Storage::disk('local')->assertExists(str_replace('private:', '', $f->file));
         }
 
         $this->assertSame('Ongoing', $this->rb->fresh()->status);
@@ -104,7 +109,7 @@ class RcspLifecycleTest extends TestCase
 
         $this->actingAs($this->lgu)
             ->post(route('lgu.monitoring.proceed', $this->rb))
-            ->assertSessionHas('error');
+            ->assertSessionHasErrors('phase');
 
         $this->assertSame(0, $this->rb->fresh()->current_phase);
     }
@@ -150,7 +155,7 @@ class RcspLifecycleTest extends TestCase
         $other = User::factory()->lgu(Municipality::create(['name' => 'Bansalan'])->id)->create();
 
         $this->actingAs($other)
-            ->post(route('lgu.monitoring.submit', $this->rb), ['phase_id' => $this->phases[0]->id])
+            ->post(route('lgu.monitoring.submit', $this->rb), ['phase_id' => $this->phases[0]->id, 'conduct' => []])
             ->assertForbidden();
     }
 

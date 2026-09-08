@@ -10,12 +10,22 @@ class RcspForm extends Model
 {
     protected $fillable = [
         'lgu_user_id', 'rcsp_barangay_id', 'rcsp_phase_id', 'rcsp_activity_id',
-        'conduct', 'file', 'status', 'remarks',
+        'conduct', 'file', 'status', 'remarks', 'reviewed_by_user_id', 'reviewed_at',
     ];
+
+    protected function casts(): array
+    {
+        return ['reviewed_at' => 'datetime'];
+    }
 
     public function lguUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'lgu_user_id');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by_user_id');
     }
 
     public function rcspBarangay(): BelongsTo

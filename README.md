@@ -198,6 +198,32 @@ do nothing, so there is no behaviour to reproduce:
 | `mblrc/fr_monitoring.php` | `/mblrc/former-rebels` |
 | `39th-IB/add_rcsp.php` | `/39th-ib/areas` (same `frmap_barangays` update + colour history) |
 
+## Local RCSP demonstration data
+
+The application includes an explicitly invoked, non-official RCSP demonstration
+catalog. It never runs from `DatabaseSeeder` and refuses production. After applying
+the RCSP hardening migration in a local environment, set a strong password and run:
+
+```powershell
+$env:RCSP_DEMO_PASSWORD = 'ChooseYourOwnStrong123'
+php artisan db:seed --class=RcspDemoSeeder
+```
+
+The password must be at least 12 characters and contain uppercase, lowercase, and
+a number. Sign in as `rcsp_lgu_demo` for the municipality-scoped LGU workflow or
+`katuparan_demo` for Katuparan review. All `DEMO` phases, activities, locations,
+remarks, users, and records are synthetic test content—not official RCSP requirements.
+
+Seeded examples appear under **RCSP Barangays** (LGU) and **RCSP Forms**
+(Katuparan): pending, submitted, in-progress/returned, and completed. `DEMO Manual
+Workflow Barangay` is intentionally not enrolled. Use **Add RCSP Barangay** and
+**Submit**, then **View Form** to submit each phase. Katuparan opens the clickable
+row in **Bulk File Submission**, reviews every activity, adds required return
+remarks, and clicks **Submit**. The LGU corrects returned activities and submits
+again. After all activities are approved, use **Proceed to Phase N** through Phase
+5 and finally **Complete**. **View Phases** shows approved history.
+
+
 ## Known data caveat
 
 `Database/kp_datacenter (6).sql` was generated **24 April 2025**, but the legacy app

@@ -56,6 +56,9 @@ return [
             'label' => '39th IB',
             'nav' => [
                 ['label' => 'Dashboard', 'route' => 'ib39.dashboard',   'icon' => 'squares-2x2', 'skyicon' => 'icon-grid'],
+                ['label' => 'FR Profiles', 'route' => 'ib39.fr-profiles.index', 'icon' => 'users', 'skyicon' => 'icon-people'],
+                ['label' => 'Record Surfaced FR', 'route' => 'ib39.fr-profiles.create', 'icon' => 'user-plus', 'skyicon' => 'icon-user-follow'],
+                ['label' => 'FEA Processing', 'route' => 'ib39.fea.index', 'icon' => 'document-text', 'skyicon' => 'icon-docs'],
                 ['label' => 'Add Area',  'route' => 'ib39.areas.index', 'icon' => 'map-pin',     'skyicon' => 'icon-map'],
                 ['label' => 'Map',       'route' => 'ib39.map',         'icon' => 'map',         'skyicon' => 'icon-location-pin'],
             ],

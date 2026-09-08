@@ -18,6 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/rcsp-form/{form}/evidence', [Lgu\MonitoringController::class, 'evidence'])->name('rcsp.evidence');
 });
 
 /*
@@ -135,6 +136,42 @@ Route::middleware(['auth', 'role:mblrc'])->prefix('mblrc')->name('mblrc.')->grou
 
 Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->group(function () {
     Route::get('/', [Ib39\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'index'])->name('fr-profiles.index');
+    Route::get('/fr-profiles/create', [Ib39\SurfacedFormerRebelController::class, 'create'])->name('fr-profiles.create');
+    Route::post('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'store'])->name('fr-profiles.store');
+    Route::get('/fr-profiles/{ib39SurfacedFormerRebel}', [Ib39\SurfacedFormerRebelController::class, 'show'])->name('fr-profiles.show');
+    Route::post('/fr-profiles/{ib39SurfacedFormerRebel}/cancel', Ib39\SurfacedFormerRebelCancellationController::class)->name('fr-profiles.cancel');
+
+    Route::get('/cdr/{cdr}', [Ib39\CdrController::class, 'show'])->name('cdr.show');
+    Route::post('/cdr/{cdr}/start', [Ib39\CdrController::class, 'start'])->name('cdr.start');
+    Route::get('/cdr/{cdr}/edit', [Ib39\CdrController::class, 'edit'])->name('cdr.edit');
+    Route::put('/cdr/{cdr}/draft', [Ib39\CdrController::class, 'update'])->name('cdr.update');
+    Route::get('/cdr/{cdr}/preview', [Ib39\CdrController::class, 'preview'])->name('cdr.preview');
+    Route::get('/cdr/{cdr}/print', [Ib39\CdrController::class, 'print'])->name('cdr.print');
+    Route::get('/cdr/{cdr}/finalization-review', [Ib39\CdrController::class, 'finalizationReview'])->name('cdr.finalization.review');
+    Route::post('/cdr/{cdr}/finalize', [Ib39\CdrController::class, 'finalize'])->name('cdr.finalize');
+    Route::post('/cdr/{cdr}/final-document', [Ib39\CdrDocumentController::class, 'upload'])->name('cdr.documents.upload');
+    Route::post('/cdr/{cdr}/final-document/replacement', [Ib39\CdrDocumentController::class, 'replace'])->name('cdr.documents.replace');
+    Route::get('/cdr/{cdr}/document-versions/{version}/preview', [Ib39\CdrDocumentController::class, 'preview'])->name('cdr.documents.preview');
+    Route::get('/cdr/{cdr}/document-versions/{version}/download', [Ib39\CdrDocumentController::class, 'download'])->name('cdr.documents.download');
+    Route::get('/cdr/{cdr}/document-versions/{version}/print', [Ib39\CdrDocumentController::class, 'print'])->name('cdr.documents.print');
+    Route::post('/cdr/{cdr}/photos', [Ib39\CdrPhotoController::class, 'store'])->name('cdr.photos.store');
+    Route::get('/cdr-photo-versions/{photoVersion}/preview', [Ib39\CdrPhotoController::class, 'show'])->name('cdr.photos.show');
+
+    Route::get('/fea', [Ib39\FeaProcessingController::class, 'index'])->name('fea.index');
+    Route::get('/fea/{fea}', [Ib39\FeaProcessingController::class, 'show'])->name('fea.show');
+    Route::post('/fea/{fea}/documents/{document}/start', [Ib39\FeaDocumentController::class, 'start'])->name('fea.documents.start');
+    Route::patch('/fea/{fea}/documents/{document}', [Ib39\FeaDocumentController::class, 'update'])->name('fea.documents.update');
+    Route::get('/fea/{fea}/documents/{document}/draft', [Ib39\FeaDraftController::class, 'edit'])->name('fea.documents.draft.edit');
+    Route::put('/fea/{fea}/documents/{document}/draft', [Ib39\FeaDraftController::class, 'update'])->name('fea.documents.draft.update');
+    Route::get('/fea/{fea}/documents/{document}/draft/preview', [Ib39\FeaDraftController::class, 'preview'])->name('fea.documents.draft.preview');
+    Route::get('/fea/{fea}/documents/{document}/draft/print', [Ib39\FeaDraftController::class, 'print'])->name('fea.documents.draft.print');
+    Route::post('/fea/{fea}/documents/{document}/draft-versions', [Ib39\FeaUploadController::class, 'store'])->name('fea.documents.versions.store');
+    Route::post('/fea/{fea}/documents/{document}/comparison-photo-versions', [Ib39\FeaUploadController::class, 'storeComparison'])->name('fea.documents.comparison-versions.store');
+    Route::post('/fea/{fea}/documents/{document}/surrendered-photo-versions', [Ib39\FeaUploadController::class, 'storeSurrendered'])->name('fea.documents.surrendered-versions.store');
+    Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/preview', [Ib39\FeaUploadController::class, 'preview'])->name('fea.documents.versions.preview');
+    Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/download', [Ib39\FeaUploadController::class, 'download'])->name('fea.documents.versions.download');
+
     Route::get('/areas', [Ib39\AreaController::class, 'index'])->name('areas.index');
     Route::post('/areas', [Ib39\AreaController::class, 'store'])->name('areas.store');
     Route::put('/areas/{area}', [Ib39\AreaController::class, 'update'])->name('areas.update');
