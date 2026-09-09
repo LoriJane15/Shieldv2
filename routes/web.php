@@ -188,6 +188,12 @@ Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->grou
     Route::get('/', [Japic\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/certifications', [Japic\CertificationController::class, 'index'])->name('certifications.index');
     Route::get('/certifications/{japicCertificationProcessing}', [Japic\CertificationController::class, 'show'])->name('certifications.show');
+    Route::get('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'edit'])->name('certifications.draft.edit');
+    Route::put('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'update'])->name('certifications.draft.update');
+    Route::get('/certifications/{japicCertificationProcessing}/preview', [Japic\CertificationDocumentController::class, 'preview'])->name('certifications.preview');
+    Route::get('/certifications/{japicCertificationProcessing}/print', [Japic\CertificationDocumentController::class, 'print'])->name('certifications.print');
+    Route::post('/certifications/{japicCertificationProcessing}/submit-for-signing', [Japic\CertificationWorkflowController::class, 'submitForSigning'])->name('certifications.submit-for-signing');
+    Route::post('/certifications/{japicCertificationProcessing}/signing-complete', [Japic\CertificationWorkflowController::class, 'signingComplete'])->name('certifications.signing-complete');
 
     Route::get('/cdr/{cdr}/document-versions/{version}/preview', [Ib39\CdrDocumentController::class, 'preview'])->name('cdr.documents.preview');
     Route::get('/cdr/{cdr}/document-versions/{version}/download', [Ib39\CdrDocumentController::class, 'download'])->name('cdr.documents.download');

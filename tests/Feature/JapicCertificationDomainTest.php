@@ -10,6 +10,7 @@ use App\Models\JapicCertificationDraftHistory;
 use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 use App\Services\Ib39SurfacedFormerRebelService;
+use App\Support\JapicCertificationDraftSchema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -31,6 +32,11 @@ class JapicCertificationDomainTest extends TestCase
         $this->assertSame('japic.dashboard', $japic->homeRoute());
         $this->assertTrue($japic->can('viewAny', JapicCertificationProcessing::class));
         $this->assertFalse(User::factory()->role('39th_ib')->create()->can('viewAny', JapicCertificationProcessing::class));
+        $this->assertSame(1, JapicCertificationDraftSchema::VERSION);
+        $this->assertSame(
+            app(JapicCertificationDraftSchema::class)->controlNumberHash('  Japic-AbC-001 '),
+            app(JapicCertificationDraftSchema::class)->controlNumberHash('japic-abc-001')
+        );
     }
 
     public function test_sensitive_values_are_encrypted_and_histories_are_immutable(): void

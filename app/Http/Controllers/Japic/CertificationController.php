@@ -58,6 +58,8 @@ class CertificationController extends Controller
             'surfacedFormerRebel.feaProcessing.documents.currentDraftVersion',
             'surfacedFormerRebel.feaProcessing.documents.currentSupportingPhotoVersion',
             'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
+            'draft.lastSavedBy',
+            'draftHistories' => fn ($query) => $query->with('savedBy')->latest('revision')->limit(50),
             'histories' => fn ($query) => $query->latest('occurred_at')->limit(50),
         ]);
 

@@ -24,7 +24,8 @@ class JapicRcspIsolationTest extends TestCase
         $this->assertFalse(method_exists(new JapicCertificationProcessing, 'rcsp'));
         $this->assertFalse(method_exists(new JapicCertificationDocumentVersion, 'rcsp'));
 
-        foreach (['JapicCertificationIntakeService.php', 'JapicCertificationCancellationCoordinator.php'] as $file) {
+        foreach (['JapicCertificationIntakeService.php', 'JapicCertificationCancellationCoordinator.php',
+            'JapicCertificationDraftService.php', 'JapicCertificationWorkflowService.php', 'JapicCertificationDocumentService.php'] as $file) {
             $this->assertStringNotContainsString('Rcsp', file_get_contents(app_path('Services/'.$file)));
             $this->assertStringNotContainsString('rcsp_', strtolower(file_get_contents(app_path('Services/'.$file))));
         }
@@ -34,6 +35,9 @@ class JapicRcspIsolationTest extends TestCase
             app_path('Http/Controllers/Japic/CertificationController.php'),
             app_path('Notifications/JapicCertificationIntakeNotification.php'),
             app_path('Services/JapicCertificationIntakeNotifier.php'),
+            app_path('Http/Controllers/Japic/CertificationDraftController.php'),
+            app_path('Http/Controllers/Japic/CertificationDocumentController.php'),
+            app_path('Http/Controllers/Japic/CertificationWorkflowController.php'),
         ] as $file) {
             $source = strtolower(file_get_contents($file));
             $this->assertStringNotContainsString('app\\models\\rcsp', $source);

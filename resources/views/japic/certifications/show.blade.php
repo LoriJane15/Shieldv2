@@ -20,6 +20,32 @@
     <div class="text-right"><span class="badge badge-info">{{ $processing->status->value }}</span><div class="mt-2 {{ $processing->delayed ? 'text-danger' : 'text-success' }}">{{ $processing->deadline_label }}</div></div>
 </div></div>
 
+<section class="card mb-4"><div class="card-body">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+        <div><h2 class="h6 font-weight-bold">Certification draft</h2>
+            <p class="mb-2">{{ $processing->draft ? 'Encrypted revision '.$processing->draft->revision : 'No draft has been saved.' }}</p></div>
+        <div>
+            @can('editDraft', $processing)<a class="btn btn-sm btn-primary" href="{{ route('japic.certifications.draft.edit', $processing) }}">{{ $processing->draft ? 'Continue editing' : 'Create draft' }}</a>@endcan
+            @can('previewDraft', $processing)<a class="btn btn-sm btn-outline-primary" href="{{ route('japic.certifications.preview', $processing) }}">Preview</a><a class="btn btn-sm btn-outline-secondary" href="{{ route('japic.certifications.print', $processing) }}">Print draft</a>@endcan
+        </div>
+    </div>
+    @if($processing->status === \App\Enums\JapicCertificationStatus::Drafting && $processing->draft)
+        @can('submitForSigning', $processing)<form method="POST" action="{{ route('japic.certifications.submit-for-signing', $processing) }}" class="mt-3">@csrf
+            <input type="hidden" name="revision" value="{{ $processing->draft->revision }}"><input type="hidden" name="lock_version" value="{{ $processing->lock_version }}">
+            @if($processing->delayed)<label for="submit-delay">Delay reason</label><textarea id="submit-delay" name="delay_reason" class="form-control mb-2" maxlength="2000" required></textarea>@endif
+            <button class="btn btn-warning" type="submit">Submit / Mark for Signing</button>
+        </form>@endcan
+    @elseif($processing->status === \App\Enums\JapicCertificationStatus::ForSigning && $processing->draft)
+        @can('confirmSigningComplete', $processing)<form method="POST" action="{{ route('japic.certifications.signing-complete', $processing) }}" class="mt-3">@csrf
+            <input type="hidden" name="revision" value="{{ $processing->draft->revision }}"><input type="hidden" name="lock_version" value="{{ $processing->lock_version }}">
+            @if($processing->delayed)<label for="signing-delay">Delay reason</label><textarea id="signing-delay" name="delay_reason" class="form-control mb-2" maxlength="2000" required></textarea>@endif
+            <div class="form-check mb-2"><input id="signing-complete" class="form-check-input" type="checkbox" name="signing_complete" value="1" required><label class="form-check-label" for="signing-complete">I confirm physical signing is complete.</label></div>
+            <button class="btn btn-success" type="submit">Confirm Signing Complete</button>
+        </form>@endcan
+    @endif
+    @if($processing->draftHistories->isNotEmpty())<h3 class="h6 mt-4">Immutable draft revisions</h3>@foreach($processing->draftHistories as $revision)<div class="border-top py-2">Revision {{ $revision->revision }} · {{ $revision->saved_at->format('M d, Y h:i A') }} · {{ $revision->savedBy?->name ?? 'System' }}</div>@endforeach @endif
+</div></section>
+
 <div class="row">
     <div class="col-lg-6 mb-4"><section class="card h-100"><div class="card-body">
         <h2 class="h6 font-weight-bold">Surfacing information</h2>
