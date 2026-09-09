@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Enums\Ib39CdrDocumentSource;
 use App\Models\Ib39CdrDocumentVersion;
+use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 
 class Ib39CdrDocumentVersionPolicy
@@ -27,8 +28,24 @@ class Ib39CdrDocumentVersionPolicy
 
     private function hasAccess(User $user, Ib39CdrDocumentVersion $version): bool
     {
-        return $user->is_active
-            && $user->hasRole('39th_ib')
-            && $version->processing()->whereHas('surfacedFormerRebel')->exists();
+        if (! $user->is_active) {
+            return false;
+        }
+
+        if ($user->hasRole('39th_ib')) {
+            return $version->processing()->whereHas('surfacedFormerRebel')->exists();
+        }
+
+        if (! $user->hasRole('japic')) {
+            return false;
+        }
+
+        $version->loadMissing('processing.surfacedFormerRebel.japicCertificationProcessing');
+        $processing = $version->processing;
+        $certification = $processing?->surfacedFormerRebel?->japicCertificationProcessing;
+
+        return $processing?->current_final_version_id === $version->id
+            && $certification instanceof JapicCertificationProcessing
+            && $user->can('view', $certification);
     }
 }

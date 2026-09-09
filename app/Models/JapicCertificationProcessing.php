@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\JapicCertificationStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,7 +32,45 @@ class JapicCertificationProcessing extends Model
 
     protected function delayed(): Attribute
     {
-        return Attribute::get(fn (): bool => $this->status->isActive() && now()->greaterThan($this->due_at));
+        return Attribute::get(fn (): bool => $this->deadline_days < 0);
+    }
+
+    protected function deadlineDays(): Attribute
+    {
+        return Attribute::get(function (): int {
+            $reference = match ($this->status) {
+                JapicCertificationStatus::Completed => $this->completed_at,
+                JapicCertificationStatus::Cancelled => $this->surfacedFormerRebel?->cancellation?->cancelled_at,
+                default => now(),
+            } ?? now();
+
+            return (int) $reference->copy()->startOfDay()->diffInDays($this->due_at->copy()->startOfDay(), false);
+        });
+    }
+
+    protected function deadlineLabel(): Attribute
+    {
+        return Attribute::get(fn (): string => match (true) {
+            $this->deadline_days < 0 => abs($this->deadline_days).' '.str('day')->plural(abs($this->deadline_days)).' overdue',
+            $this->deadline_days === 0 => 'Due today',
+            default => $this->deadline_days.' '.str('day')->plural($this->deadline_days).' remaining',
+        });
+    }
+
+    public function scopeWithTiming(Builder $query, string $timing): Builder
+    {
+        $operator = $timing === 'overdue' ? '>' : '<=';
+
+        return $query->whereRaw('DATE('.self::deadlineReferenceSql().") {$operator} DATE(due_at)", [
+            JapicCertificationStatus::Completed->value,
+            JapicCertificationStatus::Cancelled->value,
+            now()->toDateTimeString(),
+        ]);
+    }
+
+    public static function deadlineReferenceSql(): string
+    {
+        return 'CASE WHEN status = ? THEN completed_at WHEN status = ? THEN (SELECT cancelled_at FROM ib39_fr_cancellations WHERE ib39_fr_cancellations.ib39_surfaced_former_rebel_id = japic_certification_processings.ib39_surfaced_former_rebel_id LIMIT 1) ELSE ? END';
     }
 
     public function surfacedFormerRebel(): BelongsTo

@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
 
 class JapicCertificationIntakeService
 {
+    public function __construct(private readonly JapicCertificationIntakeNotifier $notifier) {}
+
     public function createForCompletedCdr(Ib39CdrProcessing $cdr): ?JapicCertificationProcessing
     {
         return DB::transaction(function () use ($cdr): ?JapicCertificationProcessing {
@@ -58,6 +60,17 @@ class JapicCertificationIntakeService
                 'event' => JapicCertificationEvent::IntakeCreated,
                 'occurred_at' => $receivedAt,
             ]);
+
+            DB::afterCommit(function () use ($processing): void {
+                try {
+                    $this->notifier->notify($processing->fresh());
+                } catch (\Throwable $exception) {
+                    report($exception);
+                    logger()->warning('JAPIC intake notification delivery failed.', [
+                        'processing_id' => $processing->id,
+                    ]);
+                }
+            });
 
             return $processing;
         }, 5);

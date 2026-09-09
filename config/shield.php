@@ -72,7 +72,10 @@ return [
         ],
         'japic' => [
             'label' => 'JAPIC',
-            'nav' => [],
+            'nav' => [
+                ['label' => 'Dashboard', 'route' => 'japic.dashboard', 'icon' => 'squares-2x2', 'skyicon' => 'icon-grid'],
+                ['label' => 'FRs for Certification', 'route' => 'japic.certifications.index', 'icon' => 'document-check', 'skyicon' => 'icon-docs'],
+            ],
         ],
     ],
 ];

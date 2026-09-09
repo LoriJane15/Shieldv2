@@ -28,7 +28,7 @@ class JapicCertificationDomainTest extends TestCase
             $this->assertTrue(Schema::hasTable($table));
         }
         $japic = User::factory()->role('japic')->create();
-        $this->assertSame('profile.edit', $japic->homeRoute());
+        $this->assertSame('japic.dashboard', $japic->homeRoute());
         $this->assertTrue($japic->can('viewAny', JapicCertificationProcessing::class));
         $this->assertFalse(User::factory()->role('39th_ib')->create()->can('viewAny', JapicCertificationProcessing::class));
     }

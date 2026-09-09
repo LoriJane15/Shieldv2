@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Afp;
 use App\Http\Controllers\GovAgency;
 use App\Http\Controllers\Ib39;
+use App\Http\Controllers\Japic;
 use App\Http\Controllers\Lgu;
 use App\Http\Controllers\Mblrc;
 use App\Http\Controllers\ProfileController;
@@ -181,6 +182,17 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::get('/map-data', [Ib39\AreaController::class, 'mapData'])->name('map.data');
     Route::get('/area-data', [Ib39\AreaController::class, 'areaData'])->name('area.data');
     Route::get('/barangay-data', [Ib39\AreaController::class, 'barangayData'])->name('barangay.data');
+});
+
+Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->group(function () {
+    Route::get('/', [Japic\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/certifications', [Japic\CertificationController::class, 'index'])->name('certifications.index');
+    Route::get('/certifications/{japicCertificationProcessing}', [Japic\CertificationController::class, 'show'])->name('certifications.show');
+
+    Route::get('/cdr/{cdr}/document-versions/{version}/preview', [Ib39\CdrDocumentController::class, 'preview'])->name('cdr.documents.preview');
+    Route::get('/cdr/{cdr}/document-versions/{version}/download', [Ib39\CdrDocumentController::class, 'download'])->name('cdr.documents.download');
+    Route::get('/fea/{fea}/documents/{document}/versions/{version}/preview', [Ib39\FeaUploadController::class, 'preview'])->name('fea.documents.versions.preview');
+    Route::get('/fea/{fea}/documents/{document}/versions/{version}/download', [Ib39\FeaUploadController::class, 'download'])->name('fea.documents.versions.download');
 });
 
 Route::middleware(['auth', 'role:afp'])->prefix('afp')->name('afp.')->group(function () {

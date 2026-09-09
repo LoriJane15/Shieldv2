@@ -55,7 +55,7 @@ class User extends Authenticatable
             'lgu' => 'lgu.dashboard',
             'mblrc' => 'mblrc.dashboard',
             'afp' => 'afp.dashboard',
-            'japic' => 'profile.edit',
+            'japic' => 'japic.dashboard',
             default => 'login',
         };
     }

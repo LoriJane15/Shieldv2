@@ -28,5 +28,18 @@ class JapicRcspIsolationTest extends TestCase
             $this->assertStringNotContainsString('Rcsp', file_get_contents(app_path('Services/'.$file)));
             $this->assertStringNotContainsString('rcsp_', strtolower(file_get_contents(app_path('Services/'.$file))));
         }
+
+        foreach ([
+            app_path('Http/Controllers/Japic/DashboardController.php'),
+            app_path('Http/Controllers/Japic/CertificationController.php'),
+            app_path('Notifications/JapicCertificationIntakeNotification.php'),
+            app_path('Services/JapicCertificationIntakeNotifier.php'),
+        ] as $file) {
+            $source = strtolower(file_get_contents($file));
+            $this->assertStringNotContainsString('app\\models\\rcsp', $source);
+            $this->assertStringNotContainsString("db::table('rcsp", $source);
+            $this->assertStringNotContainsString("route('rcsp", $source);
+        }
+        $this->assertSame(0, DB::table('sqlite_master')->where('type', 'table')->where('name', 'like', 'rcsp_%')->where('sql', 'like', '%japic%')->count());
     }
 }

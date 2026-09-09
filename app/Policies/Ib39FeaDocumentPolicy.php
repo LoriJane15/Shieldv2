@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\Ib39FeaDocumentStatus;
 use App\Models\Ib39FeaDocument;
 use App\Models\Ib39FeaProcessing;
+use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 
 class Ib39FeaDocumentPolicy
@@ -58,9 +59,22 @@ class Ib39FeaDocumentPolicy
 
     private function canView(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
-        return $user->is_active
-            && $user->hasRole('39th_ib')
-            && $document->fea_processing_id === $processing->id
-            && $processing->surfacedFormerRebel()->exists();
+        if (! $user->is_active || $document->fea_processing_id !== $processing->id) {
+            return false;
+        }
+
+        if ($user->hasRole('39th_ib')) {
+            return $processing->surfacedFormerRebel()->exists();
+        }
+
+        if (! $user->hasRole('japic')) {
+            return false;
+        }
+
+        $processing->loadMissing('surfacedFormerRebel.japicCertificationProcessing');
+        $certification = $processing->surfacedFormerRebel?->japicCertificationProcessing;
+
+        return $certification instanceof JapicCertificationProcessing
+            && $user->can('view', $certification);
     }
 }
