@@ -4,13 +4,20 @@ namespace Tests\Feature;
 
 use App\Enums\Ib39FeaDocumentStatus;
 use App\Enums\Ib39FrCategory;
+use App\Enums\JapicCertificationEvent;
+use App\Enums\JapicCertificationStatus;
 use App\Models\AuditLog;
 use App\Models\Ib39FrCancellation;
 use App\Models\Ib39SurfacedFormerRebel;
+use App\Models\JapicCertificationDocumentVersion;
+use App\Models\JapicCertificationDraft;
+use App\Models\JapicCertificationDraftHistory;
+use App\Models\JapicCertificationProcessing;
 use App\Models\Municipality;
 use App\Models\User;
 use App\Services\Ib39SurfacedFormerRebelCancellationService;
 use App\Services\Ib39SurfacedFormerRebelService;
+use App\Services\JapicCertificationCancellationCoordinator;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +92,7 @@ class Ib39SurfacedFormerRebelCancellationTest extends TestCase
         Ib39FrCancellation::query()->sole()->update(['reason' => 'Changed']);
     }
 
-    public function test_cancellation_blocks_cdr_and_fea_mutation_and_reads_no_japic_tables(): void
+    public function test_cancellation_without_japic_task_creates_none_and_does_not_mutate_cdr_fea_or_rcsp(): void
     {
         [$actor, $record] = $this->context();
         $cdr = $record->cdrProcessing()->firstOrFail();
@@ -102,9 +109,90 @@ class Ib39SurfacedFormerRebelCancellationTest extends TestCase
         $this->actingAs($actor)->post(route('ib39.cdr.start', $cdr))->assertForbidden();
         $this->actingAs($actor)->post(route('ib39.fea.documents.start', [$fea, $document]))->assertForbidden();
         $this->assertSame(Ib39FeaDocumentStatus::Pending, $document->fresh()->status);
-        $this->assertFalse(collect($queries)->contains(
-            fn (string $sql): bool => str_contains($sql, 'japic'),
-        ));
+        $this->assertDatabaseCount('japic_certification_processings', 0);
+        $this->assertFalse(collect($queries)->contains(fn (string $sql): bool => str_contains($sql, 'rcsp')));
+    }
+
+    public function test_active_japic_task_is_cancelled_once_while_drafts_versions_cdr_and_fea_are_preserved(): void
+    {
+        [$actor, $record] = $this->context();
+        $processing = $this->japicProcessing($record, JapicCertificationStatus::Drafting);
+        JapicCertificationDraft::query()->forceCreate([
+            'processing_id' => $processing->id, 'payload' => ['name' => 'Private draft'],
+            'schema_version' => 1, 'revision' => 1, 'last_saved_by' => $actor->id, 'last_saved_at' => now(),
+        ]);
+        JapicCertificationDraftHistory::query()->forceCreate([
+            'processing_id' => $processing->id, 'revision' => 1, 'payload' => ['name' => 'Private draft'],
+            'saved_by' => $actor->id, 'saved_at' => now(),
+        ]);
+        JapicCertificationDocumentVersion::query()->forceCreate([
+            'processing_id' => $processing->id, 'version_number' => 1, 'storage_path' => 'private/japic/final.pdf',
+            'original_filename' => 'final.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 123,
+            'sha256' => str_repeat('a', 64), 'uploaded_by' => $actor->id, 'all_signatories_confirmed' => true,
+            'correct_final_confirmed' => true, 'uploaded_at' => now(),
+        ]);
+        $protected = $this->protectedCounts();
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+
+        app(Ib39SurfacedFormerRebelCancellationService::class)->cancel($record, 'Approved cancellation', $actor);
+
+        $this->assertSame(JapicCertificationStatus::Cancelled, $processing->fresh()->status);
+        $this->assertDatabaseCount('japic_certification_drafts', 1);
+        $this->assertDatabaseCount('japic_certification_draft_histories', 1);
+        $this->assertDatabaseCount('japic_certification_document_versions', 1);
+        $this->assertSame($protected, $this->protectedCounts());
+        $this->assertDatabaseHas('japic_certification_histories', [
+            'processing_id' => $processing->id, 'from_status' => JapicCertificationStatus::Drafting->value,
+            'to_status' => JapicCertificationStatus::Cancelled->value, 'event' => JapicCertificationEvent::FrCancelled->value,
+        ]);
+        $this->assertDatabaseCount('japic_certification_histories', 1);
+        $this->assertFalse(collect($queries)->contains(fn (string $sql): bool => str_contains($sql, 'rcsp')));
+    }
+
+    public function test_completed_japic_remains_completed_and_records_informational_event(): void
+    {
+        [$actor, $record] = $this->context();
+        $processing = $this->japicProcessing($record, JapicCertificationStatus::Completed);
+        app(Ib39SurfacedFormerRebelCancellationService::class)->cancel($record, 'Later cancellation', $actor);
+
+        $this->assertSame(JapicCertificationStatus::Completed, $processing->fresh()->status);
+        $this->assertDatabaseHas('japic_certification_histories', [
+            'processing_id' => $processing->id, 'from_status' => JapicCertificationStatus::Completed->value,
+            'to_status' => JapicCertificationStatus::Completed->value,
+            'event' => JapicCertificationEvent::FrCancelledAfterCompletion->value,
+        ]);
+    }
+
+    public function test_failed_japic_coordination_rolls_back_entire_cancellation(): void
+    {
+        [$actor, $record] = $this->context();
+        $processing = $this->japicProcessing($record, JapicCertificationStatus::Pending);
+        DB::unprepared("CREATE TRIGGER fail_japic_coordination BEFORE INSERT ON japic_certification_histories BEGIN SELECT RAISE(ABORT, 'simulated coordination failure'); END");
+
+        try {
+            app(Ib39SurfacedFormerRebelCancellationService::class)->cancel($record, 'Rollback all', $actor);
+            $this->fail('The simulated coordination failure did not abort cancellation.');
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString('simulated coordination failure', $exception->getMessage());
+        }
+        $this->assertDatabaseCount('ib39_fr_cancellations', 0);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'ib39_surfaced_former_rebel_cancelled']);
+        $this->assertSame(JapicCertificationStatus::Pending, $processing->fresh()->status);
+        $this->assertDatabaseCount('japic_certification_histories', 0);
+    }
+
+    public function test_repeated_coordination_cannot_duplicate_history(): void
+    {
+        [$actor, $record] = $this->context();
+        $processing = $this->japicProcessing($record, JapicCertificationStatus::Pending);
+        $cancellation = app(Ib39SurfacedFormerRebelCancellationService::class)->cancel($record, 'Approved once', $actor);
+        app(JapicCertificationCancellationCoordinator::class)->coordinate($record, $cancellation, $actor);
+
+        $this->assertDatabaseCount('japic_certification_histories', 1);
+        $this->assertSame(JapicCertificationStatus::Cancelled, $processing->fresh()->status);
     }
 
     public function test_audit_failure_rolls_back_cancellation(): void
@@ -146,5 +234,29 @@ class Ib39SurfacedFormerRebelCancellationTest extends TestCase
             'fea' => DB::table('ib39_fea_processings')->count(),
             'fea_documents' => DB::table('ib39_fea_documents')->count(),
         ];
+    }
+
+    private function japicProcessing(Ib39SurfacedFormerRebel $record, JapicCertificationStatus $status): JapicCertificationProcessing
+    {
+        $received = now()->subDay();
+
+        return JapicCertificationProcessing::query()->forceCreate([
+            'ib39_surfaced_former_rebel_id' => $record->id,
+            'triggering_cdr_document_version_id' => $this->cdrVersion($record),
+            'status' => $status, 'received_at' => $received, 'due_at' => $received->copy()->addDays(14),
+            'completed_at' => $status === JapicCertificationStatus::Completed ? now() : null, 'lock_version' => 0,
+        ]);
+    }
+
+    private function cdrVersion(Ib39SurfacedFormerRebel $record): int
+    {
+        $actor = User::factory()->role('39th_ib')->create();
+
+        return DB::table('ib39_cdr_document_versions')->insertGetId([
+            'cdr_processing_id' => $record->cdrProcessing()->value('id'), 'version_number' => 1,
+            'source_type' => 'generated', 'storage_path' => 'private/cdr/final.pdf', 'original_filename' => 'final.pdf',
+            'mime_type' => 'application/pdf', 'size_bytes' => 123, 'sha256' => str_repeat('b', 64),
+            'created_by' => $actor->id, 'finalized_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 }

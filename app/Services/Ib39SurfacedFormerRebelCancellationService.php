@@ -13,6 +13,8 @@ use Throwable;
 
 class Ib39SurfacedFormerRebelCancellationService
 {
+    public function __construct(private readonly JapicCertificationCancellationCoordinator $japicCancellation) {}
+
     public function cancel(
         Ib39SurfacedFormerRebel $record,
         string $reason,
@@ -55,6 +57,8 @@ class Ib39SurfacedFormerRebelCancellationService
                     'ip_address' => $ipAddress,
                     'user_agent' => $userAgent ? mb_substr($userAgent, 0, 1000) : null,
                 ]);
+
+                $this->japicCancellation->coordinate($locked, $cancellation, $actor);
 
                 return $cancellation;
             }, 5);

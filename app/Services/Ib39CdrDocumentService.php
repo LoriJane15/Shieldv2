@@ -20,6 +20,8 @@ use Throwable;
 
 class Ib39CdrDocumentService
 {
+    public function __construct(private readonly JapicCertificationIntakeService $japicIntake) {}
+
     public function uploadFinal(
         Ib39CdrProcessing $processing,
         UploadedFile $file,
@@ -149,6 +151,10 @@ class Ib39CdrDocumentService
                     'ip_address' => $ipAddress,
                     'user_agent' => $userAgent ? mb_substr($userAgent, 0, 1000) : null,
                 ]);
+
+                if (! $isReplacement) {
+                    $this->japicIntake->createForCompletedCdr($locked->fresh());
+                }
 
                 return ['version' => $version, 'duplicate' => false];
             }, 5);

@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class Ib39CdrFinalizationService
 {
+    public function __construct(private readonly JapicCertificationIntakeService $japicIntake) {}
+
     public function fingerprint(Ib39CdrProcessing $processing): string
     {
         $form = $processing->form()->firstOrFail();
@@ -91,6 +93,8 @@ class Ib39CdrFinalizationService
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent ? mb_substr($userAgent, 0, 1000) : null,
             ]);
+
+            $this->japicIntake->createForCompletedCdr($locked->fresh());
 
             return $version;
         }, 5);

@@ -70,5 +70,9 @@ return [
                 ['label' => 'RCSP Barangays', 'route' => 'afp.rcsp.index',  'icon' => 'map',         'skyicon' => 'icon-map'],
             ],
         ],
+        'japic' => [
+            'label' => 'JAPIC',
+            'nav' => [],
+        ],
     ],
 ];

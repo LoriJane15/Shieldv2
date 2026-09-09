@@ -55,6 +55,7 @@ class User extends Authenticatable
             'lgu' => 'lgu.dashboard',
             'mblrc' => 'mblrc.dashboard',
             'afp' => 'afp.dashboard',
+            'japic' => 'profile.edit',
             default => 'login',
         };
     }
@@ -78,5 +79,10 @@ class User extends Authenticatable
     public function completedIb39CdrProcessings(): HasMany
     {
         return $this->hasMany(Ib39CdrProcessing::class, 'completed_by');
+    }
+
+    public function assignedJapicCertificationProcessings(): HasMany
+    {
+        return $this->hasMany(JapicCertificationProcessing::class, 'assigned_to');
     }
 }

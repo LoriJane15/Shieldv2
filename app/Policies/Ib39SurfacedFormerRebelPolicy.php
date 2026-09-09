@@ -28,4 +28,13 @@ class Ib39SurfacedFormerRebelPolicy
             && $user->hasRole('39th_ib')
             && ! $record->cancellation()->exists();
     }
+
+    public function viewForJapic(User $user, Ib39SurfacedFormerRebel $record): bool
+    {
+        return $user->is_active
+            && $user->hasRole('japic')
+            && $record->japicCertificationProcessing()->where(function ($query) use ($user): void {
+                $query->whereNull('assigned_to')->orWhere('assigned_to', $user->id);
+            })->exists();
+    }
 }

@@ -8,6 +8,8 @@ use App\Models\Ib39FeaDocument;
 use App\Models\Ib39FeaDocumentVersion;
 use App\Models\Ib39FeaProcessing;
 use App\Models\Ib39SurfacedFormerRebel;
+use App\Models\JapicCertificationDocumentVersion;
+use App\Models\JapicCertificationProcessing;
 use App\Models\RcspBarangay;
 use App\Models\RcspForm;
 use App\Policies\Ib39CdrDocumentVersionPolicy;
@@ -16,6 +18,8 @@ use App\Policies\Ib39FeaDocumentPolicy;
 use App\Policies\Ib39FeaDocumentVersionPolicy;
 use App\Policies\Ib39FeaProcessingPolicy;
 use App\Policies\Ib39SurfacedFormerRebelPolicy;
+use App\Policies\JapicCertificationDocumentVersionPolicy;
+use App\Policies\JapicCertificationProcessingPolicy;
 use App\Policies\RcspBarangayPolicy;
 use App\Policies\RcspFormPolicy;
 use Illuminate\Pagination\Paginator;
@@ -38,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Ib39SurfacedFormerRebel::class, Ib39SurfacedFormerRebelPolicy::class);
+        Gate::policy(JapicCertificationProcessing::class, JapicCertificationProcessingPolicy::class);
+        Gate::policy(JapicCertificationDocumentVersion::class, JapicCertificationDocumentVersionPolicy::class);
         Gate::policy(Ib39CdrProcessing::class, Ib39CdrProcessingPolicy::class);
         Gate::policy(Ib39CdrDocumentVersion::class, Ib39CdrDocumentVersionPolicy::class);
         Gate::policy(Ib39FeaProcessing::class, Ib39FeaProcessingPolicy::class);
