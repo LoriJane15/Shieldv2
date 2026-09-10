@@ -26,6 +26,9 @@ class JapicRelatedDocumentAccessTest extends TestCase
         $cdr = $record->cdrProcessing;
         Storage::disk('local')->put($current->getRawOriginal('storage_path'), '%PDF-1.4 current');
 
+        $this->actingAs($japic)->get(route('japic.certifications.records.cdr', $processing))
+            ->assertOk()->assertSee('current authoritative final CDR')->assertSee('Secure preview')
+            ->assertDontSee('CDR History')->assertDontSee('private/cdr');
         $this->actingAs($japic)->get(route('japic.cdr.documents.preview', [$cdr, $current]))->assertOk();
         $this->actingAs($japic)->get(route('japic.cdr.documents.download', [$cdr, $current]))->assertOk();
 
@@ -43,7 +46,7 @@ class JapicRelatedDocumentAccessTest extends TestCase
     public function test_fea_access_enforces_processing_document_version_and_fr_ownership(): void
     {
         Storage::fake('local');
-        [$japic, $record] = $this->context(true);
+        [$japic, $record, $processing] = $this->context(true);
         $fea = $record->feaProcessing;
         $document = $fea->documents->first();
         $version = Ib39FeaDocumentVersion::query()->forceCreate(['fea_processing_id' => $fea->id, 'fea_document_id' => $document->id,
@@ -52,12 +55,29 @@ class JapicRelatedDocumentAccessTest extends TestCase
         $document->update(['current_draft_version_id' => $version->id]);
         Storage::disk('local')->put($version->getRawOriginal('storage_path'), '%PDF-1.4 fea');
 
+        $this->actingAs($japic)->get(route('japic.certifications.records.fea', $processing))
+            ->assertOk()->assertSee($document->document_type->label())->assertSee($version->slot->label())
+            ->assertSee('Secure preview')->assertSee('Secure download')->assertDontSee('Upload');
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.preview', [$fea, $document, $version]))->assertOk();
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.download', [$fea, $document, $version]))->assertOk();
         $otherDocument = $fea->documents->skip(1)->first();
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.preview', [$fea, $otherDocument, $version]))->assertNotFound();
 
         $this->actingAs($japic)->post(route('ib39.fea.documents.versions.store', [$fea, $document]))->assertForbidden();
+    }
+
+    public function test_record_pages_use_exact_empty_states_and_never_infer_assistance(): void
+    {
+        [$japic, $record, $processing] = $this->context(false);
+        $record->cdrProcessing->update(['current_final_version_id' => null]);
+
+        $this->actingAs($japic)->get(route('japic.certifications.records.cdr', $processing))
+            ->assertOk()->assertSee('No CDR document is currently available for preview.');
+        $this->actingAs($japic)->get(route('japic.certifications.records.fea', $processing))
+            ->assertOk()->assertSee('No FEA processing documents are currently available for preview.');
+        $this->actingAs($japic)->get(route('japic.certifications.records.assistance', $processing))
+            ->assertOk()->assertSee('No assistance records are currently available.');
+        $this->assertSame(0, DB::table('fr_government_assistances')->count());
     }
 
     private function context(bool $firearms): array

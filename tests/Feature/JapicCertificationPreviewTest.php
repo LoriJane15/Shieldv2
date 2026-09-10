@@ -28,12 +28,29 @@ class JapicCertificationPreviewTest extends TestCase
                 ->assertHeader('Cache-Control')->assertSee('DRAFT — NOT FINAL')->assertSee('JOINT AFP-PNP')
                 ->assertSee('Emblem')->assertSee('pending')->assertSee('PREPARED BY:')->assertSee('ATTESTED BY:')
                 ->assertSee('Enhanced Comprehensive Local Integration Program(E-CLIP)')->assertSee('First Place')
+                ->assertSee('She started her affiliation')->assertSee('during 1998')->assertSee('attest her legitimacy')
                 ->assertSee('TEST PREPARER')->assertSee('TEST ATTESTER')->assertSee('CPT')
                 ->assertSee('Task Force Balik Loob (TFBL);')->assertSee('DILG Provincial/HUC/ICC Office;')
                 ->assertSee('E-CLIP and Amnesty Program Cluster of NTF-ELCAC.')
                 ->assertDontSee('CamScanner')->assertDontSee('private/japic')->assertDontSee('storage_path');
             $this->assertStringContainsString('@page{size:A4 portrait', $response->getContent());
             $this->assertStringContainsString('border-bottom:1px solid #111', $response->getContent());
+        }
+    }
+
+    public function test_fixed_wording_uses_male_and_gender_neutral_frozen_source_values(): void
+    {
+        Storage::fake('local');
+        foreach ([['Male', 'He started his affiliation', 'attest his legitimacy'], ['Unsupported', 'The former rebel started their affiliation', 'attest their legitimacy']] as [$gender, $affiliation, $purpose]) {
+            [$processing, $japic] = $this->processingWithPhoto();
+            $version = $processing->triggeringCdrDocumentVersion;
+            $snapshot = $version->content_snapshot;
+            $snapshot['content']['gender'] = $gender;
+            $version->forceFill(['content_snapshot' => $snapshot])->saveQuietly();
+            $this->save($processing, $japic, 'Gender Test');
+
+            $this->actingAs($japic)->get(route('japic.certifications.preview', $processing))
+                ->assertOk()->assertSee($affiliation)->assertSee($purpose);
         }
     }
 
@@ -67,7 +84,7 @@ class JapicCertificationPreviewTest extends TestCase
             ],
             'prepared_by' => [['full_name' => 'TEST PREPARER', 'rank' => 'CPT']],
             'attested_by' => [['full_name' => 'TEST ATTESTER', 'rank' => 'CPT']],
-        ]], 'CTRL-PREVIEW', 0, 0, null, $japic);
+        ]], 'CTRL-PREVIEW-'.$processing->id, 0, 0, null, $japic);
     }
 
     private function processingWithPhoto(): array
@@ -75,7 +92,7 @@ class JapicCertificationPreviewTest extends TestCase
         $japic = User::factory()->role('japic')->create();
         $actor = User::factory()->role('39th_ib')->create();
         $municipality = DB::table('municipalities')->insertGetId(['name' => 'Preview City', 'created_at' => now(), 'updated_at' => now()]);
-        $fr = DB::table('ib39_surfaced_former_rebels')->insertGetId(['reference_number' => 'FR-PREVIEW', 'first_name' => 'Preview', 'last_name' => 'Subject', 'category' => 'Regular Member',
+        $fr = DB::table('ib39_surfaced_former_rebels')->insertGetId(['reference_number' => 'FR-PREVIEW-'.uniqid(), 'first_name' => 'Preview', 'last_name' => 'Subject', 'category' => 'Regular Member',
             'province' => 'Davao del Sur', 'municipality_id' => $municipality, 'surfaced_at' => '2026-08-01', 'possessed_firearms' => 0, 'created_by' => $actor->id, 'created_at' => now(), 'updated_at' => now()]);
         $cdr = DB::table('ib39_cdr_processings')->insertGetId(['ib39_surfaced_former_rebel_id' => $fr, 'status' => 'Completed', 'completed_at' => now(), 'completed_by' => $actor->id, 'created_at' => now(), 'updated_at' => now()]);
         $photo = DB::table('ib39_cdr_photos')->insertGetId(['cdr_processing_id' => $cdr, 'photo_type' => 'fr_photo', 'created_at' => now(), 'updated_at' => now()]);

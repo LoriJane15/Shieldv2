@@ -25,6 +25,8 @@ class CertificationDraftController extends Controller
         return view('japic.certifications.edit', [
             'processing' => $japicCertificationProcessing,
             'payload' => $payload,
+            'wording' => $schema->wording($payload),
+            'affiliationPeriod' => data_get($payload, 'source_snapshot.affiliation_period'),
             'maxPersonnelRows' => JapicCertificationDraftSchema::MAX_PERSONNEL_ROWS,
         ]);
     }

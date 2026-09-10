@@ -154,6 +154,16 @@ class JapicCertificationDraftEditorTest extends TestCase
         $this->assertStringNotContainsString('FIRST PREPARER', DB::table('japic_certification_drafts')->value('payload'));
     }
 
+    public function test_editor_hides_source_snapshot_and_uses_frozen_gender_and_affiliation_period(): void
+    {
+        [$processing, $japic] = $this->processing();
+
+        $this->actingAs($japic)->get(route('japic.certifications.draft.edit', $processing))->assertOk()
+            ->assertDontSee('Authoritative source snapshot')
+            ->assertSee('She started her affiliation')->assertSee('attest her legitimacy')
+            ->assertSee('during 1998')->assertDontSee('name="source_snapshot', false);
+    }
+
     private function draftInput(JapicCertificationProcessing $processing): array
     {
         return ['revision' => $processing->draft?->revision ?? 0, 'lock_version' => $processing->lock_version, 'control_number' => 'CTRL-001',

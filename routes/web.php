@@ -188,6 +188,10 @@ Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->grou
     Route::get('/', [Japic\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/certifications', [Japic\CertificationController::class, 'index'])->name('certifications.index');
     Route::get('/certifications/{japicCertificationProcessing}', [Japic\CertificationController::class, 'show'])->name('certifications.show');
+    Route::get('/certifications/{japicCertificationProcessing}/documents/cdr', [Japic\CertificationController::class, 'cdr'])->name('certifications.records.cdr');
+    Route::get('/certifications/{japicCertificationProcessing}/documents/fea', [Japic\CertificationController::class, 'fea'])->name('certifications.records.fea');
+    Route::get('/certifications/{japicCertificationProcessing}/assistance', [Japic\CertificationController::class, 'assistance'])->name('certifications.records.assistance');
+    Route::get('/certifications/{japicCertificationProcessing}/history/{revision?}', [Japic\CertificationController::class, 'history'])->whereNumber('revision')->name('certifications.history');
     Route::get('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'edit'])->name('certifications.draft.edit');
     Route::put('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'update'])->name('certifications.draft.update');
     Route::post('/certifications/{processing}/photo-versions', [Japic\CertificationPhotoController::class, 'store'])->name('certifications.photos.store');

@@ -6,6 +6,7 @@ use App\Enums\JapicCertificationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Japic\IndexCertificationRequest;
 use App\Models\JapicCertificationProcessing;
+use App\Services\JapicCertificationRevisionHistoryService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -53,17 +54,55 @@ class CertificationController extends Controller
         $japicCertificationProcessing->load([
             'surfacedFormerRebel.municipality', 'surfacedFormerRebel.barangay',
             'surfacedFormerRebel.cancellation',
-            'surfacedFormerRebel.cdrProcessing.currentFinalVersion',
-            'surfacedFormerRebel.feaProcessing.documents.currentDraftVersion',
-            'surfacedFormerRebel.feaProcessing.documents.currentSupportingPhotoVersion',
-            'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
             'draft.lastSavedBy',
-            'currentPhotoVersion',
-            'photoVersions' => fn ($query) => $query->with('uploader:id,name')->latest('version_number'),
-            'draftHistories' => fn ($query) => $query->with('savedBy')->latest('revision')->limit(50),
-            'histories' => fn ($query) => $query->latest('occurred_at')->limit(50),
+            'histories' => fn ($query) => $query->with('actor:id,name')->oldest('occurred_at'),
         ]);
 
         return view('japic.certifications.show', ['processing' => $japicCertificationProcessing]);
+    }
+
+    public function cdr(JapicCertificationProcessing $japicCertificationProcessing): View
+    {
+        Gate::authorize('view', $japicCertificationProcessing);
+        $japicCertificationProcessing->load('surfacedFormerRebel.cdrProcessing.currentFinalVersion');
+
+        return view('japic.certifications.records.cdr', ['processing' => $japicCertificationProcessing]);
+    }
+
+    public function fea(JapicCertificationProcessing $japicCertificationProcessing): View
+    {
+        Gate::authorize('view', $japicCertificationProcessing);
+        $japicCertificationProcessing->load([
+            'surfacedFormerRebel.feaProcessing.documents.currentDraftVersion',
+            'surfacedFormerRebel.feaProcessing.documents.currentSupportingPhotoVersion',
+            'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
+        ]);
+
+        $documents = $japicCertificationProcessing->surfacedFormerRebel->feaProcessing?->documents
+            ->filter(fn ($document) => $document->currentDraftVersion || $document->currentSupportingPhotoVersion || $document->currentSurrenderedPhotoVersion)
+            ->values() ?? collect();
+
+        return view('japic.certifications.records.fea', [
+            'processing' => $japicCertificationProcessing,
+            'documents' => $documents,
+        ]);
+    }
+
+    public function assistance(JapicCertificationProcessing $japicCertificationProcessing): View
+    {
+        Gate::authorize('view', $japicCertificationProcessing);
+        $japicCertificationProcessing->load('surfacedFormerRebel');
+
+        return view('japic.certifications.records.assistance', ['processing' => $japicCertificationProcessing]);
+    }
+
+    public function history(
+        JapicCertificationProcessing $japicCertificationProcessing,
+        JapicCertificationRevisionHistoryService $history,
+        ?int $revision = null,
+    ): View {
+        Gate::authorize('view', $japicCertificationProcessing);
+
+        return view('japic.certifications.history', $history->viewModel($japicCertificationProcessing, $revision));
     }
 }

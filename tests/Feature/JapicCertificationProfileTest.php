@@ -24,7 +24,7 @@ class JapicCertificationProfileTest extends TestCase
             'cancelled_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
 
         $response = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()
-            ->assertSee('Authoritative cancellation reason')->assertSee('No linked assistance record available.')
+            ->assertSee('Authoritative cancellation reason')->assertSee('Documents/Records')->assertSee('Assistance Records')
             ->assertDontSee('Start Certification')->assertDontSee('Upload Final')->assertDontSee('Complete Certification');
         $this->assertStringNotContainsString('private/cdr/secret.pdf', $response->getContent());
         $this->assertSame(0, DB::table('fr_government_assistances')->count());
@@ -53,8 +53,10 @@ class JapicCertificationProfileTest extends TestCase
         DB::enableQueryLog();
 
         $response = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()
-            ->assertSee('Approved Surfacing Information')->assertSee('Related Workflows')
-            ->assertSee('Current Final CDR')->assertSee('Secure preview')
+            ->assertSee('FR Profile Information')->assertSee('Overall FR Status')->assertSee('Documents/Records')
+            ->assertSee('JAPIC Certification Status and Timeline')->assertSee('View History')
+            ->assertDontSee('Related Workflows')->assertDontSee('Current Final CDR')->assertDontSee('Secure preview')
+            ->assertDontSee('Private certification photographs')->assertDontSee('Immutable draft revisions')
             ->assertDontSee('JAPIC-MUST-NOT-RECEIVE-CDR-HISTORY')->assertDontSee('CDR History');
 
         $this->assertFalse(collect(DB::getQueryLog())->contains(

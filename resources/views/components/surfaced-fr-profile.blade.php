@@ -1,4 +1,9 @@
-@props(['record'])
+@props([
+    'record',
+    'informationHeading' => 'Approved Surfacing Information',
+    'showStatusTiles' => true,
+    'showWorkflowSummary' => true,
+])
 
 @once
 @push('styles')
@@ -24,12 +29,12 @@
         <div class="hero-main"><div class="hero-icon-box"><i class="mdi mdi-account-card-details" aria-hidden="true"></i></div><div>
             <div class="hero-eyebrow mb-1">Surfaced FR Profile</div><h1>{{ $record->display_name }}</h1><p>Read-only surfaced former rebel profile</p>
         </div></div>
-        <div class="hero-badges"><div class="hero-ref-badge"><i class="mdi mdi-shield-check"></i>{{ $record->reference_number }}</div><div class="hero-status-pill">{{ $record->overall_case_status }}</div></div>
+        <div class="hero-badges"><div class="hero-ref-badge"><i class="mdi mdi-shield-check"></i>{{ $record->reference_number }}</div>@if($showStatusTiles)<div class="hero-status-pill">{{ $record->overall_case_status }}</div>@endif</div>
     </div>
 </header>
 
 <div class="row">
-    <div class="col-lg-7 mb-4"><section class="profile-card h-100" aria-labelledby="surfacing-details-heading"><div class="profile-card-header"><h2 id="surfacing-details-heading"><i class="mdi mdi-account-card-details"></i>Approved Surfacing Information</h2></div><div class="profile-card-body"><dl class="info-tile-grid mb-0">
+    <div class="{{ $showWorkflowSummary ? 'col-lg-7' : 'col-12' }} mb-4"><section class="profile-card h-100" aria-labelledby="surfacing-details-heading"><div class="profile-card-header"><h2 id="surfacing-details-heading"><i class="mdi mdi-account-card-details"></i>{{ $informationHeading }}</h2></div><div class="profile-card-body"><dl class="info-tile-grid mb-0">
         @foreach([
             ['First name',$record->first_name],['Last name',$record->last_name],
             ['FR category',$record->category->value.($record->other_category_specification ? ' — '.$record->other_category_specification : '')],
@@ -40,14 +45,16 @@
             <div class="info-tile"><dt class="info-tile-label">{{ $label }}</dt><dd class="info-tile-value">{{ $value }}</dd></div>
         @endforeach
         <div class="info-tile"><dt class="info-tile-label">Possessed firearms</dt><dd class="info-tile-value"><span class="badge-pill-status {{ $record->possessed_firearms ? 'badge-pill-yes' : 'badge-pill-no' }}">{{ $record->possessed_firearms ? 'Yes' : 'No' }}</span></dd></div>
-        <div class="info-tile"><dt class="info-tile-label">CDR status</dt><dd class="info-tile-value"><span class="badge-pill-status badge-pill-cdr">{{ $record->cdr_status }}</span></dd></div>
-        <div class="info-tile"><dt class="info-tile-label">Overall case status</dt><dd class="info-tile-value"><span class="badge-pill-status badge-pill-case">{{ $record->overall_case_status }}</span></dd></div>
+        @if($showStatusTiles)
+            <div class="info-tile"><dt class="info-tile-label">CDR status</dt><dd class="info-tile-value"><span class="badge-pill-status badge-pill-cdr">{{ $record->cdr_status }}</span></dd></div>
+            <div class="info-tile"><dt class="info-tile-label">Overall case status</dt><dd class="info-tile-value"><span class="badge-pill-status badge-pill-case">{{ $record->overall_case_status }}</span></dd></div>
+        @endif
         <div class="info-tile"><dt class="info-tile-label">Created date</dt><dd class="info-tile-value">{{ $record->created_at->format('F d, Y · h:i A') }}</dd></div>
         <div class="info-tile full-width"><dt class="info-tile-label">Initial remarks</dt><dd class="info-tile-value">{{ $record->initial_remarks ?: 'No initial remarks recorded.' }}</dd></div>
     </dl></div></section></div>
-    <div class="col-lg-5 mb-4"><section class="profile-card h-100" aria-labelledby="workflow-heading"><div class="profile-card-header"><h3 id="workflow-heading"><i class="mdi mdi-lan-connect"></i>Related Workflows</h3></div><div class="profile-card-body">
+    @if($showWorkflowSummary)<div class="col-lg-5 mb-4"><section class="profile-card h-100" aria-labelledby="workflow-heading"><div class="profile-card-header"><h3 id="workflow-heading"><i class="mdi mdi-lan-connect"></i>Related Workflows</h3></div><div class="profile-card-body">
         <div class="privacy-box"><i class="mdi mdi-shield"></i><div>Only the internal CDR status is linked to this record. No cross-agency records are inferred or matched.</div></div>
         <div class="workflow-tile-list"><div class="workflow-tile"><strong>CDR processing</strong><span>{{ $record->cdr_status }}</span></div><div class="workflow-tile"><strong>Assistance records</strong><span>Not securely linked — unavailable</span></div></div>
         <h4 class="sub-section-title"><i class="mdi mdi-file-check"></i>FEA</h4><div class="workflow-tile-list"><div class="workflow-tile"><strong>Process Status</strong><span>{{ $record->feaProcessing?->overallStatus()->value ?? ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span></div><div class="workflow-tile"><strong>Documents</strong><span>{{ $record->feaProcessing ? $record->feaProcessing->documents->count().' requirements' : ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span></div></div>
-    </div></section></div>
+    </div></section></div>@endif
 </div>

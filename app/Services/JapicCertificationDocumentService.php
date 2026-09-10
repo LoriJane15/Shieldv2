@@ -35,7 +35,8 @@ class JapicCertificationDocumentService
             'processing' => $processing,
             'payload' => $payload,
             'revision' => $revision,
-            'purpose' => JapicCertificationDraftSchema::PURPOSE,
+            'wording' => $this->schema->wording($payload),
+            'affiliationPeriod' => data_get($payload, 'source_snapshot.affiliation_period'),
             'copyFurnished' => JapicCertificationDraftSchema::COPY_FURNISHED,
             'photoDataUri' => $this->photoDataUri($processing, $payload),
         ];

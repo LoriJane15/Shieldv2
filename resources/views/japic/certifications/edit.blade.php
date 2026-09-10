@@ -10,7 +10,6 @@
 
 @section('content')
 @php
-    $source = $payload['source_snapshot'];
     $certificate = $payload['certificate'];
     $narrative = $certificate['narrative_values'];
     $prepared = old('certificate.prepared_by', $certificate['prepared_by'] ?: [['full_name' => '', 'rank' => '']]);
@@ -37,23 +36,18 @@
         <div class="form-group col-md-6"><label for="date-issued">Date issued</label><input id="date-issued" class="form-control" type="date" name="certificate[date_issued]" value="{{ old('certificate.date_issued', $certificate['date_issued'] ?? '') }}"></div>
     </div></div></div>
 
-    <div class="card mb-4"><div class="card-body"><h2 class="h6 font-weight-bold">Authoritative source snapshot</h2><dl class="row mb-0">
-        @foreach(['fr_reference'=>'FR reference','subject_name'=>'Subject name','alias'=>'Alias','gender'=>'Gender','classification'=>'Classification','residential_address'=>'Residential address','former_position'=>'Former position','former_organization'=>'Former organization','affiliation_period'=>'Affiliation / recruitment period','surfacing_date'=>'Surfacing date','surfacing_location'=>'Surfacing location'] as $key=>$label)<dt class="col-md-4">{{ $label }}</dt><dd class="col-md-8">{{ $source[$key] ?? 'Unavailable' }}</dd>@endforeach
-        <dt class="col-md-4">Operating areas</dt><dd class="col-md-8">{{ implode(', ', $source['operating_areas'] ?? []) ?: 'Unavailable' }}</dd>
-    </dl></div></div>
-
     <div class="card mb-4"><div class="card-body"><h2 class="h6 font-weight-bold">Structured certification narrative</h2>
         <p class="fixed-narrative"><strong>THIS IS TO CERTIFY THAT</strong>
             <input aria-label="FR name" name="certificate[narrative_values][fr_name]" maxlength="255" required value="{{ old('certificate.narrative_values.fr_name', $narrative['fr_name'] ?? '') }}">, residing in
             <input aria-label="Residence" name="certificate[narrative_values][residence]" maxlength="1000" required value="{{ old('certificate.narrative_values.residence', $narrative['residence'] ?? '') }}">, is a former
             <input aria-label="Former organization or category" name="certificate[narrative_values][former_organization_or_category]" maxlength="500" required value="{{ old('certificate.narrative_values.former_organization_or_category', $narrative['former_organization_or_category'] ?? '') }}">, operating in the area/s of
-            <input aria-label="Areas of operation" name="certificate[narrative_values][areas_of_operation]" maxlength="2000" required value="{{ old('certificate.narrative_values.areas_of_operation', $narrative['areas_of_operation'] ?? '') }}">. She started her affiliation with the
-            <input aria-label="Affiliated organization" name="certificate[narrative_values][affiliated_organization]" maxlength="500" required value="{{ old('certificate.narrative_values.affiliated_organization', $narrative['affiliated_organization'] ?? '') }}"> and surrendered to
+            <input aria-label="Areas of operation" name="certificate[narrative_values][areas_of_operation]" maxlength="2000" required value="{{ old('certificate.narrative_values.areas_of_operation', $narrative['areas_of_operation'] ?? '') }}">. {{ $wording['affiliation_subject'] }} started {{ $wording['possessive'] }} affiliation with the
+            <input aria-label="Affiliated organization" name="certificate[narrative_values][affiliated_organization]" maxlength="500" required value="{{ old('certificate.narrative_values.affiliated_organization', $narrative['affiliated_organization'] ?? '') }}">@if(filled($affiliationPeriod)) during {{ $affiliationPeriod }}@endif and surrendered to
             <input aria-label="Office or organization surrendered to" name="certificate[narrative_values][surrendered_to]" maxlength="500" required value="{{ old('certificate.narrative_values.surrendered_to', $narrative['surrendered_to'] ?? '') }}"> on
             <input aria-label="Date surrendered" type="date" name="certificate[narrative_values][surrendered_on]" required value="{{ old('certificate.narrative_values.surrendered_on', $narrative['surrendered_on'] ?? '') }}"> at
             <input aria-label="Place surrendered" name="certificate[narrative_values][surrendered_at]" maxlength="1000" required value="{{ old('certificate.narrative_values.surrendered_at', $narrative['surrendered_at'] ?? '') }}">.
         </p>
-        <p class="fixed-narrative">This certification is being issued to attest her legitimacy as a former rebel to support her application for the Enhanced Comprehensive Local Integration Program(E-CLIP).</p>
+        <p class="fixed-narrative">{{ $wording['purpose'] }}</p>
     </div></div>
 
     @foreach(['prepared_by' => ['Prepared By',$prepared], 'attested_by' => ['Attested By',$attested]] as $section => [$heading,$rows])

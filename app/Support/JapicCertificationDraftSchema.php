@@ -13,8 +13,6 @@ class JapicCertificationDraftSchema
 
     public const MAX_PERSONNEL_ROWS = 8;
 
-    public const PURPOSE = 'This certification is being issued to attest her legitimacy as a former rebel to support her application for the Enhanced Comprehensive Local Integration Program(E-CLIP).';
-
     public const COPY_FURNISHED = [
         'Task Force Balik Loob (TFBL);',
         'DILG Provincial/HUC/ICC Office;',
@@ -127,6 +125,21 @@ class JapicCertificationDraftSchema
     public function fingerprint(array $payload): string
     {
         return hash_hmac('sha256', json_encode($this->normalizeValue($payload), JSON_THROW_ON_ERROR), (string) config('app.key'));
+    }
+
+    public function wording(array $payload): array
+    {
+        [$subject, $possessive] = match (Str::lower((string) data_get($payload, 'source_snapshot.gender'))) {
+            'female' => ['She', 'her'],
+            'male' => ['He', 'his'],
+            default => ['The former rebel', 'their'],
+        };
+
+        return [
+            'affiliation_subject' => $subject,
+            'possessive' => $possessive,
+            'purpose' => "This certification is being issued to attest {$possessive} legitimacy as a former rebel to support {$possessive} application for the Enhanced Comprehensive Local Integration Program(E-CLIP).",
+        ];
     }
 
     public function controlNumberHash(string $controlNumber): string

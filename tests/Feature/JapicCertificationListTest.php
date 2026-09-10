@@ -24,7 +24,9 @@ class JapicCertificationListTest extends TestCase
         $this->processing('REF-OTHER', 'Other');
 
         $this->actingAs($japic)->get(route('japic.certifications.index', ['search' => '%_']))
-            ->assertOk()->assertSee($literal->surfacedFormerRebel->reference_number)->assertDontSee('REF-OTHER');
+            ->assertOk()->assertSee($literal->surfacedFormerRebel->reference_number)->assertDontSee('REF-OTHER')
+            ->assertSee('Overall FR status')->assertSee('CDR Completed')->assertSee('JAPIC certification status')
+            ->assertDontSee('CDR completed</th>', false)->assertDontSee('Timing')->assertDontSee('Cancellation');
         $this->actingAs($japic)->get(route('japic.certifications.index', ['timing' => 'overdue']))->assertOk();
     }
 

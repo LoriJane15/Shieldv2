@@ -18,11 +18,14 @@ class JapicStage3AuthorizationTest extends TestCase
     public function test_route_inventory_has_only_the_six_approved_stage_three_routes_and_methods(): void
     {
         $routes = collect(app('router')->getRoutes()->getRoutes())->filter(fn ($route) => str_starts_with($route->getName() ?? '', 'japic.'));
-        $this->assertCount(15, $routes);
-        $this->assertCount(11, $routes->filter(fn ($route) => $route->methods() === ['GET', 'HEAD']));
+        $this->assertCount(19, $routes);
+        $this->assertCount(15, $routes->filter(fn ($route) => $route->methods() === ['GET', 'HEAD']));
         $this->assertCount(1, $routes->filter(fn ($route) => $route->methods() === ['PUT']));
         $this->assertCount(3, $routes->filter(fn ($route) => $route->methods() === ['POST']));
         $this->assertSame([], $routes->filter(fn ($route) => array_intersect($route->methods(), ['DELETE', 'PATCH']))->values()->all());
+        foreach (['japic.certifications.records.cdr', 'japic.certifications.records.fea', 'japic.certifications.records.assistance', 'japic.certifications.history'] as $name) {
+            $this->assertSame(['GET', 'HEAD'], $routes->first(fn ($route) => $route->getName() === $name)->methods());
+        }
     }
 
     public function test_other_roles_and_other_assigned_japic_users_cannot_use_stage_three_routes(): void
@@ -35,6 +38,9 @@ class JapicStage3AuthorizationTest extends TestCase
         }
         $this->actingAs($other)->get(route('japic.certifications.draft.edit', $processing))->assertForbidden();
         $this->actingAs($other)->put(route('japic.certifications.draft.update', $processing), [])->assertForbidden();
+        foreach (['japic.certifications.records.cdr', 'japic.certifications.records.fea', 'japic.certifications.records.assistance', 'japic.certifications.history'] as $route) {
+            $this->actingAs($other)->get(route($route, $processing))->assertForbidden();
+        }
     }
 
     public function test_editing_is_locked_after_for_signing(): void
