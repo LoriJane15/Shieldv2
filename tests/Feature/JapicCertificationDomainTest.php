@@ -25,14 +25,15 @@ class JapicCertificationDomainTest extends TestCase
     {
         foreach (['japic_certification_processings', 'japic_certification_drafts',
             'japic_certification_draft_histories', 'japic_certification_histories',
-            'japic_certification_document_versions'] as $table) {
+            'japic_certification_document_versions', 'japic_certification_photo_versions'] as $table) {
             $this->assertTrue(Schema::hasTable($table));
         }
         $japic = User::factory()->role('japic')->create();
         $this->assertSame('japic.dashboard', $japic->homeRoute());
         $this->assertTrue($japic->can('viewAny', JapicCertificationProcessing::class));
         $this->assertFalse(User::factory()->role('39th_ib')->create()->can('viewAny', JapicCertificationProcessing::class));
-        $this->assertSame(1, JapicCertificationDraftSchema::VERSION);
+        $this->assertSame(2, JapicCertificationDraftSchema::VERSION);
+        $this->assertTrue(Schema::hasColumn('japic_certification_processings', 'current_photo_version_id'));
         $this->assertSame(
             app(JapicCertificationDraftSchema::class)->controlNumberHash('  Japic-AbC-001 '),
             app(JapicCertificationDraftSchema::class)->controlNumberHash('japic-abc-001')

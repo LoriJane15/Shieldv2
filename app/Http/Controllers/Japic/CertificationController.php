@@ -52,13 +52,14 @@ class CertificationController extends Controller
         Gate::authorize('view', $japicCertificationProcessing);
         $japicCertificationProcessing->load([
             'surfacedFormerRebel.municipality', 'surfacedFormerRebel.barangay',
-            'surfacedFormerRebel.cancellation.cancelledBy',
+            'surfacedFormerRebel.cancellation',
             'surfacedFormerRebel.cdrProcessing.currentFinalVersion',
-            'surfacedFormerRebel.cdrProcessing.statusHistories',
             'surfacedFormerRebel.feaProcessing.documents.currentDraftVersion',
             'surfacedFormerRebel.feaProcessing.documents.currentSupportingPhotoVersion',
             'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
             'draft.lastSavedBy',
+            'currentPhotoVersion',
+            'photoVersions' => fn ($query) => $query->with('uploader:id,name')->latest('version_number'),
             'draftHistories' => fn ($query) => $query->with('savedBy')->latest('revision')->limit(50),
             'histories' => fn ($query) => $query->latest('occurred_at')->limit(50),
         ]);

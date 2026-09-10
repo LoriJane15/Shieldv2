@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Japic;
 
+use App\Support\JapicCertificationDraftSchema;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -23,17 +24,23 @@ class SaveCertificationDraftRequest extends FormRequest
         $rules = [
             'revision' => ['required', 'integer', 'min:0'], 'lock_version' => ['required', 'integer', 'min:0'],
             'control_number' => ['required', 'string', 'max:100'], 'delay_reason' => ['nullable', 'string', 'max:2000'],
-            'certificate' => ['nullable', 'array:date_issued,surrendering_unit,surrender_date,surrender_location,operating_area_supplement'],
-            'certificate.date_issued' => ['nullable', 'date_format:Y-m-d'], 'certificate.surrendering_unit' => ['nullable', 'string', 'max:255'],
-            'certificate.surrender_date' => ['nullable', 'date_format:Y-m-d'], 'certificate.surrender_location' => ['nullable', 'string', 'max:1000'],
-            'certificate.operating_area_supplement' => ['nullable', 'string', 'max:4000'],
-            'signatories' => ['nullable', 'array:provincial_afp,provincial_pnp,area_afp,area_pnp'],
+            'certificate' => ['required', 'array:date_issued,narrative_values,prepared_by,attested_by'],
+            'certificate.date_issued' => ['nullable', 'date_format:Y-m-d'],
+            'certificate.narrative_values' => ['required', 'array:fr_name,residence,former_organization_or_category,areas_of_operation,affiliated_organization,surrendered_to,surrendered_on,surrendered_at'],
+            'certificate.narrative_values.fr_name' => ['nullable', 'string', 'max:255'],
+            'certificate.narrative_values.residence' => ['nullable', 'string', 'max:1000'],
+            'certificate.narrative_values.former_organization_or_category' => ['nullable', 'string', 'max:500'],
+            'certificate.narrative_values.areas_of_operation' => ['nullable', 'string', 'max:2000'],
+            'certificate.narrative_values.affiliated_organization' => ['nullable', 'string', 'max:500'],
+            'certificate.narrative_values.surrendered_to' => ['nullable', 'string', 'max:500'],
+            'certificate.narrative_values.surrendered_on' => ['nullable', 'date_format:Y-m-d'],
+            'certificate.narrative_values.surrendered_at' => ['nullable', 'string', 'max:1000'],
         ];
-        foreach (['provincial_afp', 'provincial_pnp', 'area_afp', 'area_pnp'] as $key) {
-            $rules["signatories.{$key}"] = ['nullable', 'array:rank,name,suffix'];
-            $rules["signatories.{$key}.rank"] = ['nullable', 'string', 'max:100'];
-            $rules["signatories.{$key}.name"] = ['nullable', 'string', 'max:255'];
-            $rules["signatories.{$key}.suffix"] = ['nullable', 'string', 'max:100'];
+        foreach (['prepared_by', 'attested_by'] as $section) {
+            $rules["certificate.{$section}"] = ['required', 'array', 'list', 'min:1', 'max:'.JapicCertificationDraftSchema::MAX_PERSONNEL_ROWS];
+            $rules["certificate.{$section}.*"] = ['required', 'array:full_name,rank'];
+            $rules["certificate.{$section}.*.full_name"] = ['required', 'string', 'max:255'];
+            $rules["certificate.{$section}.*.rank"] = ['required', 'string', 'max:100'];
         }
 
         return $rules;
@@ -42,7 +49,7 @@ class SaveCertificationDraftRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            $allowed = ['_token', '_method', 'revision', 'lock_version', 'control_number', 'delay_reason', 'certificate', 'signatories'];
+            $allowed = ['_token', '_method', 'revision', 'lock_version', 'control_number', 'delay_reason', 'certificate'];
             if (array_diff(array_keys($this->all()), $allowed) !== []) {
                 $validator->errors()->add('request', 'The request contains unsupported or server-owned fields.');
             }
@@ -51,6 +58,6 @@ class SaveCertificationDraftRequest extends FormRequest
 
     public function manualPayload(): array
     {
-        return ['certificate' => $this->validated('certificate', []), 'signatories' => $this->validated('signatories', [])];
+        return ['certificate' => $this->validated('certificate', [])];
     }
 }

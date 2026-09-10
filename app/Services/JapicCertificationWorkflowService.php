@@ -48,7 +48,8 @@ class JapicCertificationWorkflowService
                 throw ValidationException::withMessages(['delay_reason' => 'A delay reason is required for an overdue certification.']);
             }
             $fingerprint = $this->schema->fingerprint($draft->payload);
-            if ($requireComplete && ($missing = $this->schema->missingForSigning($draft->payload, $locked->control_number)) !== []) {
+            $normalized = $this->schema->forReading($draft->payload, $locked->control_number);
+            if ($requireComplete && ($missing = $this->schema->missingForSigning($normalized, $locked->control_number)) !== []) {
                 throw ValidationException::withMessages(['draft' => 'Complete all required certification fields before submitting for signing.', 'missing_fields' => implode(', ', $missing)]);
             }
             if (! $requireComplete) {

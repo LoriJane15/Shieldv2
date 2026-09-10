@@ -16,11 +16,17 @@ class CertificationDraftController extends Controller
     public function edit(JapicCertificationProcessing $japicCertificationProcessing, JapicCertificationDraftSchema $schema): View
     {
         Gate::authorize('editDraft', $japicCertificationProcessing);
-        $japicCertificationProcessing->load(['draft.lastSavedBy', 'draftHistories.savedBy', 'surfacedFormerRebel.cancellation']);
+        $japicCertificationProcessing->load(['draft.lastSavedBy', 'draftHistories.savedBy', 'currentPhotoVersion', 'surfacedFormerRebel.cancellation']);
 
-        return view('japic.certifications.edit', ['processing' => $japicCertificationProcessing,
-            'payload' => $japicCertificationProcessing->draft?->payload ?? $schema->normalize([], $schema->sourceSnapshot($japicCertificationProcessing)),
-            'positions' => JapicCertificationDraftSchema::POSITIONS]);
+        $payload = $japicCertificationProcessing->draft
+            ? $schema->forReading($japicCertificationProcessing->draft->payload, $japicCertificationProcessing->control_number)
+            : $schema->initial($schema->sourceSnapshot($japicCertificationProcessing), $japicCertificationProcessing->control_number, null);
+
+        return view('japic.certifications.edit', [
+            'processing' => $japicCertificationProcessing,
+            'payload' => $payload,
+            'maxPersonnelRows' => JapicCertificationDraftSchema::MAX_PERSONNEL_ROWS,
+        ]);
     }
 
     public function update(SaveCertificationDraftRequest $request, JapicCertificationProcessing $japicCertificationProcessing, JapicCertificationDraftService $drafts): RedirectResponse

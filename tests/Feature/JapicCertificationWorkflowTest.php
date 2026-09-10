@@ -9,7 +9,6 @@ use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 use App\Services\JapicCertificationDraftService;
 use App\Services\JapicCertificationWorkflowService;
-use App\Support\JapicCertificationDraftSchema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -68,9 +67,14 @@ class JapicCertificationWorkflowTest extends TestCase
 
     private function saveComplete(JapicCertificationProcessing $processing, User $japic): void
     {
-        $signatories = collect(JapicCertificationDraftSchema::POSITIONS)->map(fn () => ['rank' => 'CPT', 'name' => 'TEST OFFICER', 'suffix' => null])->all();
-        app(JapicCertificationDraftService::class)->save($processing, ['certificate' => ['date_issued' => '2026-09-09', 'surrendering_unit' => '39IB',
-            'surrender_date' => '2026-08-01', 'surrender_location' => 'Test Place'], 'signatories' => $signatories], 'CTRL-WF', 0, 0, null, $japic);
+        app(JapicCertificationDraftService::class)->save($processing, ['certificate' => ['date_issued' => '2026-09-09',
+            'narrative_values' => ['fr_name' => 'Workflow Subject', 'residence' => 'Address',
+                'former_organization_or_category' => 'Leader of Organization', 'areas_of_operation' => 'Area One',
+                'affiliated_organization' => 'Organization', 'surrendered_to' => '39IB',
+                'surrendered_on' => '2026-08-01', 'surrendered_at' => 'Test Place'],
+            'prepared_by' => [['full_name' => 'TEST OFFICER', 'rank' => 'CPT']],
+            'attested_by' => [['full_name' => 'TEST ATTESTER', 'rank' => 'PMAJ']]],
+        ], 'CTRL-WF', 0, 0, null, $japic);
     }
 
     private function processing(): array

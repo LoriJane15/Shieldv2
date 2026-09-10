@@ -18,10 +18,10 @@ class JapicStage3AuthorizationTest extends TestCase
     public function test_route_inventory_has_only_the_six_approved_stage_three_routes_and_methods(): void
     {
         $routes = collect(app('router')->getRoutes()->getRoutes())->filter(fn ($route) => str_starts_with($route->getName() ?? '', 'japic.'));
-        $this->assertCount(13, $routes);
-        $this->assertCount(10, $routes->filter(fn ($route) => $route->methods() === ['GET', 'HEAD']));
+        $this->assertCount(15, $routes);
+        $this->assertCount(11, $routes->filter(fn ($route) => $route->methods() === ['GET', 'HEAD']));
         $this->assertCount(1, $routes->filter(fn ($route) => $route->methods() === ['PUT']));
-        $this->assertCount(2, $routes->filter(fn ($route) => $route->methods() === ['POST']));
+        $this->assertCount(3, $routes->filter(fn ($route) => $route->methods() === ['POST']));
         $this->assertSame([], $routes->filter(fn ($route) => array_intersect($route->methods(), ['DELETE', 'PATCH']))->values()->all());
     }
 
@@ -50,8 +50,8 @@ class JapicStage3AuthorizationTest extends TestCase
     {
         [$processing, $owner] = $this->processing();
         $source = app(JapicCertificationDraftSchema::class)->sourceSnapshot($processing);
-        $payload = app(JapicCertificationDraftSchema::class)->normalize([], $source);
-        $processing->draft()->forceCreate(['payload' => $payload, 'schema_version' => 1, 'revision' => 1, 'last_saved_by' => $owner->id, 'last_saved_at' => now()]);
+        $payload = app(JapicCertificationDraftSchema::class)->normalize([], $source, null, null);
+        $processing->draft()->forceCreate(['payload' => $payload, 'schema_version' => 2, 'revision' => 1, 'last_saved_by' => $owner->id, 'last_saved_at' => now()]);
         DB::table('ib39_fr_cancellations')->insert(['ib39_surfaced_former_rebel_id' => $processing->ib39_surfaced_former_rebel_id,
             'previous_overall_status' => 'CDR Completed', 'reason' => encrypt('Cancelled'), 'cancelled_by' => $owner->id,
             'cancelled_at' => now(), 'created_at' => now(), 'updated_at' => now()]);

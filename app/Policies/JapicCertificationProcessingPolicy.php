@@ -35,6 +35,11 @@ class JapicCertificationProcessingPolicy
         return $this->editDraft($user, $processing);
     }
 
+    public function uploadPhoto(User $user, JapicCertificationProcessing $processing): bool
+    {
+        return $this->editDraft($user, $processing);
+    }
+
     public function previewDraft(User $user, JapicCertificationProcessing $processing): bool
     {
         return $this->view($user, $processing) && $processing->draft()->exists();

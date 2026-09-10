@@ -3,20 +3,40 @@
 namespace App\Support;
 
 use App\Models\JapicCertificationProcessing;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class JapicCertificationDraftSchema
 {
-    public const VERSION = 1;
+    public const VERSION = 2;
+
+    public const LEGACY_VERSION = 1;
+
+    public const MAX_PERSONNEL_ROWS = 8;
 
     public const PURPOSE = 'This certification is being issued to attest her legitimacy as a former rebel to support her application for the Enhanced Comprehensive Local Integration Program(E-CLIP).';
 
-    public const POSITIONS = [
-        'provincial_afp' => 'AFP Co-Chairman, JAPIC-Provincial',
-        'provincial_pnp' => 'PNP Co-Chairman, JAPIC-Provincial',
-        'area_afp' => 'AFP Co-Chairman, JAPIC-Area',
-        'area_pnp' => 'PNP Co-Chairman, JAPIC-Area',
+    public const COPY_FURNISHED = [
+        'Task Force Balik Loob (TFBL);',
+        'DILG Provincial/HUC/ICC Office;',
+        'E-CLIP and Amnesty Program Cluster of NTF-ELCAC.',
+    ];
+
+    public const NARRATIVE_FIELDS = [
+        'fr_name',
+        'residence',
+        'former_organization_or_category',
+        'areas_of_operation',
+        'affiliated_organization',
+        'surrendered_to',
+        'surrendered_on',
+        'surrendered_at',
+    ];
+
+    private const LEGACY_POSITIONS = [
+        'provincial_afp',
+        'provincial_pnp',
+        'area_afp',
+        'area_pnp',
     ];
 
     public function sourceSnapshot(JapicCertificationProcessing $processing): array
@@ -28,7 +48,7 @@ class JapicCertificationDraftSchema
         $snapshot = $version->content_snapshot ?? [];
         $content = $snapshot['content'] ?? [];
         $gender = $this->clean($content['gender'] ?? null);
-        $areas = collect($content['posting_areas'] ?? [])->pluck('place')->map(fn ($v) => $this->clean($v))->filter()->unique()->values()->all();
+        $areas = collect($content['posting_areas'] ?? [])->pluck('place')->map(fn ($value) => $this->clean($value))->filter()->unique()->values()->all();
         $location = collect([$fr->specific_location, $fr->barangay?->name, $fr->municipality?->name, $fr->province])->filter()->implode(', ');
 
         return [
@@ -55,22 +75,53 @@ class JapicCertificationDraftSchema
         ];
     }
 
-    public function normalize(array $manual, array $source): array
+    public function normalize(array $manual, array $source, ?string $controlNumber, ?int $photoVersionId): array
     {
-        $certificate = Arr::only($manual['certificate'] ?? [], [
-            'date_issued', 'surrendering_unit', 'surrender_date', 'surrender_location', 'operating_area_supplement',
-        ]);
-        $signatories = [];
-        foreach (array_keys(self::POSITIONS) as $key) {
-            $signatories[$key] = Arr::only($manual['signatories'][$key] ?? [], ['rank', 'name', 'suffix']);
-        }
+        $certificate = $manual['certificate'] ?? [];
+        $providedNarrative = is_array($certificate['narrative_values'] ?? null) ? $certificate['narrative_values'] : [];
+        $narrative = collect(self::NARRATIVE_FIELDS)->mapWithKeys(
+            fn (string $field): array => [$field => $providedNarrative[$field] ?? null]
+        )->all();
 
-        return [
+        return $this->normalizeValue([
             'schema_version' => self::VERSION,
-            'source_snapshot' => $this->normalizeValue($source),
-            'certificate' => $this->normalizeValue($certificate),
-            'signatories' => $this->normalizeValue($signatories),
-        ];
+            'source_snapshot' => $source,
+            'certificate' => [
+                'control_number' => $controlNumber,
+                'date_issued' => $certificate['date_issued'] ?? null,
+                'narrative_values' => $narrative,
+                'prepared_by' => $this->personnel($certificate['prepared_by'] ?? []),
+                'attested_by' => $this->personnel($certificate['attested_by'] ?? []),
+                'photo_version_id' => $photoVersionId,
+            ],
+        ]);
+    }
+
+    public function initial(array $source, ?string $controlNumber, ?int $photoVersionId): array
+    {
+        $payload = $this->fromLegacy([
+            'schema_version' => self::LEGACY_VERSION,
+            'source_snapshot' => $source,
+            'certificate' => [],
+            'signatories' => [],
+        ], $controlNumber);
+        data_set($payload, 'certificate.photo_version_id', $photoVersionId);
+
+        return $this->forReading($payload, $controlNumber);
+    }
+
+    public function forReading(array $payload, ?string $controlNumber): array
+    {
+        return match ((int) ($payload['schema_version'] ?? 0)) {
+            self::VERSION => $this->normalize(
+                ['certificate' => $payload['certificate'] ?? []],
+                $payload['source_snapshot'] ?? [],
+                data_get($payload, 'certificate.control_number', $controlNumber),
+                $this->integerOrNull(data_get($payload, 'certificate.photo_version_id')),
+            ),
+            self::LEGACY_VERSION => $this->fromLegacy($payload, $controlNumber),
+            default => abort(409, 'The draft schema is unsupported.'),
+        };
     }
 
     public function fingerprint(array $payload): string
@@ -87,26 +138,98 @@ class JapicCertificationDraftSchema
 
     public function missingForSigning(array $payload, ?string $controlNumber): array
     {
-        $paths = [
-            'control_number' => $controlNumber,
-            'certificate.date_issued' => data_get($payload, 'certificate.date_issued'),
-            'certificate.surrendering_unit' => data_get($payload, 'certificate.surrendering_unit'),
-            'certificate.surrender_date' => data_get($payload, 'certificate.surrender_date'),
-            'certificate.surrender_location' => data_get($payload, 'certificate.surrender_location'),
-            'source_snapshot.subject_name' => data_get($payload, 'source_snapshot.subject_name'),
-            'source_snapshot.alias' => data_get($payload, 'source_snapshot.alias'),
-            'source_snapshot.classification' => data_get($payload, 'source_snapshot.classification'),
-            'source_snapshot.residential_address' => data_get($payload, 'source_snapshot.residential_address'),
-            'source_snapshot.former_position' => data_get($payload, 'source_snapshot.former_position'),
-            'source_snapshot.former_organization' => data_get($payload, 'source_snapshot.former_organization'),
-            'source_snapshot.affiliation_period' => data_get($payload, 'source_snapshot.affiliation_period'),
-        ];
-        foreach (array_keys(self::POSITIONS) as $key) {
-            $paths["signatories.{$key}.rank"] = data_get($payload, "signatories.{$key}.rank");
-            $paths["signatories.{$key}.name"] = data_get($payload, "signatories.{$key}.name");
+        $certificate = $this->forReading($payload, $controlNumber)['certificate'];
+        $missing = [];
+
+        foreach (['control_number', 'date_issued'] as $field) {
+            if (blank($certificate[$field] ?? null)) {
+                $missing[] = 'certificate.'.$field;
+            }
+        }
+        foreach (self::NARRATIVE_FIELDS as $field) {
+            if (blank(data_get($certificate, 'narrative_values.'.$field))) {
+                $missing[] = 'certificate.narrative_values.'.$field;
+            }
+        }
+        foreach (['prepared_by', 'attested_by'] as $section) {
+            $rows = $certificate[$section] ?? [];
+            if ($rows === []) {
+                $missing[] = 'certificate.'.$section;
+            }
+            foreach ($rows as $index => $row) {
+                foreach (['full_name', 'rank'] as $field) {
+                    if (blank($row[$field] ?? null)) {
+                        $missing[] = "certificate.{$section}.{$index}.{$field}";
+                    }
+                }
+            }
         }
 
-        return array_keys(array_filter($paths, fn ($value) => blank($value)));
+        return $missing;
+    }
+
+    private function fromLegacy(array $payload, ?string $controlNumber): array
+    {
+        $source = $payload['source_snapshot'] ?? [];
+        $legacyCertificate = $payload['certificate'] ?? [];
+        $signatories = $payload['signatories'] ?? [];
+        $name = collect([
+            $this->clean($source['subject_name'] ?? null),
+            filled($source['alias'] ?? null) ? '@'.ltrim((string) $source['alias'], '@') : null,
+            filled($source['classification'] ?? null) ? '('.$source['classification'].')' : null,
+        ])->filter()->implode(' ');
+        $former = collect([
+            $this->clean($source['former_position'] ?? null),
+            filled($source['former_organization'] ?? null) ? 'of '.$source['former_organization'] : null,
+        ])->filter()->implode(' ');
+        $areas = collect($source['operating_areas'] ?? [])
+            ->push($legacyCertificate['operating_area_supplement'] ?? null)
+            ->map(fn ($value) => $this->clean($value))->filter()->unique()->implode(', ');
+
+        return $this->normalize([
+            'certificate' => [
+                'date_issued' => $legacyCertificate['date_issued'] ?? null,
+                'narrative_values' => [
+                    'fr_name' => $name,
+                    'residence' => $source['residential_address'] ?? null,
+                    'former_organization_or_category' => $former,
+                    'areas_of_operation' => $areas,
+                    'affiliated_organization' => 'Communist Terrorist Group (CTG)',
+                    'surrendered_to' => $legacyCertificate['surrendering_unit'] ?? null,
+                    'surrendered_on' => $legacyCertificate['surrender_date'] ?? $source['surfacing_date'] ?? null,
+                    'surrendered_at' => $legacyCertificate['surrender_location'] ?? $source['surfacing_location'] ?? null,
+                ],
+                'prepared_by' => $this->legacyPersonnel($signatories, array_slice(self::LEGACY_POSITIONS, 0, 2)),
+                'attested_by' => $this->legacyPersonnel($signatories, array_slice(self::LEGACY_POSITIONS, 2)),
+            ],
+        ], $source, $controlNumber, null);
+    }
+
+    private function legacyPersonnel(array $signatories, array $positions): array
+    {
+        return collect($positions)->map(function (string $position) use ($signatories): array {
+            $row = $signatories[$position] ?? [];
+
+            return [
+                'full_name' => collect([$row['name'] ?? null, $row['suffix'] ?? null])->filter()->implode(' '),
+                'rank' => $row['rank'] ?? null,
+            ];
+        })->filter(fn (array $row): bool => filled($row['full_name']) || filled($row['rank']))->values()->all();
+    }
+
+    private function personnel(mixed $rows): array
+    {
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        return collect(array_slice($rows, 0, self::MAX_PERSONNEL_ROWS))
+            ->map(function ($row): array {
+                $row = is_array($row) ? $row : [];
+
+                return ['full_name' => $row['full_name'] ?? null, 'rank' => $row['rank'] ?? null];
+            })
+            ->values()->all();
     }
 
     private function normalizeValue(mixed $value): mixed
@@ -129,5 +252,10 @@ class JapicCertificationDraftSchema
     private function clean(mixed $value): ?string
     {
         return is_scalar($value) ? $this->normalizeValue((string) $value) : null;
+    }
+
+    private function integerOrNull(mixed $value): ?int
+    {
+        return is_numeric($value) && (int) $value > 0 ? (int) $value : null;
     }
 }

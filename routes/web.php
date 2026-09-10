@@ -190,6 +190,8 @@ Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->grou
     Route::get('/certifications/{japicCertificationProcessing}', [Japic\CertificationController::class, 'show'])->name('certifications.show');
     Route::get('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'edit'])->name('certifications.draft.edit');
     Route::put('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'update'])->name('certifications.draft.update');
+    Route::post('/certifications/{processing}/photo-versions', [Japic\CertificationPhotoController::class, 'store'])->name('certifications.photos.store');
+    Route::get('/certifications/{processing}/photo-versions/{photoVersion}', [Japic\CertificationPhotoController::class, 'show'])->name('certifications.photos.show');
     Route::get('/certifications/{japicCertificationProcessing}/preview', [Japic\CertificationDocumentController::class, 'preview'])->name('certifications.preview');
     Route::get('/certifications/{japicCertificationProcessing}/print', [Japic\CertificationDocumentController::class, 'print'])->name('certifications.print');
     Route::post('/certifications/{japicCertificationProcessing}/submit-for-signing', [Japic\CertificationWorkflowController::class, 'submitForSigning'])->name('certifications.submit-for-signing');

@@ -42,6 +42,7 @@ class JapicStage2AuthorizationTest extends TestCase
             ->mapWithKeys(fn ($route) => [$route->getName() => $route->methods()[0]])->all();
         $this->assertSame([
             'japic.certifications.draft.update' => 'PUT',
+            'japic.certifications.photos.store' => 'POST',
             'japic.certifications.submit-for-signing' => 'POST',
             'japic.certifications.signing-complete' => 'POST',
         ], $mutations);

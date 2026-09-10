@@ -40,6 +40,34 @@ class JapicCertificationProfileTest extends TestCase
         $this->actingAs($other)->get(route('japic.certifications.show', $processing))->assertForbidden();
     }
 
+    public function test_shared_profile_contains_only_common_read_only_content_and_japic_never_loads_or_renders_cdr_history(): void
+    {
+        $japic = User::factory()->role('japic')->create();
+        $processing = $this->processing();
+        $cdrId = DB::table('ib39_cdr_processings')->where('ib39_surfaced_former_rebel_id', $processing->ib39_surfaced_former_rebel_id)->value('id');
+        DB::table('ib39_cdr_status_histories')->insert([
+            'cdr_processing_id' => $cdrId, 'from_status' => 'Ongoing', 'to_status' => 'Completed',
+            'user_id' => $japic->id, 'event' => 'completed', 'remarks' => encrypt('JAPIC-MUST-NOT-RECEIVE-CDR-HISTORY'),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::enableQueryLog();
+
+        $response = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()
+            ->assertSee('Approved Surfacing Information')->assertSee('Related Workflows')
+            ->assertSee('Current Final CDR')->assertSee('Secure preview')
+            ->assertDontSee('JAPIC-MUST-NOT-RECEIVE-CDR-HISTORY')->assertDontSee('CDR History');
+
+        $this->assertFalse(collect(DB::getQueryLog())->contains(
+            fn (array $query): bool => str_contains(strtolower($query['query']), 'ib39_cdr_status_histories')
+        ));
+        $component = file_get_contents(resource_path('views/components/surfaced-fr-profile.blade.php'));
+        foreach (['<form', 'statusHistories', 'draftHistories', 'japic.certifications', 'ib39.cdr'] as $forbidden) {
+            $this->assertStringNotContainsString($forbidden, $component);
+        }
+        $this->assertStringContainsString('statusHistories', file_get_contents(app_path('Http/Controllers/Ib39/CdrController.php')));
+        $this->assertStringNotContainsString('statusHistories', $response->getContent());
+    }
+
     private function processing(): JapicCertificationProcessing
     {
         $actor = User::factory()->role('39th_ib')->create();

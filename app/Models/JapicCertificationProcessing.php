@@ -123,6 +123,16 @@ class JapicCertificationProcessing extends Model
         return $this->hasMany(JapicCertificationDocumentVersion::class, 'processing_id');
     }
 
+    public function photoVersions(): HasMany
+    {
+        return $this->hasMany(JapicCertificationPhotoVersion::class, 'processing_id');
+    }
+
+    public function currentPhotoVersion(): BelongsTo
+    {
+        return $this->belongsTo(JapicCertificationPhotoVersion::class, 'current_photo_version_id');
+    }
+
     public function currentFinalVersion(): BelongsTo
     {
         return $this->belongsTo(JapicCertificationDocumentVersion::class, 'current_final_version_id');

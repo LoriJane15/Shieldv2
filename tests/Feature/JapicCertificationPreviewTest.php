@@ -8,7 +8,6 @@ use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 use App\Services\JapicCertificationDraftService;
 use App\Services\JapicCertificationWorkflowService;
-use App\Support\JapicCertificationDraftSchema;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -23,13 +22,18 @@ class JapicCertificationPreviewTest extends TestCase
         Storage::fake('local');
         [$processing, $japic] = $this->processingWithPhoto();
         $this->save($processing, $japic, 'First Place');
+
         foreach (['japic.certifications.preview', 'japic.certifications.print'] as $route) {
             $response = $this->actingAs($japic)->get(route($route, $processing))->assertOk()
                 ->assertHeader('Cache-Control')->assertSee('DRAFT — NOT FINAL')->assertSee('JOINT AFP-PNP')
-                ->assertSee('Official emblem pending.')->assertSee('PREPARED BY:')->assertSee('ATTESTED BY:')
+                ->assertSee('Emblem')->assertSee('pending')->assertSee('PREPARED BY:')->assertSee('ATTESTED BY:')
                 ->assertSee('Enhanced Comprehensive Local Integration Program(E-CLIP)')->assertSee('First Place')
+                ->assertSee('TEST PREPARER')->assertSee('TEST ATTESTER')->assertSee('CPT')
+                ->assertSee('Task Force Balik Loob (TFBL);')->assertSee('DILG Provincial/HUC/ICC Office;')
+                ->assertSee('E-CLIP and Amnesty Program Cluster of NTF-ELCAC.')
                 ->assertDontSee('CamScanner')->assertDontSee('private/japic')->assertDontSee('storage_path');
             $this->assertStringContainsString('@page{size:A4 portrait', $response->getContent());
+            $this->assertStringContainsString('border-bottom:1px solid #111', $response->getContent());
         }
     }
 
@@ -40,16 +44,30 @@ class JapicCertificationPreviewTest extends TestCase
         $this->save($processing, $japic, 'Frozen Place');
         app(JapicCertificationWorkflowService::class)->submitForSigning($processing->fresh(), 1, 1, null, $japic);
         $draft = $processing->draft()->firstOrFail();
-        $draft->payload = ['schema_version' => 1, 'certificate' => ['surrender_location' => 'Tampered']];
+        $draft->payload = ['schema_version' => 2, 'certificate' => ['narrative_values' => ['surrendered_at' => 'Tampered']]];
         $draft->save();
-        $this->actingAs($japic)->get(route('japic.certifications.preview', $processing))->assertOk()->assertSee('Frozen Place')->assertDontSee('Tampered');
+
+        $this->actingAs($japic)->get(route('japic.certifications.preview', $processing))
+            ->assertOk()->assertSee('Frozen Place')->assertDontSee('Tampered');
     }
 
     private function save(JapicCertificationProcessing $processing, User $japic, string $place): void
     {
-        app(JapicCertificationDraftService::class)->save($processing, ['certificate' => ['date_issued' => '2026-09-09', 'surrendering_unit' => '39IB',
-            'surrender_date' => '2026-08-01', 'surrender_location' => $place], 'signatories' => collect(JapicCertificationDraftSchema::POSITIONS)
-                ->map(fn () => ['rank' => 'CPT', 'name' => 'TEST OFFICER', 'suffix' => null])->all()], 'CTRL-PREVIEW', 0, 0, null, $japic);
+        app(JapicCertificationDraftService::class)->save($processing, ['certificate' => [
+            'date_issued' => '2026-09-09',
+            'narrative_values' => [
+                'fr_name' => 'Preview Subject',
+                'residence' => 'Preview Address',
+                'former_organization_or_category' => 'former member',
+                'areas_of_operation' => 'First Area',
+                'affiliated_organization' => 'Test Organization',
+                'surrendered_to' => '39IB',
+                'surrendered_on' => '2026-08-01',
+                'surrendered_at' => $place,
+            ],
+            'prepared_by' => [['full_name' => 'TEST PREPARER', 'rank' => 'CPT']],
+            'attested_by' => [['full_name' => 'TEST ATTESTER', 'rank' => 'CPT']],
+        ]], 'CTRL-PREVIEW', 0, 0, null, $japic);
     }
 
     private function processingWithPhoto(): array
