@@ -1,6 +1,7 @@
 @extends('layouts.skydash-v')
 @section('title', 'FEA Processing')
 @section('heading', 'FEA Processing')
+@inject('readiness', 'App\Contracts\Ib39FeaReadiness')
 
 @push('styles')
 <style>
@@ -14,6 +15,8 @@
         <h2 class="mb-1">Firearms, Explosives, and Ammunition Processing</h2>
         <p class="mb-0">Preliminary 39th IB queue for surfaced FR records with a recorded firearms indicator of Yes.</p>
     </header>
+
+    <div class="alert alert-warning" role="status">{{ $readiness->denialMessage() }}</div>
 
     <section class="card fea-card" aria-label="FEA processing queue">
         <div class="table-responsive">

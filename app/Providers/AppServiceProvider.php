@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\Ib39FeaReadiness;
 use App\Models\Ib39CdrDocumentVersion;
 use App\Models\Ib39CdrProcessing;
 use App\Models\Ib39FeaDocument;
@@ -22,6 +23,7 @@ use App\Policies\JapicCertificationDocumentVersionPolicy;
 use App\Policies\JapicCertificationProcessingPolicy;
 use App\Policies\RcspBarangayPolicy;
 use App\Policies\RcspFormPolicy;
+use App\Services\LockedIb39FeaReadiness;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -33,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(Ib39FeaReadiness::class, LockedIb39FeaReadiness::class);
     }
 
     /**

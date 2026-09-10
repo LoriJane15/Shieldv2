@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Ib39FeaReadiness;
 use App\Enums\Ib39FeaDocumentStatus;
 use App\Enums\Ib39FeaDocumentType;
 use App\Enums\Ib39FeaUploadSlot;
@@ -22,7 +23,10 @@ use Throwable;
 
 class Ib39FeaUploadService
 {
-    public function __construct(private readonly Ib39FeaDocumentWorkflowService $workflow) {}
+    public function __construct(
+        private readonly Ib39FeaDocumentWorkflowService $workflow,
+        private readonly Ib39FeaReadiness $readiness,
+    ) {}
 
     public function store(
         Ib39FeaProcessing $processing,
@@ -35,22 +39,25 @@ class Ib39FeaUploadService
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): Ib39FeaDocumentVersion {
+        $this->assertReadyBeforeUpload($processing, $document, $slot, $actor);
+
         $photo = $this->isPhoto($document, $slot);
         $metadata = Ib39FeaUploadedFile::inspect($file, $photo);
         $path = sprintf('ib39/fea/%d/drafts/%s/%s.%s', $processing->id, $slot->value, Str::uuid(), $metadata['extension']);
-
-        if (! Storage::disk('local')->putFileAs(dirname($path), $file, basename($path))) {
-            throw new RuntimeException('The draft file could not be stored.');
-        }
+        $stored = false;
 
         try {
-            $result = DB::transaction(function () use ($processing, $document, $slot, $expectedCurrentVersionId, $replacementReason, $actor, $metadata, $path, $ipAddress, $userAgent) {
+            return DB::transaction(function () use ($processing, $document, $slot, $file, $expectedCurrentVersionId, $replacementReason, $actor, $metadata, $path, $ipAddress, $userAgent, &$stored) {
                 $lockedProcessing = Ib39FeaProcessing::query()->lockForUpdate()->findOrFail($processing->id);
                 abort_unless($actor->is_active && $actor->hasRole('39th_ib'), 403);
-                abort_unless((bool) $lockedProcessing->surfacedFormerRebel()->value('possessed_firearms'), 403);
-                abort_unless($lockedProcessing->surfacedFormerRebel()->whereDoesntHave('cancellation')->exists(), 403);
+                $record = $lockedProcessing->surfacedFormerRebel()
+                    ->whereDoesntHave('cancellation')
+                    ->lockForUpdate()
+                    ->first();
+                abort_unless($record && $record->possessed_firearms, 403);
                 $lockedDocument = Ib39FeaDocument::query()->where('fea_processing_id', $lockedProcessing->id)->lockForUpdate()->findOrFail($document->id);
                 abort_unless($this->slotAllowed($lockedDocument, $slot), 403);
+                $this->readiness->assertReady($record);
 
                 if ($lockedDocument->status === Ib39FeaDocumentStatus::Completed) {
                     throw ValidationException::withMessages(['file' => 'Completed documents cannot receive draft uploads.']);
@@ -76,13 +83,18 @@ class Ib39FeaUploadService
                     throw ValidationException::withMessages(['replacement_reason' => 'A replacement reason is only accepted when replacing an existing version.']);
                 }
                 if ($current && hash_equals($current->sha256, $metadata['sha256'])) {
-                    return ['version' => $current, 'duplicate' => true];
+                    return $current;
                 }
 
                 if ($lockedDocument->status === Ib39FeaDocumentStatus::Pending) {
                     $this->workflow->start($lockedProcessing, $lockedDocument, $actor);
                     $lockedDocument->refresh();
                 }
+
+                if (! Storage::disk('local')->putFileAs(dirname($path), $file, basename($path))) {
+                    throw new RuntimeException('The draft file could not be stored.');
+                }
+                $stored = true;
 
                 $versionNumber = ((int) $lockedDocument->versions()->where('slot', $slot)->max('version_number')) + 1;
                 $version = $lockedDocument->versions()->create([
@@ -109,18 +121,28 @@ class Ib39FeaUploadService
                 ]);
                 $this->audit($version, $actor, $current ? 'ib39_fea_draft_file_replaced' : 'ib39_fea_draft_file_uploaded', $ipAddress, $userAgent);
 
-                return ['version' => $version, 'duplicate' => false];
+                return $version;
             }, 5);
-
-            if ($result['duplicate']) {
+        } catch (Throwable $exception) {
+            if ($stored) {
                 Storage::disk('local')->delete($path);
             }
-
-            return $result['version'];
-        } catch (Throwable $exception) {
-            Storage::disk('local')->delete($path);
             throw $exception;
         }
+    }
+
+    private function assertReadyBeforeUpload(
+        Ib39FeaProcessing $processing,
+        Ib39FeaDocument $document,
+        Ib39FeaUploadSlot $slot,
+        User $actor,
+    ): void {
+        abort_unless($actor->is_active && $actor->hasRole('39th_ib'), 403);
+        abort_unless($document->fea_processing_id === $processing->id, 404);
+        abort_unless($this->slotAllowed($document, $slot), 403);
+        $record = $processing->surfacedFormerRebel()->whereDoesntHave('cancellation')->first();
+        abort_unless($record && $record->possessed_firearms, 403);
+        $this->readiness->assertReady($record);
     }
 
     public function preview(Ib39FeaDocumentVersion $version, User $actor, ?string $ip, ?string $agent): StreamedResponse

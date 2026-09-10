@@ -1,6 +1,7 @@
 @extends('layouts.skydash-v')
 @section('title', 'FEA Record')
 @section('heading', 'FEA Record')
+@inject('readiness', 'App\Contracts\Ib39FeaReadiness')
 
 @push('styles')
 <style>
@@ -12,9 +13,11 @@
 @section('content')
 @php
     $record = $fea->surfacedFormerRebel;
+    $isReady = $readiness->isReady($record);
 @endphp
 <div class="fea-workspace">
     <header class="fea-workspace-hero mb-4"><div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between" style="gap:1rem"><div><h2 class="mb-1">FEA Record {{ $record->reference_number }}</h2><p class="mb-0">Preliminary document workspace</p></div><span class="overall-badge">{{ $fea->overallStatus()->value }}</span></div></header>
+    <div class="alert alert-warning" role="status">{{ $readiness->denialMessage() }}</div>
     @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
     @if($errors->any())<div class="validation-summary mb-4"><strong>The preliminary metadata was not saved.</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
     <div class="row">
@@ -45,23 +48,29 @@
                             };
                         @endphp
                         <div class="document-actions">
-                            <a class="btn btn-sm btn-outline-primary" href="{{ route('ib39.fea.documents.draft.edit', [$fea, $document]) }}">Open Official Form Editor</a>
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('ib39.fea.documents.draft.preview', [$fea, $document]) }}">Preview Saved Draft</a>
-                            <button class="btn btn-sm btn-secondary" type="button" disabled>{{ $finalUploadLabel }}</button>
+                            @if($isReady)
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('ib39.fea.documents.draft.edit', [$fea, $document]) }}">Open Official Form Editor</a>
+                                <button class="btn btn-sm btn-secondary" type="button" disabled>{{ $finalUploadLabel }}</button>
+                            @endif
+                            @can('viewDraft', [$document, $fea])
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('ib39.fea.documents.draft.preview', [$fea, $document]) }}">Preview Saved Draft</a>
+                            @endcan
                         </div>
                     @endif
-                    @if($document->status === \App\Enums\Ib39FeaDocumentStatus::Pending)
-                        <form method="POST" action="{{ route('ib39.fea.documents.start', [$fea, $document]) }}" class="mt-3">@csrf<button class="btn btn-sm btn-primary" type="submit">Start Preliminary Work</button></form>
-                    @else
-                        <form method="POST" action="{{ route('ib39.fea.documents.update', [$fea, $document]) }}" class="preliminary-form">
-                            @csrf @method('PATCH')<input type="hidden" name="document[status]" value="Processing">
-                            <div class="form-group"><label for="compliance-{{ $document->id }}">Compliance status</label><select id="compliance-{{ $document->id }}" name="document[compliance_status]" class="form-control"><option @selected($document->compliance_status->value === 'None')>None</option><option @selected($document->compliance_status->value === 'Returned for Compliance')>Returned for Compliance</option><option @selected($document->compliance_status->value === 'Has Issue')>Has Issue</option></select></div>
-                            <div class="form-group"><label for="compliance-reason-{{ $document->id }}">Compliance reason</label><textarea id="compliance-reason-{{ $document->id }}" name="document[compliance_reason]" class="form-control" maxlength="2000">{{ $document->compliance_reason }}</textarea></div>
-                            <div class="form-group"><label for="remarks-{{ $document->id }}">Remarks</label><textarea id="remarks-{{ $document->id }}" name="document[remarks]" class="form-control" maxlength="2000">{{ $document->remarks }}</textarea></div>
-                            <div class="form-check mb-2"><input type="hidden" name="document[is_delayed]" value="0"><input id="delayed-{{ $document->id }}" name="document[is_delayed]" value="1" type="checkbox" class="form-check-input" @checked($document->is_delayed)><label for="delayed-{{ $document->id }}" class="form-check-label">Document is delayed</label></div>
-                            <div class="form-group"><label for="delay-reason-{{ $document->id }}">Reason for delay</label><textarea id="delay-reason-{{ $document->id }}" name="document[delay_reason]" class="form-control" maxlength="2000">{{ $document->delay_reason }}</textarea></div>
-                            <button class="btn btn-sm btn-primary" type="submit">Update Preliminary Work</button>
-                        </form>
+                    @if($isReady)
+                        @if($document->status === \App\Enums\Ib39FeaDocumentStatus::Pending)
+                            <form method="POST" action="{{ route('ib39.fea.documents.start', [$fea, $document]) }}" class="mt-3">@csrf<button class="btn btn-sm btn-primary" type="submit">Start Preliminary Work</button></form>
+                        @else
+                            <form method="POST" action="{{ route('ib39.fea.documents.update', [$fea, $document]) }}" class="preliminary-form">
+                                @csrf @method('PATCH')<input type="hidden" name="document[status]" value="Processing">
+                                <div class="form-group"><label for="compliance-{{ $document->id }}">Compliance status</label><select id="compliance-{{ $document->id }}" name="document[compliance_status]" class="form-control"><option @selected($document->compliance_status->value === 'None')>None</option><option @selected($document->compliance_status->value === 'Returned for Compliance')>Returned for Compliance</option><option @selected($document->compliance_status->value === 'Has Issue')>Has Issue</option></select></div>
+                                <div class="form-group"><label for="compliance-reason-{{ $document->id }}">Compliance reason</label><textarea id="compliance-reason-{{ $document->id }}" name="document[compliance_reason]" class="form-control" maxlength="2000">{{ $document->compliance_reason }}</textarea></div>
+                                <div class="form-group"><label for="remarks-{{ $document->id }}">Remarks</label><textarea id="remarks-{{ $document->id }}" name="document[remarks]" class="form-control" maxlength="2000">{{ $document->remarks }}</textarea></div>
+                                <div class="form-check mb-2"><input type="hidden" name="document[is_delayed]" value="0"><input id="delayed-{{ $document->id }}" name="document[is_delayed]" value="1" type="checkbox" class="form-check-input" @checked($document->is_delayed)><label for="delayed-{{ $document->id }}" class="form-check-label">Document is delayed</label></div>
+                                <div class="form-group"><label for="delay-reason-{{ $document->id }}">Reason for delay</label><textarea id="delay-reason-{{ $document->id }}" name="document[delay_reason]" class="form-control" maxlength="2000">{{ $document->delay_reason }}</textarea></div>
+                                <button class="btn btn-sm btn-primary" type="submit">Update Preliminary Work</button>
+                            </form>
+                        @endif
                     @endif
                     @include('ib39.fea.partials.uploads')
                     <div class="document-history"><strong class="requirement-name">History</strong>

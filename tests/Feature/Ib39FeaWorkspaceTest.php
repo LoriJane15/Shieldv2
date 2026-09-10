@@ -52,10 +52,11 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertSee('FR Reference')
             ->assertSee('Pending')
             ->assertSee('View FEA Record')
+            ->assertSee('FEA processing is unavailable until the required PSWDO enrollment forms are completed.')
             ->assertSee(route('ib39.fea.show', $processing));
     }
 
-    public function test_workspace_lists_exactly_six_approved_requirements_and_private_draft_controls(): void
+    public function test_workspace_lists_six_requirements_with_read_only_controls_while_locked(): void
     {
         $processing = $this->processing();
         $actor = User::factory()->role('39th_ib')->create();
@@ -68,13 +69,18 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertSee('Justification on the TIR and CVC/CVIF')
             ->assertSee('Photograph of the firearm')
             ->assertSee('Photograph of the FR with the firearm')
-            ->assertSee('Upload Final TIR')
-            ->assertSee('Upload Final CVIF')
-            ->assertSee('Upload Final PTIS')
-            ->assertSee('Upload Final Justification Form')
-            ->assertSee('Upload Photo — Photograph of the firearm')
-            ->assertSee('Upload Photo — Photograph of the FR with the firearm')
+            ->assertSee('FEA processing is unavailable until the required PSWDO enrollment forms are completed.')
+            ->assertSee('Preview Saved Draft')
             ->assertSee('View Upload History')
+            ->assertDontSee('Open Official Form Editor')
+            ->assertDontSee('Start Preliminary Work')
+            ->assertDontSee('Update Preliminary Work')
+            ->assertDontSee('Upload Final TIR')
+            ->assertDontSee('Upload Final CVIF')
+            ->assertDontSee('Upload Final PTIS')
+            ->assertDontSee('Upload Final Justification Form')
+            ->assertDontSee('Upload Photo — Photograph of the firearm')
+            ->assertDontSee('Upload Photo — Photograph of the FR with the firearm')
             ->assertDontSee('Existing Private Draft Versions — DRAFT — NOT FINAL')
             ->assertDontSee('Existing draft uploads and their immutable histories remain available.')
             ->assertDontSee('No private draft file uploaded.')
@@ -82,16 +88,8 @@ class Ib39FeaWorkspaceTest extends TestCase
             ->assertDontSee('Private Photo Upload — DRAFT — NOT FINAL')
             ->assertDontSee('JPEG or PNG only. Maximum 20 MiB. Files are stored privately as immutable versions.')
             ->assertDontSee('No private photo uploaded.')
-            ->assertSee('type="file"', false);
-        $content = $response->getContent();
-        $this->assertSame(4, substr_count($content, 'type="button" disabled'));
-        foreach (['Upload Final TIR', 'Upload Final CVIF', 'Upload Final PTIS', 'Upload Final Justification Form'] as $label) {
-            $buttonPosition = strpos($content, $label);
-            $previewPosition = strrpos(substr($content, 0, $buttonPosition), 'Preview Saved Draft');
-            $this->assertNotFalse($buttonPosition);
-            $this->assertNotFalse($previewPosition);
-            $this->assertLessThan(500, $buttonPosition - $previewPosition);
-        }
+            ->assertDontSee('type="file"', false)
+            ->assertDontSee('type="button" disabled', false);
         $this->assertSame(6, $processing->documents()->count());
     }
 

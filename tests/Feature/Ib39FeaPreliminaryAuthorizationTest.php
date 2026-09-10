@@ -32,6 +32,10 @@ class Ib39FeaPreliminaryAuthorizationTest extends TestCase
             $this->actingAs($user)->post($start)->assertForbidden();
             $this->actingAs($user)->patch($update, $this->payload())->assertForbidden();
         }
+
+        $active = User::factory()->role('39th_ib')->create();
+        $this->actingAs($active)->post($start)->assertForbidden();
+        $this->actingAs($active)->patch($update, $this->payload())->assertForbidden();
         $this->assertDatabaseCount('ib39_fea_document_histories', 0);
     }
 
@@ -53,15 +57,12 @@ class Ib39FeaPreliminaryAuthorizationTest extends TestCase
     public function test_workspace_escapes_metadata_and_displays_safe_actor_names_and_history_fallback(): void
     {
         [$actor, $processing, $document] = $this->context();
-        $this->actingAs($actor)->post(route('ib39.fea.documents.start', [$processing, $document]));
         $script = '<script>alert("unsafe")</script>';
-        $this->actingAs($actor)->patch(route('ib39.fea.documents.update', [$processing, $document]), $this->payload([
-            'remarks' => $script,
-            'compliance_status' => 'Has Issue',
-            'compliance_reason' => $script,
-            'is_delayed' => true,
-            'delay_reason' => $script,
-        ]));
+        $document->update([
+            'remarks' => $script, 'compliance_status' => 'Has Issue',
+            'compliance_reason' => $script, 'is_delayed' => true, 'delay_reason' => $script,
+            'prepared_by' => $actor->id, 'last_updated_by' => $actor->id,
+        ]);
         $document->histories()->create([
             'fea_processing_id' => $processing->id,
             'user_id' => null,
@@ -75,9 +76,10 @@ class Ib39FeaPreliminaryAuthorizationTest extends TestCase
             ->assertSee('User unavailable')
             ->assertSee('&lt;script&gt;alert(&quot;unsafe&quot;)&lt;/script&gt;', false)
             ->assertDontSee($script, false)
-            ->assertSee('type="file"', false)
+            ->assertDontSee('type="file"', false)
             ->assertSee('View Upload History')
-            ->assertSee('Upload Final CVIF')
+            ->assertDontSee('Upload Final CVIF')
+            ->assertDontSee('Open Official Form Editor')
             ->assertSee(route('ib39.fea.documents.draft.preview', [$processing, $document]))
             ->assertDontSee('Final Copy');
     }

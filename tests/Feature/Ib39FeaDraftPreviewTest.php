@@ -152,6 +152,17 @@ class Ib39FeaDraftPreviewTest extends TestCase
         $this->assertSame($counts, [$document->histories()->count(), $document->draftHistories()->count(), $document->processing->histories()->count()]);
     }
 
+    public function test_lock_denies_editor_but_preserves_saved_draft_preview_and_print(): void
+    {
+        $document = $this->saveSyntheticDraft(Ib39FeaDocumentType::Tir);
+
+        $this->actingAs($this->actor)
+            ->get(route('ib39.fea.documents.draft.edit', [$document->processing, $document]))
+            ->assertForbidden();
+        $this->actingAs($this->actor)->get($this->url($document, 'preview'))->assertOk();
+        $this->actingAs($this->actor)->get($this->url($document, 'print'))->assertOk();
+    }
+
     public function test_access_rejects_guests_inactive_other_roles_cross_processing_deleted_parents_and_photo_types(): void
     {
         $document = $this->saveSyntheticDraft(Ib39FeaDocumentType::Tir);

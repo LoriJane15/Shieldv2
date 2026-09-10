@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\Ib39FeaReadiness;
 use App\Enums\Ib39FeaComplianceStatus;
 use App\Enums\Ib39FeaDocumentHistoryEvent;
 use App\Enums\Ib39FeaDocumentStatus;
@@ -14,7 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class Ib39FeaDocumentWorkflowService
 {
-    public function __construct(private readonly Ib39FeaDraftSchema $draftSchema) {}
+    public function __construct(
+        private readonly Ib39FeaDraftSchema $draftSchema,
+        private readonly Ib39FeaReadiness $readiness,
+    ) {}
 
     public function start(Ib39FeaProcessing $processing, Ib39FeaDocument $document, User $actor): Ib39FeaDocument
     {
@@ -191,11 +195,16 @@ class Ib39FeaDocumentWorkflowService
     {
         abort_unless($actor->is_active && $actor->hasRole('39th_ib'), 403);
         $lockedProcessing = Ib39FeaProcessing::query()->lockForUpdate()->findOrFail($processing->id);
-        abort_unless($lockedProcessing->surfacedFormerRebel()->whereDoesntHave('cancellation')->exists(), 403);
+        $record = $lockedProcessing->surfacedFormerRebel()
+            ->whereDoesntHave('cancellation')
+            ->lockForUpdate()
+            ->first();
+        abort_unless($record, 403);
         $lockedDocument = Ib39FeaDocument::query()
             ->where('fea_processing_id', $lockedProcessing->id)
             ->lockForUpdate()
             ->findOrFail($document->id);
+        $this->readiness->assertReady($record);
 
         return [$lockedProcessing, $lockedDocument];
     }

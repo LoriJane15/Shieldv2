@@ -2,14 +2,18 @@
 
 namespace App\Policies;
 
+use App\Contracts\Ib39FeaReadiness;
 use App\Enums\Ib39FeaDocumentStatus;
 use App\Models\Ib39FeaDocument;
 use App\Models\Ib39FeaProcessing;
+use App\Models\Ib39SurfacedFormerRebel;
 use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 
 class Ib39FeaDocumentPolicy
 {
+    public function __construct(private readonly Ib39FeaReadiness $readiness) {}
+
     public function start(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
         return $this->hasAccess($user, $document, $processing)
@@ -35,7 +39,7 @@ class Ib39FeaDocumentPolicy
     public function viewDraft(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
         return $document->document_type->hasDraftEditor()
-            && $this->start($user, $document, $processing);
+            && $this->canView($user, $document, $processing);
     }
 
     public function uploadDraft(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
@@ -51,10 +55,16 @@ class Ib39FeaDocumentPolicy
 
     private function hasAccess(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
     {
-        return $user->is_active
-            && $user->hasRole('39th_ib')
-            && $document->fea_processing_id === $processing->id
-            && $processing->surfacedFormerRebel()->whereDoesntHave('cancellation')->exists();
+        if (! $user->is_active
+            || ! $user->hasRole('39th_ib')
+            || $document->fea_processing_id !== $processing->id) {
+            return false;
+        }
+
+        $record = $processing->surfacedFormerRebel()->whereDoesntHave('cancellation')->first();
+
+        return $record instanceof Ib39SurfacedFormerRebel
+            && $this->readiness->isReady($record);
     }
 
     private function canView(User $user, Ib39FeaDocument $document, Ib39FeaProcessing $processing): bool
