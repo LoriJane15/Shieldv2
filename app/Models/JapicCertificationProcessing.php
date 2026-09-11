@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JapicCertificationEvent;
 use App\Enums\JapicCertificationStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -32,7 +33,35 @@ class JapicCertificationProcessing extends Model
 
     protected function delayed(): Attribute
     {
-        return Attribute::get(fn (): bool => $this->deadline_days < 0);
+        return Attribute::get(function (): bool {
+            if (! $this->due_at
+                || in_array($this->status, [JapicCertificationStatus::Completed, JapicCertificationStatus::Cancelled], true)) {
+                return false;
+            }
+
+            return $this->surfacedFormerRebel?->cancellation === null
+                && now()->greaterThan($this->due_at);
+        });
+    }
+
+    protected function timelineProgress(): Attribute
+    {
+        return Attribute::get(function (): int {
+            $status = $this->status;
+            if ($status === JapicCertificationStatus::Cancelled) {
+                $cancellation = $this->relationLoaded('histories')
+                    ? $this->histories->where('event', JapicCertificationEvent::FrCancelled)->last()
+                    : $this->histories()->where('event', JapicCertificationEvent::FrCancelled->value)->latest('occurred_at')->first();
+                $status = $cancellation?->from_status ?? JapicCertificationStatus::Pending;
+            }
+
+            return match ($status) {
+                JapicCertificationStatus::Drafting => 1,
+                JapicCertificationStatus::ForSigning, JapicCertificationStatus::AwaitingFinalUpload => 2,
+                JapicCertificationStatus::Completed => 3,
+                default => 0,
+            };
+        });
     }
 
     protected function deadlineDays(): Attribute

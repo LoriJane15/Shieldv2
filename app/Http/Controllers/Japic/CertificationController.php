@@ -55,6 +55,7 @@ class CertificationController extends Controller
             'surfacedFormerRebel.municipality', 'surfacedFormerRebel.barangay',
             'surfacedFormerRebel.cancellation',
             'draft.lastSavedBy',
+            'currentFinalVersion',
             'histories' => fn ($query) => $query->with('actor:id,name')->oldest('occurred_at'),
         ]);
 

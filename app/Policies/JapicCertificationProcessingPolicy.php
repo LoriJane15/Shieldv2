@@ -61,4 +61,17 @@ class JapicCertificationProcessingPolicy
         return $this->view($user, $processing) && $processing->status === JapicCertificationStatus::ForSigning
             && ! $processing->surfacedFormerRebel()->whereHas('cancellation')->exists();
     }
+
+    public function uploadFinal(User $user, JapicCertificationProcessing $processing): bool
+    {
+        return $this->view($user, $processing)
+            && in_array($processing->status, [
+                JapicCertificationStatus::Pending,
+                JapicCertificationStatus::Drafting,
+                JapicCertificationStatus::ForSigning,
+                JapicCertificationStatus::AwaitingFinalUpload,
+            ], true)
+            && $processing->current_final_version_id === null
+            && ! $processing->surfacedFormerRebel()->whereHas('cancellation')->exists();
+    }
 }

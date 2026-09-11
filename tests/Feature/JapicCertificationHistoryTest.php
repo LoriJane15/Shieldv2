@@ -28,7 +28,8 @@ class JapicCertificationHistoryTest extends TestCase
         $processing->forceFill(['control_number' => 'CTRL-HISTORY'])->save();
 
         $this->actingAs($japic)->get(route('japic.certifications.history', [$processing, 'revision' => 2]))
-            ->assertOk()->assertSee('Revision 1')->assertSee('Revision 2')
+            ->assertOk()->assertSee('Workflow History')->assertSee('Final Certification Versions')
+            ->assertSee('Revision 1')->assertSee('Revision 2')
             ->assertSee('Old residence')->assertSee('New residence')
             ->assertSee('Previous value')->assertSee('New value')
             ->assertSee('Replacement JAPIC certification photograph')

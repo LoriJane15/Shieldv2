@@ -26,8 +26,32 @@ class JapicCertificationListTest extends TestCase
         $this->actingAs($japic)->get(route('japic.certifications.index', ['search' => '%_']))
             ->assertOk()->assertSee($literal->surfacedFormerRebel->reference_number)->assertDontSee('REF-OTHER')
             ->assertSee('Overall FR status')->assertSee('CDR Completed')->assertSee('JAPIC certification status')
-            ->assertDontSee('CDR completed</th>', false)->assertDontSee('Timing')->assertDontSee('Cancellation');
+            ->assertSee('Delayed')->assertDontSee('CDR completed</th>', false)->assertDontSee('Timing')->assertDontSee('Cancellation');
         $this->actingAs($japic)->get(route('japic.certifications.index', ['timing' => 'overdue']))->assertOk();
+    }
+
+    public function test_delayed_is_strictly_after_the_due_instant_and_never_applies_to_completed_or_cancelled_records(): void
+    {
+        $processing = $this->processing('DELAY-BOUNDARY', 'Boundary');
+        Carbon::setTestNow($processing->due_at);
+        $this->assertFalse($processing->fresh()->load('surfacedFormerRebel.cancellation')->delayed);
+
+        Carbon::setTestNow($processing->due_at->addSecond());
+        $this->assertTrue($processing->fresh()->load('surfacedFormerRebel.cancellation')->delayed);
+        $processing->forceFill(['status' => JapicCertificationStatus::Completed])->save();
+        $this->assertFalse($processing->fresh()->load('surfacedFormerRebel.cancellation')->delayed);
+
+        $processing->forceFill(['status' => JapicCertificationStatus::Pending])->save();
+        DB::table('ib39_fr_cancellations')->insert([
+            'ib39_surfaced_former_rebel_id' => $processing->ib39_surfaced_former_rebel_id,
+            'previous_overall_status' => 'CDR Completed',
+            'reason' => encrypt('Cancelled at boundary'),
+            'cancelled_by' => User::factory()->role('39th_ib')->create()->id,
+            'cancelled_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->assertFalse($processing->fresh()->load('surfacedFormerRebel.cancellation')->delayed);
     }
 
     public function test_filters_are_allowlisted_validated_and_pagination_keeps_only_validated_values(): void

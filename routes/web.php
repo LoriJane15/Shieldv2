@@ -198,6 +198,9 @@ Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->grou
     Route::get('/certifications/{processing}/photo-versions/{photoVersion}', [Japic\CertificationPhotoController::class, 'show'])->name('certifications.photos.show');
     Route::get('/certifications/{japicCertificationProcessing}/preview', [Japic\CertificationDocumentController::class, 'preview'])->name('certifications.preview');
     Route::get('/certifications/{japicCertificationProcessing}/print', [Japic\CertificationDocumentController::class, 'print'])->name('certifications.print');
+    Route::post('/certifications/{japicCertificationProcessing}/final-document', [Japic\CertificationDocumentController::class, 'uploadFinal'])->name('certifications.final-document.upload');
+    Route::get('/certifications/{japicCertificationProcessing}/document-versions/{version}/preview', [Japic\CertificationDocumentController::class, 'previewFinal'])->name('certifications.document-versions.preview');
+    Route::get('/certifications/{japicCertificationProcessing}/document-versions/{version}/download', [Japic\CertificationDocumentController::class, 'downloadFinal'])->name('certifications.document-versions.download');
     Route::post('/certifications/{japicCertificationProcessing}/submit-for-signing', [Japic\CertificationWorkflowController::class, 'submitForSigning'])->name('certifications.submit-for-signing');
     Route::post('/certifications/{japicCertificationProcessing}/signing-complete', [Japic\CertificationWorkflowController::class, 'signingComplete'])->name('certifications.signing-complete');
 

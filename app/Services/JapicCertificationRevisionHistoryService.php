@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\JapicCertificationProcessing;
 use App\Support\JapicCertificationDraftSchema;
+use Illuminate\Support\Str;
 
 class JapicCertificationRevisionHistoryService
 {
@@ -48,7 +49,47 @@ class JapicCertificationRevisionHistoryService
             : $items->firstWhere('revision', $selectedRevision);
         abort_if($selectedRevision !== null && $selected === null, 404);
 
-        return ['processing' => $processing, 'revisions' => $items, 'selectedRevision' => $selected];
+        $workflowEvents = $processing->histories()
+            ->with('actor:id,name')
+            ->oldest('occurred_at')
+            ->get()
+            ->map(fn ($history): array => [
+                'event' => Str::headline($history->event->value),
+                'from_status' => $history->from_status?->value,
+                'to_status' => $history->to_status->value,
+                'actor' => $this->display($history->actor?->name) ?? 'System',
+                'occurred_at' => $history->occurred_at,
+                'document_version_id' => $history->document_version_id,
+                'completion_path' => match (data_get($history->metadata, 'completion_path')) {
+                    'direct_from_pending' => 'Final signed certification uploaded directly from Pending',
+                    'direct_from_drafting' => 'Final signed certification uploaded directly from Drafting',
+                    'signed_workflow' => 'Final signed certification uploaded after preparation for signature',
+                    default => null,
+                },
+            ]);
+        $documentVersions = $processing->documentVersions()
+            ->with(['uploader:id,name', 'replacesVersion:id,version_number'])
+            ->orderBy('version_number')
+            ->get()
+            ->map(fn ($version): array => [
+                'id' => $version->id,
+                'version_number' => $version->version_number,
+                'original_filename' => $version->original_filename,
+                'mime_type' => $version->mime_type,
+                'size_bytes' => $version->size_bytes,
+                'sha256' => $version->sha256,
+                'uploaded_by' => $this->display($version->uploader?->name) ?? 'System',
+                'uploaded_at' => $version->uploaded_at,
+                'replaces_version_number' => $version->replacesVersion?->version_number,
+            ]);
+
+        return [
+            'processing' => $processing,
+            'revisions' => $items,
+            'selectedRevision' => $selected,
+            'workflowEvents' => $workflowEvents,
+            'documentVersions' => $documentVersions,
+        ];
     }
 
     private function differences(?array $previous, array $current): array

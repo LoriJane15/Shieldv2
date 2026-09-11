@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\Ib39FrCategory;
+use App\Enums\JapicCertificationEvent;
 use App\Enums\JapicCertificationStatus;
 use App\Models\Ib39SurfacedFormerRebel;
 use App\Models\JapicCertificationProcessing;
@@ -53,11 +54,14 @@ class JapicCertificationProfileTest extends TestCase
         DB::enableQueryLog();
 
         $response = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()
-            ->assertSee('FR Profile Information')->assertSee('Overall FR Status')->assertSee('Documents/Records')
-            ->assertSee('JAPIC Certification Status and Timeline')->assertSee('View History')
+            ->assertSee('FR Profile Information')->assertSee('Documents/Records')
+            ->assertSee('JAPIC Certification Timeline')->assertSee('Certification Workspace')
             ->assertDontSee('Related Workflows')->assertDontSee('Current Final CDR')->assertDontSee('Secure preview')
             ->assertDontSee('Private certification photographs')->assertDontSee('Immutable draft revisions')
             ->assertDontSee('JAPIC-MUST-NOT-RECEIVE-CDR-HISTORY')->assertDontSee('CDR History');
+
+        $response->assertDontSee('id="overall-status-heading"', false)
+            ->assertSeeInOrder(['FR Profile Information', 'JAPIC Certification Timeline', 'Documents/Records', 'Certification Workspace']);
 
         $this->assertFalse(collect(DB::getQueryLog())->contains(
             fn (array $query): bool => str_contains(strtolower($query['query']), 'ib39_cdr_status_histories')
@@ -68,6 +72,50 @@ class JapicCertificationProfileTest extends TestCase
         }
         $this->assertStringContainsString('statusHistories', file_get_contents(app_path('Http/Controllers/Ib39/CdrController.php')));
         $this->assertStringNotContainsString('statusHistories', $response->getContent());
+    }
+
+    public function test_static_timeline_maps_every_internal_status_without_clickable_steps(): void
+    {
+        $japic = User::factory()->role('japic')->create();
+        $processing = $this->processing();
+        foreach ([
+            JapicCertificationStatus::Pending->value => 0,
+            JapicCertificationStatus::Drafting->value => 1,
+            JapicCertificationStatus::ForSigning->value => 2,
+            JapicCertificationStatus::AwaitingFinalUpload->value => 2,
+            JapicCertificationStatus::Completed->value => 3,
+        ] as $status => $expectedCompleted) {
+            $processing->forceFill(['status' => $status])->save();
+            $html = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()->getContent();
+            preg_match_all('/<li class="certification-step ([^"]*)">/', $html, $steps);
+            $this->assertCount(3, $steps[1]);
+            $this->assertSame($expectedCompleted, collect($steps[1])->filter(fn (string $class): bool => str_contains($class, 'is-complete'))->count());
+            $this->assertStringNotContainsString('<button class="certification-step', $html);
+            $this->assertStringNotContainsString('<a class="certification-step', $html);
+        }
+
+        $processing->histories()->create([
+            'actor_id' => $japic->id,
+            'from_status' => JapicCertificationStatus::Drafting,
+            'to_status' => JapicCertificationStatus::Cancelled,
+            'event' => JapicCertificationEvent::FrCancelled,
+            'occurred_at' => now(),
+        ]);
+        DB::table('ib39_fr_cancellations')->insert([
+            'ib39_surfaced_former_rebel_id' => $processing->ib39_surfaced_former_rebel_id,
+            'previous_overall_status' => 'CDR Completed',
+            'reason' => encrypt('Timeline cancelled'),
+            'cancelled_by' => $japic->id,
+            'cancelled_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $processing->forceFill(['status' => JapicCertificationStatus::Cancelled])->save();
+        $html = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk()
+            ->assertSee('Certification processing stopped because the FR was cancelled.')
+            ->getContent();
+        preg_match_all('/<li class="certification-step ([^"]*)">/', $html, $steps);
+        $this->assertSame(1, collect($steps[1])->filter(fn (string $class): bool => str_contains($class, 'is-complete'))->count());
     }
 
     private function processing(): JapicCertificationProcessing

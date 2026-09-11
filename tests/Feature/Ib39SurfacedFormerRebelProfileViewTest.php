@@ -77,10 +77,9 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             ->assertSee('August 30, 2026 · 09:15 AM')
             ->assertSee('Recorded by')
             ->assertSee('Safe Recorder Name')
-            ->assertSee('Only the internal CDR status is linked to this record.')
+            ->assertSee('Documents/Records')
             ->assertSee('Not securely linked — unavailable')
-            ->assertSeeInOrder(['CDR processing', 'Assistance records'])
-            ->assertSeeInOrder(['FEA', 'Process Status', 'Not Available', 'Documents', 'Not Available'])
+            ->assertSeeInOrder(['CDR', 'FEA Processing Documents', 'Assistance Records'])
             ->assertDontSee('href="/documents', false)
             ->assertDontSee('href="/assistance', false)
             ->assertDontSee('creator-secret@example.test')
@@ -103,7 +102,7 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             ->get(route('ib39.fr-profiles.show', $record))
             ->assertOk()
             ->assertSeeInOrder(['CDR status', 'Not Available', 'Overall case status', 'Newly Recorded'])
-            ->assertSeeInOrder(['FEA', 'Process Status', 'Not Applicable', 'Documents', 'Not Applicable']);
+            ->assertSeeInOrder(['FEA Processing Documents', 'Not Applicable', 'Assistance Records']);
     }
 
     public function test_blank_creator_name_uses_safe_unknown_user_fallback(): void

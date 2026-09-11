@@ -28,7 +28,13 @@
                     <td>{{ $fr->surfaced_at->format('M d, Y') }}</td>
                     <td>{{ $fr->barangay?->name ? $fr->barangay->name.', ' : '' }}{{ $fr->municipality->name }}</td>
                     <td><span class="badge badge-primary">{{ $fr->overall_case_status }}</span></td>
-                    <td><span class="badge badge-info">{{ $processing->status->value }}</span></td>
+                    <td>
+                        @if($processing->delayed)
+                            <span class="badge badge-danger" role="status" aria-label="JAPIC certification status: Delayed">Delayed</span>
+                        @else
+                            <span class="badge badge-info">{{ $processing->status->value }}</span>
+                        @endif
+                    </td>
                     <td><a class="btn btn-sm btn-outline-primary" href="{{ route('japic.certifications.show', $processing) }}">View Profile</a></td>
                 </tr>
             @empty

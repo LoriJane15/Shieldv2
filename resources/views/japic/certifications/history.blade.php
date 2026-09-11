@@ -23,4 +23,21 @@
         @endif
     </div></section></div>
 </div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4"><section class="card h-100"><div class="card-header"><h2 class="h5 mb-0">Certification Workflow History</h2></div><div class="card-body">
+        @forelse($workflowEvents as $event)
+            <div class="border-bottom pb-3 mb-3"><strong>{{ $event['event'] }}</strong><div class="text-muted small">{{ $event['from_status'] ?? 'Intake' }} &rarr; {{ $event['to_status'] }} · {{ $event['occurred_at']->format('M d, Y h:i A') }} · {{ $event['actor'] }}</div>@if($event['completion_path'])<div class="mt-1">{{ $event['completion_path'] }}</div>@endif</div>
+        @empty
+            <p class="text-muted mb-0">No certification workflow events have been recorded.</p>
+        @endforelse
+    </div></section></div>
+    <div class="col-lg-5 mb-4"><section class="card h-100"><div class="card-header"><h2 class="h5 mb-0">Final Certification Versions</h2></div><div class="card-body">
+        @forelse($documentVersions as $version)
+            <div class="border-bottom pb-3 mb-3"><strong>Version {{ $version['version_number'] }}</strong>@if($version['replaces_version_number'])<span class="badge badge-secondary ml-1">Replaces v{{ $version['replaces_version_number'] }}</span>@endif<div>{{ $version['original_filename'] }}</div><div class="text-muted small">{{ $version['mime_type'] }} · {{ number_format($version['size_bytes']) }} bytes · {{ $version['uploaded_at']->format('M d, Y h:i A') }} · {{ $version['uploaded_by'] }}</div><div class="text-muted small text-break">SHA-256: {{ $version['sha256'] }}</div></div>
+        @empty
+            <p class="text-muted mb-0">No final certification has been uploaded.</p>
+        @endforelse
+    </div></section></div>
+</div>
 @endsection
