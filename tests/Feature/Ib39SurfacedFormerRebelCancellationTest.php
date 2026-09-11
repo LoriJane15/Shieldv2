@@ -166,6 +166,48 @@ class Ib39SurfacedFormerRebelCancellationTest extends TestCase
         ]);
     }
 
+    public function test_cancellation_after_both_valid_final_workflows_captures_japic_certified_as_previous_status(): void
+    {
+        [$actor, $record] = $this->context();
+        $cdr = $record->cdrProcessing()->firstOrFail();
+        $cdrVersionId = $this->cdrVersion($record);
+        $cdr->forceFill([
+            'status' => 'Completed',
+            'current_final_version_id' => $cdrVersionId,
+            'completed_at' => now(),
+            'completed_by' => $actor->id,
+        ])->save();
+        $received = now()->subDay();
+        $processing = JapicCertificationProcessing::query()->forceCreate([
+            'ib39_surfaced_former_rebel_id' => $record->id,
+            'triggering_cdr_document_version_id' => $cdrVersionId,
+            'status' => JapicCertificationStatus::Completed,
+            'received_at' => $received,
+            'due_at' => $received->copy()->addDays(14),
+            'completed_at' => now(),
+            'completed_by' => $actor->id,
+            'lock_version' => 0,
+        ]);
+        $final = JapicCertificationDocumentVersion::query()->forceCreate([
+            'processing_id' => $processing->id, 'version_number' => 1,
+            'storage_path' => "japic/certifications/{$processing->id}/final-documents/final.pdf",
+            'original_filename' => 'final.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 1,
+            'sha256' => str_repeat('f', 64), 'uploaded_by' => $actor->id,
+            'all_signatories_confirmed' => true, 'correct_final_confirmed' => true, 'uploaded_at' => now(),
+        ]);
+        $processing->forceFill(['current_final_version_id' => $final->id])->save();
+
+        app(Ib39SurfacedFormerRebelCancellationService::class)->cancel($record, 'Post-certification cancellation', $actor);
+
+        $this->assertSame('JAPIC Certified', $record->cancellation()->sole()->previous_overall_status);
+        $this->assertSame('Cancelled', $record->fresh()->load([
+            'cancellation',
+            'cdrProcessing.currentFinalVersion',
+            'japicCertificationProcessing.currentFinalVersion',
+        ])->overall_case_status);
+        $this->assertSame(JapicCertificationStatus::Completed, $processing->fresh()->status);
+    }
+
     public function test_failed_japic_coordination_rolls_back_entire_cancellation(): void
     {
         [$actor, $record] = $this->context();

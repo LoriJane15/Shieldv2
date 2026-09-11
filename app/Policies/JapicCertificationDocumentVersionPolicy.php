@@ -21,11 +21,28 @@ class JapicCertificationDocumentVersionPolicy
 
     private function hasAccess(User $user, JapicCertificationDocumentVersion $version): bool
     {
-        $processing = $version->processing;
+        if (! $user->is_active) {
+            return false;
+        }
 
-        return $processing instanceof JapicCertificationProcessing
-            && $processing->status === JapicCertificationStatus::Completed
-            && $processing->current_final_version_id === $version->id
-            && app(JapicCertificationProcessingPolicy::class)->view($user, $processing);
+        $processing = $version->processing;
+        if (! $processing instanceof JapicCertificationProcessing
+            || $processing->status !== JapicCertificationStatus::Completed
+            || $processing->current_final_version_id !== $version->id) {
+            return false;
+        }
+
+        if ($user->hasRole('japic')) {
+            return app(JapicCertificationProcessingPolicy::class)->view($user, $processing);
+        }
+
+        if (! $user->hasRole('39th_ib')) {
+            return false;
+        }
+
+        $processing->loadMissing('surfacedFormerRebel');
+
+        return $processing->surfacedFormerRebel !== null
+            && $user->can('view', $processing->surfacedFormerRebel);
     }
 }

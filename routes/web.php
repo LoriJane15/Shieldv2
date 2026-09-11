@@ -141,6 +141,10 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::get('/fr-profiles/create', [Ib39\SurfacedFormerRebelController::class, 'create'])->name('fr-profiles.create');
     Route::post('/fr-profiles', [Ib39\SurfacedFormerRebelController::class, 'store'])->name('fr-profiles.store');
     Route::get('/fr-profiles/{ib39SurfacedFormerRebel}', [Ib39\SurfacedFormerRebelController::class, 'show'])->name('fr-profiles.show');
+    Route::get('/fr-profiles/{ib39SurfacedFormerRebel}/documents/cdr', [Ib39\SurfacedFormerRebelController::class, 'cdr'])->name('fr-profiles.records.cdr');
+    Route::get('/fr-profiles/{ib39SurfacedFormerRebel}/documents/fea', [Ib39\SurfacedFormerRebelController::class, 'fea'])->name('fr-profiles.records.fea');
+    Route::get('/fr-profiles/{ib39SurfacedFormerRebel}/assistance', [Ib39\SurfacedFormerRebelController::class, 'assistance'])->name('fr-profiles.records.assistance');
+    Route::get('/fr-profiles/{ib39SurfacedFormerRebel}/documents/japic-certification', [Ib39\SurfacedFormerRebelController::class, 'certification'])->name('fr-profiles.records.certification');
     Route::post('/fr-profiles/{ib39SurfacedFormerRebel}/cancel', Ib39\SurfacedFormerRebelCancellationController::class)->name('fr-profiles.cancel');
 
     Route::get('/cdr/{cdr}', [Ib39\CdrController::class, 'show'])->name('cdr.show');
@@ -172,6 +176,8 @@ Route::middleware(['auth', 'role:39th_ib'])->prefix('39th-ib')->name('ib39.')->g
     Route::post('/fea/{fea}/documents/{document}/surrendered-photo-versions', [Ib39\FeaUploadController::class, 'storeSurrendered'])->name('fea.documents.surrendered-versions.store');
     Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/preview', [Ib39\FeaUploadController::class, 'preview'])->name('fea.documents.versions.preview');
     Route::get('/fea/{fea}/documents/{document}/draft-versions/{version}/download', [Ib39\FeaUploadController::class, 'download'])->name('fea.documents.versions.download');
+    Route::get('/japic-certifications/{japicCertificationProcessing}/document-versions/{version}/preview', [Japic\CertificationDocumentController::class, 'previewFinal'])->name('japic-certifications.document-versions.preview');
+    Route::get('/japic-certifications/{japicCertificationProcessing}/document-versions/{version}/download', [Japic\CertificationDocumentController::class, 'downloadFinal'])->name('japic-certifications.document-versions.download');
 
     Route::get('/areas', [Ib39\AreaController::class, 'index'])->name('areas.index');
     Route::post('/areas', [Ib39\AreaController::class, 'store'])->name('areas.store');
@@ -191,6 +197,7 @@ Route::middleware(['auth', 'role:japic'])->prefix('japic')->name('japic.')->grou
     Route::get('/certifications/{japicCertificationProcessing}/documents/cdr', [Japic\CertificationController::class, 'cdr'])->name('certifications.records.cdr');
     Route::get('/certifications/{japicCertificationProcessing}/documents/fea', [Japic\CertificationController::class, 'fea'])->name('certifications.records.fea');
     Route::get('/certifications/{japicCertificationProcessing}/assistance', [Japic\CertificationController::class, 'assistance'])->name('certifications.records.assistance');
+    Route::get('/certifications/{japicCertificationProcessing}/documents/certification', [Japic\CertificationController::class, 'certification'])->name('certifications.records.certification');
     Route::get('/certifications/{japicCertificationProcessing}/history/{revision?}', [Japic\CertificationController::class, 'history'])->whereNumber('revision')->name('certifications.history');
     Route::get('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'edit'])->name('certifications.draft.edit');
     Route::put('/certifications/{japicCertificationProcessing}/draft', [Japic\CertificationDraftController::class, 'update'])->name('certifications.draft.update');

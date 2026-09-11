@@ -15,14 +15,7 @@
 
     <x-surfaced-fr-profile :record="$record" />
 
-    <section class="profile-card mb-4" aria-labelledby="documents-records-heading">
-        <div class="profile-card-header"><h2 id="documents-records-heading"><i class="mdi mdi-folder-multiple-outline"></i>Documents/Records</h2></div>
-        <div class="profile-card-body"><div class="workflow-tile-list">
-            <div class="workflow-tile"><strong>CDR</strong><span>{{ $record->cdr_status }}</span></div>
-            <div class="workflow-tile"><strong>FEA Processing Documents</strong><span>{{ $record->feaProcessing ? $record->feaProcessing->overallStatus()->value.' / '.$record->feaProcessing->documents->count().' requirements' : ($record->possessed_firearms ? 'Not Available' : 'Not Applicable') }}</span></div>
-            <div class="workflow-tile"><strong>Assistance Records</strong><span>Not securely linked — unavailable</span></div>
-        </div></div>
-    </section>
+    <x-surfaced-fr-documents-records :summaries="$documentSummaries" :links="$documentLinks" />
 
     <section class="profile-card" aria-labelledby="initial-history-heading">
         <div class="profile-card-header"><h2 id="initial-history-heading"><i class="mdi mdi-history"></i>Initial Status History</h2></div>

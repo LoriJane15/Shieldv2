@@ -9,6 +9,7 @@ use App\Http\Requests\Ib39\StoreSurfacedFormerRebelRequest;
 use App\Models\Ib39SurfacedFormerRebel;
 use App\Models\Municipality;
 use App\Services\Ib39SurfacedFormerRebelService;
+use App\Services\SurfacedFrDocumentsRecordsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -23,7 +24,13 @@ class SurfacedFormerRebelController extends Controller
         $search = $filters['search'] ?? null;
 
         $records = Ib39SurfacedFormerRebel::query()
-            ->with(['municipality', 'barangay', 'cdrProcessing:id,ib39_surfaced_former_rebel_id,status', 'cancellation:id,ib39_surfaced_former_rebel_id'])
+            ->with([
+                'municipality',
+                'barangay',
+                'cdrProcessing.currentFinalVersion',
+                'japicCertificationProcessing.currentFinalVersion',
+                'cancellation:id,ib39_surfaced_former_rebel_id',
+            ])
             ->when($search, function ($query, string $search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('reference_number', 'like', "%{$search}%")
@@ -62,17 +69,93 @@ class SurfacedFormerRebelController extends Controller
         ]);
     }
 
-    public function show(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel): View
-    {
+    public function show(
+        Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel,
+        SurfacedFrDocumentsRecordsService $documents,
+    ): View {
         Gate::authorize('view', $ib39SurfacedFormerRebel);
 
-        $ib39SurfacedFormerRebel->load(['municipality', 'barangay', 'creator', 'cdrProcessing', 'feaProcessing.documents', 'cancellation.cancelledBy']);
+        $ib39SurfacedFormerRebel->load([
+            'municipality',
+            'barangay',
+            'creator',
+            'cdrProcessing.currentFinalVersion',
+            'feaProcessing.documents.currentDraftVersion',
+            'feaProcessing.documents.currentSupportingPhotoVersion',
+            'feaProcessing.documents.currentSurrenderedPhotoVersion',
+            'japicCertificationProcessing.currentFinalVersion',
+            'cancellation.cancelledBy',
+        ]);
 
         return view('ib39.fr-profiles.show', [
             'record' => $ib39SurfacedFormerRebel,
             'recordedBy' => filled($ib39SurfacedFormerRebel->creator?->name)
                 ? $ib39SurfacedFormerRebel->creator->name
                 : 'Unknown user',
+            'documentSummaries' => $documents->summaries($ib39SurfacedFormerRebel),
+            'documentLinks' => [
+                'cdr' => route('ib39.fr-profiles.records.cdr', $ib39SurfacedFormerRebel),
+                'fea' => route('ib39.fr-profiles.records.fea', $ib39SurfacedFormerRebel),
+                'assistance' => route('ib39.fr-profiles.records.assistance', $ib39SurfacedFormerRebel),
+                'japic' => route('ib39.fr-profiles.records.certification', $ib39SurfacedFormerRebel),
+            ],
+        ]);
+    }
+
+    public function cdr(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel, SurfacedFrDocumentsRecordsService $documents): View
+    {
+        Gate::authorize('view', $ib39SurfacedFormerRebel);
+        $ib39SurfacedFormerRebel->load('cdrProcessing.currentFinalVersion');
+        $data = $documents->cdrRecord($ib39SurfacedFormerRebel);
+        $final = $data['finalCdr'];
+
+        return view('japic.certifications.records.cdr', $data + [
+            'backUrl' => route('ib39.fr-profiles.show', $ib39SurfacedFormerRebel),
+            'referenceNumber' => $ib39SurfacedFormerRebel->reference_number,
+            'previewUrl' => $final ? route('ib39.cdr.documents.preview', [$data['cdr'], $final]) : null,
+            'downloadUrl' => $final && $data['canDownload'] ? route('ib39.cdr.documents.download', [$data['cdr'], $final]) : null,
+        ]);
+    }
+
+    public function fea(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel, SurfacedFrDocumentsRecordsService $documents): View
+    {
+        Gate::authorize('view', $ib39SurfacedFormerRebel);
+        $ib39SurfacedFormerRebel->load([
+            'feaProcessing.documents.currentDraftVersion',
+            'feaProcessing.documents.currentSupportingPhotoVersion',
+            'feaProcessing.documents.currentSurrenderedPhotoVersion',
+        ]);
+
+        return view('japic.certifications.records.fea', [
+            'backUrl' => route('ib39.fr-profiles.show', $ib39SurfacedFormerRebel),
+            'documents' => $documents->feaRecords(
+                $ib39SurfacedFormerRebel,
+                fn ($fea, $document, $version): string => route('ib39.fea.documents.versions.preview', [$fea, $document, $version]),
+                fn ($fea, $document, $version): string => route('ib39.fea.documents.versions.download', [$fea, $document, $version]),
+            ),
+        ]);
+    }
+
+    public function assistance(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel): View
+    {
+        Gate::authorize('view', $ib39SurfacedFormerRebel);
+
+        return view('japic.certifications.records.assistance', [
+            'backUrl' => route('ib39.fr-profiles.show', $ib39SurfacedFormerRebel),
+        ]);
+    }
+
+    public function certification(Ib39SurfacedFormerRebel $ib39SurfacedFormerRebel, SurfacedFrDocumentsRecordsService $documents): View
+    {
+        Gate::authorize('view', $ib39SurfacedFormerRebel);
+        $ib39SurfacedFormerRebel->load('japicCertificationProcessing.currentFinalVersion');
+        $data = $documents->certificationRecord($ib39SurfacedFormerRebel);
+        $final = $data['finalCertification'];
+
+        return view('japic.certifications.records.certification', $data + [
+            'backUrl' => route('ib39.fr-profiles.show', $ib39SurfacedFormerRebel),
+            'previewUrl' => $final ? route('ib39.japic-certifications.document-versions.preview', [$data['certification'], $final]) : null,
+            'downloadUrl' => $final ? route('ib39.japic-certifications.document-versions.download', [$data['certification'], $final]) : null,
         ]);
     }
 

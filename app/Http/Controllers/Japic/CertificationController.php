@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Japic\IndexCertificationRequest;
 use App\Models\JapicCertificationProcessing;
 use App\Services\JapicCertificationRevisionHistoryService;
+use App\Services\SurfacedFrDocumentsRecordsService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -23,7 +24,8 @@ class CertificationController extends Controller
             ->where(fn ($query) => $query->whereNull('assigned_to')->orWhere('assigned_to', $request->user()->id))
             ->with([
                 'surfacedFormerRebel.municipality', 'surfacedFormerRebel.barangay',
-                'surfacedFormerRebel.cancellation', 'surfacedFormerRebel.cdrProcessing',
+                'surfacedFormerRebel.cancellation', 'surfacedFormerRebel.cdrProcessing.currentFinalVersion',
+                'currentFinalVersion',
             ])
             ->when($escaped, fn ($query) => $query->whereHas('surfacedFormerRebel', fn ($fr) => $fr
                 ->where(fn ($match) => $match
@@ -40,6 +42,9 @@ class CertificationController extends Controller
                 ? $query->whereHas('surfacedFormerRebel.cancellation')
                 : $query->whereDoesntHave('surfacedFormerRebel.cancellation'))
             ->orderBy('due_at')->orderBy('id')->paginate(15)->appends($filters);
+        $records->getCollection()->each(function (JapicCertificationProcessing $processing): void {
+            $processing->surfacedFormerRebel->setRelation('japicCertificationProcessing', $processing);
+        });
 
         return view('japic.certifications.index', [
             'records' => $records,
@@ -48,29 +53,54 @@ class CertificationController extends Controller
         ]);
     }
 
-    public function show(JapicCertificationProcessing $japicCertificationProcessing): View
-    {
+    public function show(
+        JapicCertificationProcessing $japicCertificationProcessing,
+        SurfacedFrDocumentsRecordsService $documents,
+    ): View {
         Gate::authorize('view', $japicCertificationProcessing);
         $japicCertificationProcessing->load([
             'surfacedFormerRebel.municipality', 'surfacedFormerRebel.barangay',
             'surfacedFormerRebel.cancellation',
+            'surfacedFormerRebel.cdrProcessing.currentFinalVersion',
+            'surfacedFormerRebel.feaProcessing.documents.currentDraftVersion',
+            'surfacedFormerRebel.feaProcessing.documents.currentSupportingPhotoVersion',
+            'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
             'draft.lastSavedBy',
             'currentFinalVersion',
             'histories' => fn ($query) => $query->with('actor:id,name')->oldest('occurred_at'),
         ]);
+        $record = $japicCertificationProcessing->surfacedFormerRebel;
+        $record->setRelation('japicCertificationProcessing', $japicCertificationProcessing);
 
-        return view('japic.certifications.show', ['processing' => $japicCertificationProcessing]);
+        return view('japic.certifications.show', [
+            'processing' => $japicCertificationProcessing,
+            'documentSummaries' => $documents->summaries($record),
+            'documentLinks' => [
+                'cdr' => route('japic.certifications.records.cdr', $japicCertificationProcessing),
+                'fea' => route('japic.certifications.records.fea', $japicCertificationProcessing),
+                'assistance' => route('japic.certifications.records.assistance', $japicCertificationProcessing),
+                'japic' => route('japic.certifications.records.certification', $japicCertificationProcessing),
+            ],
+        ]);
     }
 
-    public function cdr(JapicCertificationProcessing $japicCertificationProcessing): View
+    public function cdr(JapicCertificationProcessing $japicCertificationProcessing, SurfacedFrDocumentsRecordsService $documents): View
     {
         Gate::authorize('view', $japicCertificationProcessing);
         $japicCertificationProcessing->load('surfacedFormerRebel.cdrProcessing.currentFinalVersion');
+        $record = $japicCertificationProcessing->surfacedFormerRebel;
+        $data = $documents->cdrRecord($record);
+        $final = $data['finalCdr'];
 
-        return view('japic.certifications.records.cdr', ['processing' => $japicCertificationProcessing]);
+        return view('japic.certifications.records.cdr', $data + [
+            'backUrl' => route('japic.certifications.show', $japicCertificationProcessing),
+            'referenceNumber' => $record->reference_number,
+            'previewUrl' => $final ? route('japic.cdr.documents.preview', [$data['cdr'], $final]) : null,
+            'downloadUrl' => $final && $data['canDownload'] ? route('japic.cdr.documents.download', [$data['cdr'], $final]) : null,
+        ]);
     }
 
-    public function fea(JapicCertificationProcessing $japicCertificationProcessing): View
+    public function fea(JapicCertificationProcessing $japicCertificationProcessing, SurfacedFrDocumentsRecordsService $documents): View
     {
         Gate::authorize('view', $japicCertificationProcessing);
         $japicCertificationProcessing->load([
@@ -79,22 +109,39 @@ class CertificationController extends Controller
             'surfacedFormerRebel.feaProcessing.documents.currentSurrenderedPhotoVersion',
         ]);
 
-        $documents = $japicCertificationProcessing->surfacedFormerRebel->feaProcessing?->documents
-            ->filter(fn ($document) => $document->currentDraftVersion || $document->currentSupportingPhotoVersion || $document->currentSurrenderedPhotoVersion)
-            ->values() ?? collect();
-
         return view('japic.certifications.records.fea', [
-            'processing' => $japicCertificationProcessing,
-            'documents' => $documents,
+            'backUrl' => route('japic.certifications.show', $japicCertificationProcessing),
+            'documents' => $documents->feaRecords(
+                $japicCertificationProcessing->surfacedFormerRebel,
+                fn ($fea, $document, $version): string => route('japic.fea.documents.versions.preview', [$fea, $document, $version]),
+                fn ($fea, $document, $version): string => route('japic.fea.documents.versions.download', [$fea, $document, $version]),
+            ),
         ]);
     }
 
     public function assistance(JapicCertificationProcessing $japicCertificationProcessing): View
     {
         Gate::authorize('view', $japicCertificationProcessing);
-        $japicCertificationProcessing->load('surfacedFormerRebel');
 
-        return view('japic.certifications.records.assistance', ['processing' => $japicCertificationProcessing]);
+        return view('japic.certifications.records.assistance', [
+            'backUrl' => route('japic.certifications.show', $japicCertificationProcessing),
+        ]);
+    }
+
+    public function certification(JapicCertificationProcessing $japicCertificationProcessing, SurfacedFrDocumentsRecordsService $documents): View
+    {
+        Gate::authorize('view', $japicCertificationProcessing);
+        $japicCertificationProcessing->load(['surfacedFormerRebel', 'currentFinalVersion']);
+        $record = $japicCertificationProcessing->surfacedFormerRebel;
+        $record->setRelation('japicCertificationProcessing', $japicCertificationProcessing);
+        $data = $documents->certificationRecord($record);
+        $final = $data['finalCertification'];
+
+        return view('japic.certifications.records.certification', $data + [
+            'backUrl' => route('japic.certifications.show', $japicCertificationProcessing),
+            'previewUrl' => $final ? route('japic.certifications.document-versions.preview', [$japicCertificationProcessing, $final]) : null,
+            'downloadUrl' => $final ? route('japic.certifications.document-versions.download', [$japicCertificationProcessing, $final]) : null,
+        ]);
     }
 
     public function history(

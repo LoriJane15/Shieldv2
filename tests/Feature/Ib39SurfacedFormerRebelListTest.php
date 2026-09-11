@@ -3,13 +3,18 @@
 namespace Tests\Feature;
 
 use App\Enums\Ib39FrCategory;
+use App\Enums\JapicCertificationStatus;
 use App\Models\AuditLog;
 use App\Models\Barangay;
 use App\Models\FormerRebel;
 use App\Models\Ib39SurfacedFormerRebel;
+use App\Models\JapicCertificationDocumentVersion;
+use App\Models\JapicCertificationProcessing;
 use App\Models\Municipality;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use LogicException;
 use Tests\TestCase;
 
 class Ib39SurfacedFormerRebelListTest extends TestCase
@@ -338,6 +343,103 @@ class Ib39SurfacedFormerRebelListTest extends TestCase
             $this->assertNotContains('ib39.fr-profiles.index', $routes);
             $this->assertNotContains('ib39.fr-profiles.create', $routes);
         });
+    }
+
+    public function test_overall_status_precedence_and_valid_final_relationships_cover_every_state(): void
+    {
+        $new = $this->record(['reference_number' => 'STATUS-NEW']);
+        $ongoing = $this->record(['reference_number' => 'STATUS-ONGOING']);
+        DB::table('ib39_cdr_processings')->insert([
+            'ib39_surfaced_former_rebel_id' => $ongoing->id, 'status' => 'Ongoing',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $completed = $this->record(['reference_number' => 'STATUS-CDR-COMPLETE']);
+        DB::table('ib39_cdr_processings')->insert([
+            'ib39_surfaced_former_rebel_id' => $completed->id, 'status' => 'Completed',
+            'completed_at' => now(), 'completed_by' => $this->creator->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $certified = $this->certifiedRecord('STATUS-JAPIC-CERTIFIED');
+        $cancelled = $this->certifiedRecord('STATUS-CANCELLED');
+        DB::table('ib39_fr_cancellations')->insert([
+            'ib39_surfaced_former_rebel_id' => $cancelled->id,
+            'previous_overall_status' => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_JAPIC_CERTIFIED,
+            'reason' => encrypt('Cancelled after completion'), 'cancelled_by' => $this->creator->id,
+            'cancelled_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        foreach ([
+            $new->id => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS,
+            $ongoing->id => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_CDR_ONGOING,
+            $completed->id => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_CDR_COMPLETED,
+            $certified->id => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_JAPIC_CERTIFIED,
+            $cancelled->id => Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_CANCELLED,
+        ] as $id => $expected) {
+            $record = Ib39SurfacedFormerRebel::query()->findOrFail($id)->load($this->overallStatusRelations());
+            $this->assertSame($expected, $record->overall_case_status);
+        }
+
+        $missingCdrFinal = $this->certifiedRecord('STATUS-MISSING-CDR-FINAL');
+        $missingCdrFinal->cdrProcessing()->update(['current_final_version_id' => null]);
+        $this->assertSame(
+            Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_CDR_COMPLETED,
+            $missingCdrFinal->fresh()->load($this->overallStatusRelations())->overall_case_status,
+        );
+
+        $missingCertificationFinal = $this->certifiedRecord('STATUS-MISSING-JAPIC-FINAL');
+        $missingCertificationFinal->japicCertificationProcessing()->update(['current_final_version_id' => null]);
+        $this->assertSame(
+            Ib39SurfacedFormerRebel::OVERALL_CASE_STATUS_CDR_COMPLETED,
+            $missingCertificationFinal->fresh()->load($this->overallStatusRelations())->overall_case_status,
+        );
+    }
+
+    public function test_overall_status_requires_intentional_eager_loading_instead_of_silently_downgrading(): void
+    {
+        $record = $this->certifiedRecord('STATUS-EAGER-LOAD');
+
+        $this->expectException(LogicException::class);
+        $record->fresh()->overall_case_status;
+    }
+
+    private function certifiedRecord(string $reference): Ib39SurfacedFormerRebel
+    {
+        $record = $this->record(['reference_number' => $reference]);
+        $cdrId = DB::table('ib39_cdr_processings')->insertGetId([
+            'ib39_surfaced_former_rebel_id' => $record->id, 'status' => 'Completed',
+            'completed_at' => now(), 'completed_by' => $this->creator->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $cdrVersionId = DB::table('ib39_cdr_document_versions')->insertGetId([
+            'cdr_processing_id' => $cdrId, 'version_number' => 1, 'source_type' => 'generated',
+            'storage_path' => "generated/status/{$record->id}", 'original_filename' => 'final.html',
+            'mime_type' => 'text/html', 'size_bytes' => 1, 'sha256' => hash('sha256', 'cdr-'.$record->id),
+            'content_schema_version' => 2, 'content_snapshot' => encrypt(['content' => []]),
+            'created_by' => $this->creator->id, 'finalized_at' => now(), 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('ib39_cdr_processings')->where('id', $cdrId)->update(['current_final_version_id' => $cdrVersionId]);
+        $processing = JapicCertificationProcessing::query()->forceCreate([
+            'ib39_surfaced_former_rebel_id' => $record->id,
+            'triggering_cdr_document_version_id' => $cdrVersionId,
+            'status' => JapicCertificationStatus::Completed,
+            'received_at' => now(), 'due_at' => now()->addDays(14), 'completed_at' => now(),
+            'completed_by' => $this->creator->id, 'lock_version' => 1,
+        ]);
+        $certificationVersion = JapicCertificationDocumentVersion::query()->forceCreate([
+            'processing_id' => $processing->id, 'version_number' => 1,
+            'storage_path' => "japic/certifications/{$processing->id}/final-documents/final.pdf",
+            'original_filename' => 'final.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 1,
+            'sha256' => hash('sha256', 'japic-'.$record->id), 'uploaded_by' => $this->creator->id,
+            'all_signatories_confirmed' => true, 'correct_final_confirmed' => true, 'uploaded_at' => now(),
+        ]);
+        $processing->forceFill(['current_final_version_id' => $certificationVersion->id])->save();
+
+        return $record;
+    }
+
+    private function overallStatusRelations(): array
+    {
+        return ['cancellation', 'cdrProcessing.currentFinalVersion', 'japicCertificationProcessing.currentFinalVersion'];
     }
 
     private function record(array $overrides = []): Ib39SurfacedFormerRebel

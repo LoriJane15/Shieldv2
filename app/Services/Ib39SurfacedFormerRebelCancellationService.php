@@ -38,7 +38,11 @@ class Ib39SurfacedFormerRebelCancellationService
                     throw ValidationException::withMessages(['reason' => 'This surfaced FR has already been cancelled.']);
                 }
 
-                $locked->load('cdrProcessing');
+                $locked->load([
+                    'cancellation',
+                    'cdrProcessing.currentFinalVersion',
+                    'japicCertificationProcessing.currentFinalVersion',
+                ]);
                 $previousStatus = $locked->overall_case_status;
                 $cancellation = $locked->cancellation()->forceCreate([
                     'previous_overall_status' => $previousStatus,

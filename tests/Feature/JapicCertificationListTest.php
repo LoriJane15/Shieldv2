@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\Ib39FrCategory;
 use App\Enums\JapicCertificationStatus;
 use App\Models\Ib39SurfacedFormerRebel;
+use App\Models\JapicCertificationDocumentVersion;
 use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 use Carbon\Carbon;
@@ -65,6 +66,41 @@ class JapicCertificationListTest extends TestCase
         foreach ([['status' => 'Delayed'], ['timing' => 'late'], ['received_from' => '09/01/2026'], ['unknown' => 'x']] as $filters) {
             $this->actingAs($japic)->get(route('japic.certifications.index', $filters))->assertSessionHasErrors();
         }
+    }
+
+    public function test_list_derives_japic_certified_from_valid_final_pointers_without_n_plus_one_queries(): void
+    {
+        $japic = User::factory()->role('japic')->create();
+        $records = collect(range(1, 3))->map(fn (int $number) => $this->processing('CERTIFIED-'.$number, 'Person '.$number));
+        foreach ($records as $processing) {
+            $final = JapicCertificationDocumentVersion::query()->forceCreate([
+                'processing_id' => $processing->id, 'version_number' => 1,
+                'storage_path' => "japic/certifications/{$processing->id}/final-documents/final.pdf",
+                'original_filename' => 'final.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 1,
+                'sha256' => hash('sha256', (string) $processing->id), 'uploaded_by' => $japic->id,
+                'all_signatories_confirmed' => true, 'correct_final_confirmed' => true, 'uploaded_at' => now(),
+            ]);
+            $processing->forceFill([
+                'status' => JapicCertificationStatus::Completed,
+                'current_final_version_id' => $final->id,
+                'completed_at' => now(),
+                'completed_by' => $japic->id,
+            ])->save();
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $response = $this->actingAs($japic)->get(route('japic.certifications.index'))->assertOk();
+        foreach ($records as $processing) {
+            $response->assertSee($processing->surfacedFormerRebel->reference_number);
+        }
+        $response->assertSee('JAPIC Certified');
+
+        $queries = collect(DB::getQueryLog())->pluck('query')->map('strtolower');
+        foreach (['ib39_cdr_processings', 'ib39_cdr_document_versions', 'ib39_fr_cancellations', 'japic_certification_document_versions'] as $table) {
+            $this->assertLessThanOrEqual(1, $queries->filter(fn (string $sql): bool => str_contains($sql, 'from "'.$table.'"'))->count(), "{$table} was queried per row.");
+        }
+        $this->assertFalse($queries->contains(fn (string $sql): bool => str_contains($sql, 'fr_government_assistances')));
     }
 
     private function processing(string $reference, string $lastName): JapicCertificationProcessing

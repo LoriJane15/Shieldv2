@@ -3,20 +3,17 @@
 @section('heading', 'JAPIC Certification')
 
 @section('content')
-@php
-    $cdr = $processing->surfacedFormerRebel->cdrProcessing;
-    $finalCdr = $cdr?->currentFinalVersion;
-@endphp
-<a href="{{ route('japic.certifications.show', $processing) }}" class="d-inline-block mb-3">&larr; Back to certification profile</a>
+<a href="{{ $backUrl }}" class="d-inline-block mb-3">&larr; Back to surfaced FR profile</a>
 <section class="card"><div class="card-header"><h2 class="h5 mb-0">CDR</h2></div><div class="card-body">
-    @if($cdr && $finalCdr)
-        <p>This is the current authoritative final CDR for {{ $processing->surfacedFormerRebel->reference_number }}.</p>
-        <a class="btn btn-outline-primary" href="{{ route('japic.cdr.documents.preview', [$cdr, $finalCdr]) }}">Secure preview</a>
-        @if($finalCdr->source_type === \App\Enums\Ib39CdrDocumentSource::Uploaded)
-            <a class="btn btn-outline-secondary" href="{{ route('japic.cdr.documents.download', [$cdr, $finalCdr]) }}">Secure download</a>
+    <p><strong>Status:</strong> {{ $cdrStatus }}</p>
+    @if($finalCdr)
+        <p>This is the current authoritative final CDR for {{ $referenceNumber }}.</p>
+        <a class="btn btn-outline-primary" href="{{ $previewUrl }}">Secure preview</a>
+        @if($downloadUrl)
+            <a class="btn btn-outline-secondary" href="{{ $downloadUrl }}">Secure download</a>
         @endif
     @else
-        <p class="text-muted mb-0">No CDR document is currently available for preview.</p>
+        <p class="text-muted mb-0">No completed CDR document is available yet.</p>
     @endif
 </div></section>
 @endsection

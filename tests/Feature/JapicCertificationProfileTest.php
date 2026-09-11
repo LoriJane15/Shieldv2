@@ -41,6 +41,38 @@ class JapicCertificationProfileTest extends TestCase
         $this->actingAs($other)->get(route('japic.certifications.show', $processing))->assertForbidden();
     }
 
+    public function test_both_profiles_present_the_same_status_and_four_monitoring_destinations(): void
+    {
+        $japic = User::factory()->role('japic')->create();
+        $processing = $this->processing();
+        $ib39 = User::query()->findOrFail($processing->surfacedFormerRebel()->value('created_by'));
+        $fr = $processing->surfacedFormerRebel;
+
+        $japicResponse = $this->actingAs($japic)->get(route('japic.certifications.show', $processing))->assertOk();
+        $ib39Response = $this->actingAs($ib39)->get(route('ib39.fr-profiles.show', $fr))->assertOk();
+        foreach ([$japicResponse, $ib39Response] as $response) {
+            $response->assertSee('CDR Completed')->assertSeeInOrder([
+                'CDR', 'FEA Processing Documents', 'Assistance Records', 'JAPIC Certification',
+            ]);
+        }
+        foreach ([
+            'japic.certifications.records.cdr',
+            'japic.certifications.records.fea',
+            'japic.certifications.records.assistance',
+            'japic.certifications.records.certification',
+        ] as $routeName) {
+            $japicResponse->assertSee('href="'.route($routeName, $processing).'"', false);
+        }
+        foreach ([
+            'ib39.fr-profiles.records.cdr',
+            'ib39.fr-profiles.records.fea',
+            'ib39.fr-profiles.records.assistance',
+            'ib39.fr-profiles.records.certification',
+        ] as $routeName) {
+            $ib39Response->assertSee('href="'.route($routeName, $fr).'"', false);
+        }
+    }
+
     public function test_shared_profile_contains_only_common_read_only_content_and_japic_never_loads_or_renders_cdr_history(): void
     {
         $japic = User::factory()->role('japic')->create();
@@ -72,6 +104,9 @@ class JapicCertificationProfileTest extends TestCase
         }
         $this->assertStringContainsString('statusHistories', file_get_contents(app_path('Http/Controllers/Ib39/CdrController.php')));
         $this->assertStringNotContainsString('statusHistories', $response->getContent());
+        $monitoringComponent = file_get_contents(resource_path('views/components/surfaced-fr-documents-records.blade.php'));
+        $this->assertStringNotContainsString('route(', $monitoringComponent);
+        $this->assertStringNotContainsString('App\\Enums', $monitoringComponent);
     }
 
     public function test_static_timeline_maps_every_internal_status_without_clickable_steps(): void

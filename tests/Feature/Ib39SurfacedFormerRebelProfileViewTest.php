@@ -78,10 +78,20 @@ class Ib39SurfacedFormerRebelProfileViewTest extends TestCase
             ->assertSee('Recorded by')
             ->assertSee('Safe Recorder Name')
             ->assertSee('Documents/Records')
-            ->assertSee('Not securely linked — unavailable')
-            ->assertSeeInOrder(['CDR', 'FEA Processing Documents', 'Assistance Records'])
-            ->assertDontSee('href="/documents', false)
-            ->assertDontSee('href="/assistance', false)
+            ->assertSeeInOrder([
+                'CDR',
+                'No completed CDR document is available yet.',
+                'FEA Processing Documents',
+                'No FEA processing documents are available yet.',
+                'Assistance Records',
+                'No assistance records are available yet.',
+                'JAPIC Certification',
+                'No final JAPIC certification document is available yet.',
+            ])
+            ->assertSee('href="'.route('ib39.fr-profiles.records.cdr', $record).'"', false)
+            ->assertSee('href="'.route('ib39.fr-profiles.records.fea', $record).'"', false)
+            ->assertSee('href="'.route('ib39.fr-profiles.records.assistance', $record).'"', false)
+            ->assertSee('href="'.route('ib39.fr-profiles.records.certification', $record).'"', false)
             ->assertDontSee('creator-secret@example.test')
             ->assertDontSee('876543210')
             ->assertDontSee('Forwarded')

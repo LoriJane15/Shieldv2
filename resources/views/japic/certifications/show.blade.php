@@ -10,7 +10,7 @@
         <ol class="module-breadcrumb" aria-label="Breadcrumb"><li><a href="{{ route('japic.dashboard') }}">Dashboard</a></li><li class="separator"><i class="mdi mdi-chevron-right"></i></li><li><a href="{{ route('japic.certifications.index') }}">Certifications</a></li><li class="separator"><i class="mdi mdi-chevron-right"></i></li><li class="active">{{ $fr->reference_number }}</li></ol>
     </div>
 
-    <x-surfaced-fr-profile :record="$fr" information-heading="FR Profile Information" :show-status-tiles="false" />
+    <x-surfaced-fr-profile :record="$fr" information-heading="FR Profile Information" />
 
     @push('styles')
     <style>
@@ -39,11 +39,7 @@
         </ol>
     </div></section>
 
-    <section class="profile-card mb-4" aria-labelledby="documents-heading"><div class="profile-card-header"><h2 id="documents-heading"><i class="mdi mdi-folder-multiple-outline"></i>Documents/Records</h2></div><div class="profile-card-body"><div class="workflow-tile-list">
-        <a class="workflow-tile text-decoration-none" href="{{ route('japic.certifications.records.cdr', $processing) }}"><strong>CDR</strong><span>View the current authoritative final record</span></a>
-        <a class="workflow-tile text-decoration-none" href="{{ route('japic.certifications.records.fea', $processing) }}"><strong>FEA Processing Documents</strong><span>View available processing documents</span></a>
-        <a class="workflow-tile text-decoration-none" href="{{ route('japic.certifications.records.assistance', $processing) }}"><strong>Assistance Records</strong><span>View securely linked assistance information</span></a>
-    </div></div></section>
+    <x-surfaced-fr-documents-records :summaries="$documentSummaries" :links="$documentLinks" />
 
     <section class="profile-card" aria-labelledby="certification-workspace-heading"><div class="profile-card-header"><h2 id="certification-workspace-heading"><i class="mdi mdi-file-certificate-outline"></i>Certification Workspace</h2></div><div class="profile-card-body">
         <p class="text-muted">{{ $processing->draft ? 'Encrypted draft revision '.$processing->draft->revision.' is available.' : 'No certification draft has been saved.' }}</p>

@@ -7,6 +7,7 @@ use App\Enums\Ib39FrCategory;
 use App\Enums\JapicCertificationStatus;
 use App\Models\Ib39FeaDocumentVersion;
 use App\Models\Ib39SurfacedFormerRebel;
+use App\Models\JapicCertificationDocumentVersion;
 use App\Models\JapicCertificationProcessing;
 use App\Models\User;
 use App\Services\Ib39SurfacedFormerRebelService;
@@ -19,11 +20,12 @@ class JapicRelatedDocumentAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_japic_can_read_only_current_final_cdr_and_missing_files_are_not_found(): void
+    public function test_both_roles_can_read_only_current_final_cdr_and_missing_files_are_not_found(): void
     {
         Storage::fake('local');
         [$japic, $record, $processing, $current] = $this->context(false);
         $cdr = $record->cdrProcessing;
+        $ib39 = User::query()->findOrFail($record->created_by);
         Storage::disk('local')->put($current->getRawOriginal('storage_path'), '%PDF-1.4 current');
 
         $this->actingAs($japic)->get(route('japic.certifications.records.cdr', $processing))
@@ -31,6 +33,10 @@ class JapicRelatedDocumentAccessTest extends TestCase
             ->assertDontSee('CDR History')->assertDontSee('private/cdr');
         $this->actingAs($japic)->get(route('japic.cdr.documents.preview', [$cdr, $current]))->assertOk();
         $this->actingAs($japic)->get(route('japic.cdr.documents.download', [$cdr, $current]))->assertOk();
+        $this->actingAs($ib39)->get(route('ib39.fr-profiles.records.cdr', $record))
+            ->assertOk()->assertSee('current authoritative final CDR')->assertSee('Secure preview')->assertSee('Secure download');
+        $this->actingAs($ib39)->get(route('ib39.cdr.documents.preview', [$cdr, $current]))->assertOk();
+        $this->actingAs($ib39)->get(route('ib39.cdr.documents.download', [$cdr, $current]))->assertOk();
 
         $oldId = DB::table('ib39_cdr_document_versions')->insertGetId(['cdr_processing_id' => $cdr->id, 'version_number' => 2,
             'source_type' => 'uploaded', 'storage_path' => 'private/cdr/old.pdf', 'original_filename' => 'old.pdf', 'mime_type' => 'application/pdf',
@@ -43,11 +49,12 @@ class JapicRelatedDocumentAccessTest extends TestCase
         $this->assertNotNull($processing);
     }
 
-    public function test_fea_access_enforces_processing_document_version_and_fr_ownership(): void
+    public function test_both_roles_have_read_only_fea_access_with_parent_validation(): void
     {
         Storage::fake('local');
         [$japic, $record, $processing] = $this->context(true);
         $fea = $record->feaProcessing;
+        $ib39 = User::query()->findOrFail($record->created_by);
         $document = $fea->documents->first();
         $version = Ib39FeaDocumentVersion::query()->forceCreate(['fea_processing_id' => $fea->id, 'fea_document_id' => $document->id,
             'slot' => Ib39FeaUploadSlot::Primary, 'version_number' => 1, 'storage_path' => "ib39/fea/{$fea->id}/test.pdf",
@@ -60,6 +67,10 @@ class JapicRelatedDocumentAccessTest extends TestCase
             ->assertSee('Secure preview')->assertSee('Secure download')->assertDontSee('Upload');
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.preview', [$fea, $document, $version]))->assertOk();
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.download', [$fea, $document, $version]))->assertOk();
+        $this->actingAs($ib39)->get(route('ib39.fr-profiles.records.fea', $record))
+            ->assertOk()->assertSee($document->document_type->label())->assertSee('Secure preview')->assertSee('Secure download');
+        $this->actingAs($ib39)->get(route('ib39.fea.documents.versions.preview', [$fea, $document, $version]))->assertOk();
+        $this->actingAs($ib39)->get(route('ib39.fea.documents.versions.download', [$fea, $document, $version]))->assertOk();
         $otherDocument = $fea->documents->skip(1)->first();
         $this->actingAs($japic)->get(route('japic.fea.documents.versions.preview', [$fea, $otherDocument, $version]))->assertNotFound();
 
@@ -72,12 +83,73 @@ class JapicRelatedDocumentAccessTest extends TestCase
         $record->cdrProcessing->update(['current_final_version_id' => null]);
 
         $this->actingAs($japic)->get(route('japic.certifications.records.cdr', $processing))
-            ->assertOk()->assertSee('No CDR document is currently available for preview.');
+            ->assertOk()->assertSee('No completed CDR document is available yet.');
         $this->actingAs($japic)->get(route('japic.certifications.records.fea', $processing))
-            ->assertOk()->assertSee('No FEA processing documents are currently available for preview.');
+            ->assertOk()->assertSee('No FEA processing documents are available yet.');
         $this->actingAs($japic)->get(route('japic.certifications.records.assistance', $processing))
-            ->assertOk()->assertSee('No assistance records are currently available.');
+            ->assertOk()->assertSee('No assistance records are available yet.');
+        $this->actingAs($japic)->get(route('japic.certifications.records.certification', $processing))
+            ->assertOk()->assertSee('No final JAPIC certification document is available yet.');
+
+        $ib39 = User::query()->findOrFail($record->created_by);
+        foreach ([
+            'ib39.fr-profiles.records.cdr' => 'No completed CDR document is available yet.',
+            'ib39.fr-profiles.records.fea' => 'No FEA processing documents are available yet.',
+            'ib39.fr-profiles.records.assistance' => 'No assistance records are available yet.',
+            'ib39.fr-profiles.records.certification' => 'No final JAPIC certification document is available yet.',
+        ] as $routeName => $message) {
+            $this->actingAs($ib39)->get(route($routeName, $record))->assertOk()->assertSee($message);
+        }
         $this->assertSame(0, DB::table('fr_government_assistances')->count());
+    }
+
+    public function test_both_roles_can_preview_and_download_only_the_current_final_japic_document(): void
+    {
+        Storage::fake('local');
+        [$japic, $record, $processing] = $this->context(false);
+        $ib39 = User::query()->findOrFail($record->created_by);
+        $path = "japic/certifications/{$processing->id}/final-documents/current.pdf";
+        $current = JapicCertificationDocumentVersion::query()->forceCreate([
+            'processing_id' => $processing->id, 'version_number' => 1, 'storage_path' => $path,
+            'original_filename' => 'certification.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 16,
+            'sha256' => str_repeat('a', 64), 'uploaded_by' => $japic->id, 'all_signatories_confirmed' => true,
+            'correct_final_confirmed' => true, 'uploaded_at' => now(),
+        ]);
+        $processing->forceFill(['status' => JapicCertificationStatus::Completed, 'current_final_version_id' => $current->id, 'completed_at' => now(), 'completed_by' => $japic->id])->save();
+        Storage::disk('local')->put($path, '%PDF-1.4 secure');
+
+        $this->actingAs($japic)->get(route('japic.certifications.records.certification', $processing))
+            ->assertOk()->assertSee('Secure preview')->assertSee('Secure download')->assertDontSee($path)->assertDontSee(str_repeat('a', 64));
+        $this->actingAs($ib39)->get(route('ib39.fr-profiles.records.certification', $record))
+            ->assertOk()->assertSee('Secure preview')->assertSee('Secure download')->assertDontSee($path)->assertDontSee(str_repeat('a', 64));
+
+        foreach ([
+            [$japic, 'japic.certifications.document-versions.preview'],
+            [$japic, 'japic.certifications.document-versions.download'],
+            [$ib39, 'ib39.japic-certifications.document-versions.preview'],
+            [$ib39, 'ib39.japic-certifications.document-versions.download'],
+        ] as [$user, $routeName]) {
+            $response = $this->actingAs($user)->get(route($routeName, [$processing, $current]))->assertOk();
+            $cacheControl = (string) $response->headers->get('Cache-Control');
+            foreach (['private', 'no-store', 'no-cache', 'must-revalidate', 'max-age=0'] as $directive) {
+                $this->assertStringContainsString($directive, $cacheControl);
+            }
+        }
+
+        $old = JapicCertificationDocumentVersion::query()->forceCreate([
+            'processing_id' => $processing->id, 'version_number' => 2, 'storage_path' => "japic/certifications/{$processing->id}/final-documents/old.pdf",
+            'original_filename' => 'old.pdf', 'mime_type' => 'application/pdf', 'size_bytes' => 1, 'sha256' => str_repeat('b', 64),
+            'uploaded_by' => $japic->id, 'all_signatories_confirmed' => true, 'correct_final_confirmed' => true, 'uploaded_at' => now(),
+        ]);
+        $this->actingAs($japic)->get(route('japic.certifications.document-versions.preview', [$processing, $old]))->assertForbidden();
+
+        [, , $otherProcessing] = $this->context(false);
+        $this->actingAs($ib39)->get(route('ib39.japic-certifications.document-versions.preview', [$otherProcessing, $current]))->assertNotFound();
+
+        $inactive = User::factory()->role('39th_ib')->create(['is_active' => false]);
+        $unrelated = User::factory()->role('admin')->create();
+        $this->actingAs($inactive)->get(route('ib39.japic-certifications.document-versions.preview', [$processing, $current]))->assertRedirect(route('login'));
+        $this->actingAs($unrelated)->get(route('ib39.japic-certifications.document-versions.preview', [$processing, $current]))->assertForbidden();
     }
 
     private function context(bool $firearms): array

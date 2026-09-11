@@ -231,9 +231,9 @@ class JapicCertificationDocumentService
         ?string $ipAddress,
         ?string $userAgent,
     ): StreamedResponse {
-        abort_unless($actor->is_active && $actor->hasRole('japic'), 403);
-        abort_unless(($processing->assigned_to === null || $processing->assigned_to === $actor->id)
-            && $version->processing_id === $processing->id
+        $ability = $disposition === 'inline' ? 'preview' : 'download';
+        abort_unless($actor->can($ability, $version), 403);
+        abort_unless($version->processing_id === $processing->id
             && $processing->status === JapicCertificationStatus::Completed
             && $processing->current_final_version_id === $version->id, 404);
         $path = $version->getRawOriginal('storage_path');
